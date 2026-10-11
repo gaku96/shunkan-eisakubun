@@ -16,10 +16,11 @@
     autoSpeak: true,
     showHint: true,
     typingMode: false,
-    ttsEngine: "bundled", // "bundled", "gemini", or "browser"
+    ttsEngine: "gemini", // "bundled", "gemini", or "browser"
     geminiApiKey: "",
     geminiModel: "gemini-3.8-flash-tts",
     geminiVoice: "Kore", // Kore, Puck, Aoede, Fenrir, Charon
+    geminiAccent: "us", // us, uk, in, au, global
   };
 
   // ---------- データ ----------
@@ -58,6 +59,31 @@
     return null;
   }
 
+  // ---------- アクセント定義 ----------
+  const ACCENT_LIST = ["us", "uk", "in", "au"];
+  const ACCENT_LABELS = {
+    us: { flag: "🇺🇸", name: "米語", label: "アメリカ英語" },
+    uk: { flag: "🇬🇧", name: "英語", label: "イギリス英語" },
+    in: { flag: "🇮🇳", name: "印語", label: "インド英語" },
+    au: { flag: "🇦🇺", name: "豪語", label: "オーストラリア英語" },
+  };
+  const ACCENT_STYLE_PROMPTS = {
+    us: "natural, authentic, conversational native American English with authentic linking, American rhoticity, and connected speech",
+    uk: "natural, authentic British English with characteristic Received Pronunciation (RP), non-rhotic intonation, and standard British phonetics",
+    in: "natural, fluent international business Indian English with authentic native Indian English rhythm, melodic intonation, and distinctive phonetics",
+    au: "natural, authentic conversational Australian English with characteristic Australian vowel shifts, intonation, and friendly warmth",
+  };
+
+  function getEffectiveAccent(cardOrId, settingAccent = "us") {
+    if (settingAccent !== "global") return settingAccent || "us";
+    const idStr = typeof cardOrId === "object" && cardOrId ? cardOrId.id : String(cardOrId || "");
+    let hash = 0;
+    for (let i = 0; i < idStr.length; i++) {
+      hash = (hash * 31 + idStr.charCodeAt(i)) >>> 0;
+    }
+    return ACCENT_LIST[hash % ACCENT_LIST.length];
+  }
+
   // ---------- IndexedDB 音声キャッシュ ----------
   let dbPromise = null;
   function getDB() {
@@ -84,14 +110,28 @@
       });
     } catch { return null; }
   }
-  async function findCachedAudio(cardId, isJa = false, preferredModel = "", preferredVoice = "") {
+  async function findCachedAudio(cardId, isJa = false, preferredModel = "", preferredVoice = "", preferredAccent = "") {
     if (!cardId) return null;
     try {
-      // 1. 指定モデル・ボイスの完全一致キーを直接取得（最速）
+      // 1. 指定モデル・ボイス・アクセントの完全一致キーを直接取得（最速）
       if (preferredModel && preferredVoice) {
-        const exactKey = isJa ? `ja_${cardId}_${preferredModel}_${preferredVoice}` : `${cardId}_${preferredModel}_${preferredVoice}`;
-        const exactBlob = await getCachedAudio(exactKey);
-        if (exactBlob) return { blob: exactBlob, key: exactKey };
+        if (isJa) {
+          const exactKey = `ja_${cardId}_${preferredModel}_${preferredVoice}`;
+          const exactBlob = await getCachedAudio(exactKey);
+          if (exactBlob) return { blob: exactBlob, key: exactKey };
+        } else {
+          if (preferredAccent) {
+            const exactKey = `${cardId}_${preferredModel}_${preferredVoice}_${preferredAccent}`;
+            const exactBlob = await getCachedAudio(exactKey);
+            if (exactBlob) return { blob: exactBlob, key: exactKey };
+          }
+          // 旧キー（アクセント指定なし）も探索（preferredAccentが"us"なら互換ヒット）
+          if (!preferredAccent || preferredAccent === "us") {
+            const oldKey = `${cardId}_${preferredModel}_${preferredVoice}`;
+            const oldBlob = await getCachedAudio(oldKey);
+            if (oldBlob) return { blob: oldBlob, key: oldKey };
+          }
+        }
       }
 
       // 2. カーソル走査でプレフィックス一致を探索（モデルやボイスが違っても確実にキャッシュから再生）
@@ -101,10 +141,12 @@
         const store = tx.objectStore(DB_STORE);
         const prefix = isJa ? `ja_${cardId}_` : `${cardId}_`;
         const req = store.openCursor();
+        let fallbackCandidate = null;
+
         req.onsuccess = (e) => {
           const cursor = e.target.result;
           if (!cursor) {
-            resolve(null);
+            resolve(fallbackCandidate);
             return;
           }
           const k = String(cursor.key);
@@ -115,8 +157,14 @@
             }
           } else {
             if (!k.startsWith("ja_") && k.startsWith(prefix)) {
-              resolve({ blob: cursor.value, key: k });
-              return;
+              // もし指定アクセントがあればアクセント一致を最優先
+              if (preferredAccent && k.endsWith(`_${preferredAccent}`)) {
+                resolve({ blob: cursor.value, key: k });
+                return;
+              }
+              if (!fallbackCandidate) {
+                fallbackCandidate = { blob: cursor.value, key: k };
+              }
             }
           }
           cursor.continue();
@@ -1040,11 +1088,11 @@
   }
 
   // ---------- Gemini 3.8 TTS API呼び出し ----------
-  async function generateGeminiSpeech(text, apiKey, model = "gemini-3.8-flash-tts", voice = "Kore", lang = "en") {
+  async function generateGeminiSpeech(text, apiKey, model = "gemini-3.8-flash-tts", voice = "Kore", lang = "en", accent = "us") {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
     const stylePrompt = lang === "ja"
       ? "natural, clear, polite and warm Japanese narration by a native speaker with authentic standard Tokyo intonation"
-      : "natural, authentic, conversational native American English with authentic linking and connected speech";
+      : (ACCENT_STYLE_PROMPTS[accent] || ACCENT_STYLE_PROMPTS.us);
 
     const res = await fetch(url, {
       method: "POST",
@@ -1334,10 +1382,13 @@
 
     // 1. Gemini 音声（IndexedDBキャッシュを最優先再生。APIキー未入力でもオフラインでも再生可能）
     if (s.ttsEngine !== "browser") {
-      const cachedItem = await findCachedAudio(card.id, false, s.geminiModel, s.geminiVoice);
+      const effectiveAccent = getEffectiveAccent(card, s.geminiAccent || "us");
+      const accentInfo = ACCENT_LABELS[effectiveAccent] || ACCENT_LABELS.us;
+      const cachedItem = await findCachedAudio(card.id, false, s.geminiModel, s.geminiVoice, effectiveAccent);
       if (cachedItem && cachedItem.blob) {
-        const voiceLabel = cachedItem.key.split("_").pop() || s.geminiVoice || "Gemini 3.8";
-        if (badge) badge.textContent = `✨ Gemini 3.8 (${voiceLabel})`;
+        const parts = cachedItem.key.split("_");
+        const voiceLabel = parts[2] || s.geminiVoice || "Gemini 3.8";
+        if (badge) badge.textContent = `✨ Gemini 3.8 (${voiceLabel}・${accentInfo.flag} ${accentInfo.name})`;
         const ok = await playBlobPromise(cachedItem.blob, rate);
         if (ok) return;
       }
@@ -1345,11 +1396,11 @@
       // キャッシュ未生成でAPIキーがある場合は生成
       if (s.geminiApiKey) {
         try {
-          if (badge) badge.textContent = "✨ Gemini 3.8 生成中...";
-          const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice, "en");
-          const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}`;
+          if (badge) badge.textContent = `✨ Gemini 3.8 (${accentInfo.flag} ${accentInfo.name}生成中...)`;
+          const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice, "en", effectiveAccent);
+          const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}_${effectiveAccent}`;
           await setCachedAudio(cacheKey, blob);
-          if (badge) badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
+          if (badge) badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice}・${accentInfo.flag} ${accentInfo.name})`;
           const ok = await playBlobPromise(blob, rate);
           if (ok) return;
         } catch (err) {
@@ -1423,11 +1474,15 @@
       return;
     }
 
+    const effectiveAccent = getEffectiveAccent(card, s.geminiAccent || "us");
+    const accentInfo = ACCENT_LABELS[effectiveAccent] || ACCENT_LABELS.us;
+
     // 2. まず IndexedDB に保存された Gemini キャッシュ音声があるか確認（APIキー未入力・オフラインでも再生可能！）
-    const cachedItem = await findCachedAudio(card.id, false, s.geminiModel, s.geminiVoice);
+    const cachedItem = await findCachedAudio(card.id, false, s.geminiModel, s.geminiVoice, effectiveAccent);
     if (cachedItem && cachedItem.blob) {
-      const voiceLabel = cachedItem.key.split("_").pop() || s.geminiVoice || "Gemini 3.8";
-      badge.textContent = `✨ Gemini 3.8 (${voiceLabel})`;
+      const parts = cachedItem.key.split("_");
+      const voiceLabel = parts[2] || s.geminiVoice || "Gemini 3.8";
+      badge.textContent = `✨ Gemini 3.8 (${voiceLabel}・${accentInfo.flag} ${accentInfo.name})`;
       badge.className = "tts-badge";
       const played = await playBlob(cachedItem.blob);
       if (played) return;
@@ -1435,14 +1490,14 @@
 
     // 3. キャッシュがなく、Gemini APIキーが設定されている場合はリアルタイム生成
     if (s.ttsEngine === "gemini" && s.geminiApiKey) {
-      badge.textContent = "✨ Gemini 3.8 生成中...";
+      badge.textContent = `✨ Gemini 3.8 (${accentInfo.flag} ${accentInfo.name}生成中...)`;
       badge.className = "tts-badge loading";
 
       try {
-        const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice, "en");
-        const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}`;
+        const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice, "en", effectiveAccent);
+        const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}_${effectiveAccent}`;
         await setCachedAudio(cacheKey, blob);
-        badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
+        badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice}・${accentInfo.flag} ${accentInfo.name})`;
         badge.className = "tts-badge";
         const played = await playBlob(blob);
         if (played) return;
@@ -1927,16 +1982,25 @@
       keyInput.focus();
       return;
     }
-    testStatus.textContent = "🇺🇸 英語生成中...";
+    const model = form.geminiModel.value;
+    const voice = form.geminiVoice.value;
+    const accent = form.geminiAccent?.value || "us";
+    const testAccent = accent === "global" ? "uk" : accent;
+    const accentInfo = ACCENT_LABELS[testAccent] || ACCENT_LABELS.us;
+    testStatus.textContent = `${accentInfo.flag} ${accentInfo.label}生成中...`;
     testStatus.className = "status-msg";
     testTtsBtn.disabled = true;
     try {
-      const model = form.geminiModel.value;
-      const voice = form.geminiVoice.value;
-      const sample = "I'd say eighty percent of the time I'm working from home.";
-      const blob = await generateGeminiSpeech(sample, key, model, voice, "en");
+      const sample = testAccent === "uk"
+        ? "Would you care for a cup of tea? I'd rather stay at home."
+        : (testAccent === "in"
+          ? "We will discuss this in today's meeting. Please do the needful."
+          : (testAccent === "au"
+            ? "Good day! Let's catch up over coffee this afternoon."
+            : "I'd say eighty percent of the time I'm working from home."));
+      const blob = await generateGeminiSpeech(sample, key, model, voice, "en", testAccent);
       playBlob(blob);
-      testStatus.textContent = "✓ 英語再生成功！";
+      testStatus.textContent = `✓ ${accentInfo.flag} ${accentInfo.label}再生成功！`;
       testStatus.className = "status-msg success";
     } catch (e) {
       if (e.message.includes("Quota exceeded") || e.message.includes("quota") || e.message.includes("limit: 10")) {
@@ -1993,6 +2057,7 @@
       geminiApiKey: form.geminiApiKey.value.trim(),
       geminiModel: form.geminiModel.value,
       geminiVoice: form.geminiVoice.value,
+      geminiAccent: form.geminiAccent ? form.geminiAccent.value : "us",
     };
     const h = state.history[todayKey()];
     if (h) h.goal = state.settings.dailyGoal;
@@ -2009,6 +2074,10 @@
   });
   form.geminiVoice.addEventListener("change", () => {
     state.settings.geminiVoice = form.geminiVoice.value;
+    save();
+  });
+  form.geminiAccent?.addEventListener("change", () => {
+    state.settings.geminiAccent = form.geminiAccent.value;
     save();
   });
   ttsSelect.addEventListener("change", () => {
@@ -2077,13 +2146,14 @@
       batchCacheProgress.textContent = `⚡️ [${i + 1}/${totalItems}問] ${courseLabel} (${processedCount}ファイル保存済) - ${card.pattern.en.slice(0, 16)}...`;
 
       // 1. 英語キャッシュ確認・生成
-      const enCacheKey = `${card.id}_${model}_${voice}`;
+      const effectiveAccent = getEffectiveAccent(card, state.settings.geminiAccent || "us");
+      const enCacheKey = `${card.id}_${model}_${voice}_${effectiveAccent}`;
       const enCached = await getCachedAudio(enCacheKey);
       if (!enCached) {
         let retry = 0;
         while (retry < 5 && !batchCacheAborted) {
           try {
-            const blob = await generateGeminiSpeech(card.en, key, model, voice, "en");
+            const blob = await generateGeminiSpeech(card.en, key, model, voice, "en", effectiveAccent);
             await setCachedAudio(enCacheKey, blob);
             processedCount++;
             await updateCacheCount();
@@ -2206,6 +2276,7 @@
     form.geminiApiKey.value = s.geminiApiKey;
     form.geminiModel.value = s.geminiModel;
     form.geminiVoice.value = s.geminiVoice;
+    if (form.geminiAccent) form.geminiAccent.value = s.geminiAccent || "us";
     testStatus.textContent = "";
     updateTtsFieldsVisibility();
     await updateCacheCount();

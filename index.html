@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間英作文 | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css?v=22">
+  <link rel="stylesheet" href="style.css?v=23">
 </head>
 <body>
   <header class="app-header">
@@ -558,6 +558,16 @@
               <option value="Charon">Charon（深みのある男性）</option>
             </select>
           </label>
+          <label class="field">
+            <span>英語アクセント</span>
+            <select name="geminiAccent" id="gemini-accent">
+              <option value="us">🇺🇸 アメリカ英語 (US)</option>
+              <option value="uk">🇬🇧 イギリス英語 (UK / RP)</option>
+              <option value="in">🇮🇳 インド英語 (India / Business)</option>
+              <option value="au">🇦🇺 オーストラリア英語 (Aussie)</option>
+              <option value="global">🌏 グローバル実戦ミックス (米・英・印・豪)</option>
+            </select>
+          </label>
           <div class="test-row" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
             <button type="button" class="btn small" id="test-tts-btn">🔊 英語をテスト</button>
             <button type="button" class="btn small" id="test-tts-ja-btn">🇯🇵 日本語をテスト</button>
@@ -720,8 +730,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=22"></script>
-  <script src="app.js?v=22"></script>
+  <script src="data.js?v=23"></script>
+  <script src="app.js?v=23"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

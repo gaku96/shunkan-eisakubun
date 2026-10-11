@@ -42,12 +42,28 @@ def pcm_to_wav(pcm_data: bytes, sample_rate: int = 24000, num_channels: int = 1,
     )
     return bytes(header) + pcm_data
 
-def call_gemini_tts(text: str, api_key: str, model: str = "gemini-3.8-flash-tts", voice: str = "Kore", lang: str = "en") -> bytes:
+ACCENT_STYLE_PROMPTS = {
+    "us": "natural, authentic, conversational native American English with authentic linking, American rhoticity, and connected speech",
+    "uk": "natural, authentic British English with characteristic Received Pronunciation (RP), non-rhotic intonation, and standard British phonetics",
+    "in": "natural, fluent international business Indian English with authentic native Indian English rhythm, melodic intonation, and distinctive phonetics",
+    "au": "natural, authentic conversational Australian English with characteristic Australian vowel shifts, intonation, and friendly warmth"
+}
+
+def get_effective_accent(card_id: str, setting_accent: str = "us") -> str:
+    if setting_accent != "global":
+        return setting_accent or "us"
+    accents = ["us", "uk", "in", "au"]
+    h = 0
+    for ch in card_id:
+        h = ((h * 31) + ord(ch)) & 0xFFFFFFFF
+    return accents[h % len(accents)]
+
+def call_gemini_tts(text: str, api_key: str, model: str = "gemini-3.8-flash-tts", voice: str = "Kore", lang: str = "en", accent: str = "us") -> bytes:
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     style_prompt = (
         "natural, clear, polite and warm Japanese narration by a native speaker with authentic standard Tokyo intonation"
         if lang == "ja" else
-        "natural, authentic, conversational native American English with authentic linking and connected speech"
+        ACCENT_STYLE_PROMPTS.get(accent, ACCENT_STYLE_PROMPTS["us"])
     )
 
     payload = {
@@ -122,6 +138,7 @@ def main():
     parser.add_argument("--api-key", required=True, help="Gemini API Key")
     parser.add_argument("--model", default="gemini-3.8-flash-tts", help="Gemini model")
     parser.add_argument("--voice", default="Kore", help="Voice name (Kore, Puck, Aoede, Fenrir, Charon)")
+    parser.add_argument("--accent", default="us", choices=["us", "uk", "in", "au", "global"], help="Accent: us, uk, in, au, global")
     parser.add_argument("--output-dir", default=None, help="Output directory (defaults to audio/)")
     args = parser.parse_args()
 
@@ -134,7 +151,7 @@ def main():
     total_cards = len(cards)
 
     print(f"Loaded {total_cards} cards. Total files to generate: {total_cards * 2} (English + Japanese)")
-    print(f"Model: {args.model}, Voice: {args.voice}")
+    print(f"Model: {args.model}, Voice: {args.voice}, Accent: {args.accent}")
     print(f"Output directory: {output_dir}")
     print("=" * 60)
 
@@ -144,15 +161,16 @@ def main():
     for idx, card in enumerate(cards, 1):
         cid = card["id"]
         course_tag = "GRIT" if card["course"] == "grit" else "口語"
+        eff_accent = get_effective_accent(cid, args.accent)
         en_file = os.path.join(output_dir, f"{cid}.wav")
         ja_file = os.path.join(output_dir, f"{cid}_ja.wav")
 
-        print(f"[{idx}/{total_cards}] ({course_tag}) {cid}: {card['en'][:30]}...")
+        print(f"[{idx}/{total_cards}] ({course_tag}・{eff_accent.upper()}) {cid}: {card['en'][:30]}...")
 
         # 1. English
         if not os.path.exists(en_file) or os.path.getsize(en_file) == 0:
             try:
-                wav_bytes = call_gemini_tts(card["en"], args.api_key, args.model, args.voice, "en")
+                wav_bytes = call_gemini_tts(card["en"], args.api_key, args.model, args.voice, "en", eff_accent)
                 with open(en_file, "wb") as f:
                     f.write(wav_bytes)
                 success_count += 1
