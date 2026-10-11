@@ -11,9 +11,180 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターンプラクティス | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css?v=32">
+  <link rel="stylesheet" href="style.css?v=33">
 </head>
 <body>
+  <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <symbol id="icon-flame" viewBox="0 0 24 24">
+      <path d="M12 2c.6 2.5 2.5 4 4.5 6 1.8 1.8 2.5 3.8 2.5 6a7 7 0 1 1-14 0c0-3.5 2-6 4-8 .5 1.5 1.5 2.5 3 2.5 0-2.5 0-5 0-6.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 18a3 3 0 0 0 3-3c0-2-1.5-3.5-3-5-1.5 1.5-3 3-3 5a3 3 0 0 0 3 3z" fill="var(--icon-pop, #f97316)" stroke="none"/>
+    </symbol>
+    <symbol id="icon-gear" viewBox="0 0 24 24">
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="12" cy="12" r="3" fill="var(--icon-pop, #f97316)" stroke="none"/>
+    </symbol>
+    <symbol id="icon-speech" viewBox="0 0 24 24">
+      <path d="M21 12c0 4.4-3.8 8-8.5 8a9.4 9.4 0 0 1-3.3-.6L3 21l1.7-4.5A7.7 7.7 0 0 1 4 12c0-4.4 3.8-8 8.5-8S21 7.6 21 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="9" cy="12" r="1.5" fill="var(--icon-pop, #f97316)" stroke="none"/>
+      <circle cx="12.5" cy="12" r="1.5" fill="var(--icon-pop, #f97316)" stroke="none"/>
+      <circle cx="16" cy="12" r="1.5" fill="var(--icon-pop, #f97316)" stroke="none"/>
+    </symbol>
+    <symbol id="icon-grad-cap" viewBox="0 0 24 24">
+      <path d="M22 10v6M2 10l10-5 10 5-10 5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M6 12v5c0 1.8 2.7 3 6 3s6-1.2 6-3v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="22" cy="10" r="1.2" fill="var(--icon-pop, #f97316)" stroke="none"/>
+      <path d="M22 11.2v5.3a1.5 1.5 0 0 1-1.5 1.5h-1" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-headphones" viewBox="0 0 24 24">
+      <path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a9 9 0 0 1 18 0v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M9 11.5a3.5 3.5 0 0 1 6 0" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-bolt" viewBox="0 0 24 24">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polygon points="12.5 3.5 5.5 13 11.5 13 10.8 19 18.5 11 12.5 11 12.5 3.5" fill="var(--icon-pop, #f97316)" stroke="none" opacity="0.35"/>
+    </symbol>
+    <symbol id="icon-dice" viewBox="0 0 24 24">
+      <rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="16" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="12" cy="12" r="2" fill="var(--icon-pop, #f97316)" stroke="none"/>
+      <circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="icon-robot" viewBox="0 0 24 24">
+      <rect x="4" y="8" width="16" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M2 14h2M20 14h2M9 4h6M12 4v4M9 17h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="12" cy="3" r="1.5" fill="var(--icon-pop, #f97316)" stroke="none"/>
+      <circle cx="9" cy="12.5" r="1.5" fill="var(--icon-pop, #f97316)" stroke="none"/>
+      <circle cx="15" cy="12.5" r="1.5" fill="var(--icon-pop, #f97316)" stroke="none"/>
+    </symbol>
+    <symbol id="icon-sparkle" viewBox="0 0 24 24">
+      <path d="M12 3c0 4.5-3.5 8-8 8 4.5 0 8 3.5 8 8 0-4.5 3.5-8 8-8-4.5 0-8-3.5-8-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M19 3c0 1.8-1.4 3.2-3.2 3.2 1.8 0 3.2 1.4 3.2 3.2 0-1.8 1.4-3.2 3.2-3.2-1.8 0-3.2-1.4-3.2-3.2z" fill="var(--icon-pop, #f97316)" stroke="none"/>
+    </symbol>
+    <symbol id="icon-book" viewBox="0 0 24 24">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M14 2v7l-2-1.5L10 9V2" fill="var(--icon-pop, #f97316)" stroke="var(--icon-pop, #f97316)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-target" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="12" cy="12" r="2.5" fill="var(--icon-pop, #f97316)" stroke="none"/>
+    </symbol>
+    <symbol id="icon-calendar" viewBox="0 0 24 24">
+      <rect x="3" y="4" width="18" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+      <path d="M9 16l2 2 4-4" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-trophy" viewBox="0 0 24 24">
+      <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M6 3h12v7a6 6 0 0 1-12 0V3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 16v5M8 21h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 6.5l.7 1.4 1.5.2-1.1 1.1.3 1.5-1.4-.7-1.4.7.3-1.5-1.1-1.1 1.5-.2z" fill="var(--icon-pop, #f97316)" stroke="none"/>
+    </symbol>
+    <symbol id="icon-chart" viewBox="0 0 24 24">
+      <path d="M3 20h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <rect x="5" y="12" width="3.5" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="10.5" y="8" width="3.5" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2"/>
+      <rect x="16" y="4" width="3.5" height="16" rx="1" fill="var(--icon-pop, #f97316)" stroke="none"/>
+    </symbol>
+    <symbol id="icon-home" viewBox="0 0 24 24">
+      <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M10 21v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-speaker" viewBox="0 0 24 24">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M15.5 8.5a5 5 0 0 1 0 7" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2" stroke-linecap="round"/>
+      <path d="M18.5 5.5a9 9 0 0 1 0 13" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-shuffle" viewBox="0 0 24 24">
+      <path d="M16 3h5v5M4 20l6.5-6.5M21 3l-7.5 7.5" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M4 4l16 16M16 21h5v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-loop" viewBox="0 0 24 24">
+      <path d="M17 2l4 4-4 4" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M3 11v-1a4 4 0 0 1 4-4h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M7 22l-4-4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M21 13v1a4 4 0 0 1-4 4H3" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-prev" viewBox="0 0 24 24">
+      <polygon points="19 20 9 12 19 4 19 20" fill="currentColor" stroke="none"/>
+      <line x1="5" y1="19" x2="5" y2="5" stroke="var(--icon-pop, #f97316)" stroke-width="2.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-next" viewBox="0 0 24 24">
+      <polygon points="5 4 15 12 5 20 5 4" fill="currentColor" stroke="none"/>
+      <line x1="19" y1="5" x2="19" y2="19" stroke="var(--icon-pop, #f97316)" stroke-width="2.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-play" viewBox="0 0 24 24">
+      <polygon points="7 4 19 12 7 20 7 4" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-pause" viewBox="0 0 24 24">
+      <rect x="6" y="4" width="4" height="16" rx="1.5" fill="currentColor" stroke="none"/>
+      <rect x="14" y="4" width="4" height="16" rx="1.5" fill="var(--icon-pop, #f97316)" stroke="none"/>
+    </symbol>
+    <symbol id="icon-timer" viewBox="0 0 24 24">
+      <circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M12 2v3M9 2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M12 13l3-3" stroke="var(--icon-pop, #f97316)" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="12" cy="13" r="1.5" fill="var(--icon-pop, #f97316)" stroke="none"/>
+    </symbol>
+    <symbol id="icon-eye" viewBox="0 0 24 24">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="12" cy="12" r="3" fill="var(--icon-pop, #f97316)" stroke="none"/>
+    </symbol>
+    <symbol id="icon-lightbulb" viewBox="0 0 24 24">
+      <path d="M9 18h6M10 21h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.3 4.8 3.5 6h7c2.2-1.2 3.5-3.5 3.5-6a7 7 0 0 0-7-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 6v4M10 8h4" stroke="var(--icon-pop, #f97316)" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-warning" viewBox="0 0 24 24">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="12" y1="9" x2="12" y2="13" stroke="var(--icon-pop, #f97316)" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="12" cy="17" r="1.2" fill="var(--icon-pop, #f97316)" stroke="none"/>
+    </symbol>
+    <symbol id="icon-trending-up" viewBox="0 0 24 24">
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="17 6 23 6 23 12" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-device" viewBox="0 0 24 24">
+      <rect x="5" y="2" width="14" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="12" cy="18" r="1" fill="currentColor" stroke="none"/>
+      <path d="M9.5 9.5a3 3 0 0 1 5 0M14.5 13a3 3 0 0 1-5 0" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-upload" viewBox="0 0 24 24">
+      <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="16 8 12 4 8 8" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="12" y1="4" x2="12" y2="15" stroke="var(--icon-pop, #f97316)" stroke-width="2.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24">
+      <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="8 12 12 16 16 12" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="12" y1="16" x2="12" y2="4" stroke="var(--icon-pop, #f97316)" stroke-width="2.5" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-refresh" viewBox="0 0 24 24">
+      <path d="M21.5 2v6h-6" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M21.3 15.5A9 9 0 1 1 18.5 7.5l3 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-party" viewBox="0 0 24 24">
+      <path d="M3 21l3-10 7 7-10 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 12l5-5M15 15l4-1M9 9l-1-4" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="19" cy="5" r="1.5" fill="var(--icon-pop, #f97316)" stroke="none"/>
+      <circle cx="15" cy="2" r="1" fill="var(--icon-pop, #f97316)" stroke="none"/>
+    </symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24">
+      <polyline points="20 6 9 17 4 12" fill="none" stroke="var(--good, #16a34a)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24">
+      <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
   <header class="app-header">
     <button type="button" class="brand" data-nav="home" aria-label="ホームへ">
       <div class="brand-icon-wrap">
@@ -23,8 +194,8 @@
       <span class="brand-course-badge" id="brand-sub">口語 70</span>
     </button>
     <div class="header-actions">
-      <span class="streak-badge" id="header-streak" aria-label="連続学習日数">🔥 0</span>
-      <button type="button" class="icon-btn" id="open-settings" aria-label="設定">⚙️</button>
+      <span class="streak-badge" id="header-streak" aria-label="連続学習日数"><svg class="ui-icon" aria-hidden="true"><use href="#icon-flame"></use></svg> <span>0</span></span>
+      <button type="button" class="icon-btn" id="open-settings" aria-label="設定"><svg class="ui-icon" aria-hidden="true"><use href="#icon-gear"></use></svg></button>
     </div>
   </header>
 
@@ -36,14 +207,14 @@
       <!-- 🔄 コース切り替えタブ -->
       <div class="course-switch-container" id="home-course-switch" role="tablist" aria-label="学習コース切り替え">
         <button type="button" class="course-tab-btn active" data-course="conversation" role="tab" aria-selected="true">
-          <span class="course-tab-icon">🗣️</span>
+          <span class="course-tab-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-speech"></use></svg></span>
           <div class="course-tab-text">
             <span class="course-tab-title">日常・ビジネス口語</span>
             <span class="course-tab-sub" id="conv-tab-sub">実戦フレーズ・267問</span>
           </div>
         </button>
         <button type="button" class="course-tab-btn" data-course="grit" role="tab" aria-selected="false">
-          <span class="course-tab-icon">🎓</span>
+          <span class="course-tab-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-grad-cap"></use></svg></span>
           <div class="course-tab-text">
             <span class="course-tab-title">TED・知的思考GRIT</span>
             <span class="course-tab-sub">名スピーチ・90例文</span>
@@ -88,7 +259,7 @@
           <!-- 🎧 耳トレ -->
           <button type="button" class="quick-action-tile highlight" id="open-listening-btn">
             <div class="quick-tile-icon-wrap listening">
-              <span class="quick-tile-icon">🎧</span>
+              <span class="quick-tile-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-headphones"></use></svg></span>
             </div>
             <div class="quick-tile-body">
               <div class="quick-tile-title-row">
@@ -102,7 +273,7 @@
           <!-- ⚡️ 苦手復習 -->
           <button type="button" class="quick-action-tile" id="start-weak">
             <div class="quick-tile-icon-wrap weak">
-              <span class="quick-tile-icon">⚡️</span>
+              <span class="quick-tile-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-bolt"></use></svg></span>
             </div>
             <div class="quick-tile-body">
               <div class="quick-tile-title-row">
@@ -116,7 +287,7 @@
           <!-- 🎲 ランダム -->
           <button type="button" class="quick-action-tile" id="start-random">
             <div class="quick-tile-icon-wrap random">
-              <span class="quick-tile-icon">🎲</span>
+              <span class="quick-tile-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-dice"></use></svg></span>
             </div>
             <div class="quick-tile-body">
               <div class="quick-tile-title-row">
@@ -129,7 +300,7 @@
           <!-- 🤖 AI例文生成 -->
           <button type="button" class="quick-action-tile" id="open-ai-modal">
             <div class="quick-tile-icon-wrap ai">
-              <span class="quick-tile-icon">🤖</span>
+              <span class="quick-tile-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-robot"></use></svg></span>
             </div>
             <div class="quick-tile-body">
               <div class="quick-tile-title-row">
@@ -143,14 +314,14 @@
 
         <!-- カスタム例文がある場合のボタン -->
         <button type="button" class="btn wide" id="start-custom" hidden style="margin-top: 4px;">
-          ✨ 保存したAIカスタム例文を練習 <span class="pill" id="custom-count">0</span>
+          <svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg> 保存したAIカスタム例文を練習 <span class="pill" id="custom-count">0</span>
         </button>
 
         <!-- パート別アコーディオン -->
         <details class="part-accordion">
           <summary class="part-accordion-summary">
             <span class="part-acc-left">
-              <span class="part-acc-icon">📚</span>
+              <span class="part-acc-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-book"></use></svg></span>
               <span>パート・場面別に練習（Part 1〜9）</span>
             </span>
             <span class="part-acc-arrow">▾</span>
@@ -185,7 +356,7 @@
       <!-- 🏆 実績・バッジ -->
       <div class="card badge-card">
         <div class="card-head-row">
-          <h2>🏆 実績・バッジ</h2>
+          <h2><svg class="ui-icon" aria-hidden="true"><use href="#icon-trophy"></use></svg> 実績・バッジ</h2>
           <span class="badge-total-pill" id="badge-unlocked-summary">0 / 18 獲得</span>
         </div>
         <p class="card-subtext">学習を継続してバッジを集めよう！タップで達成条件と進捗を確認できます。</p>
@@ -196,7 +367,7 @@
     <!-- 練習 -->
     <section id="view-practice" class="view" hidden aria-labelledby="practice-title">
       <div class="practice-top">
-        <button type="button" class="btn ghost small" id="quit-practice">✕ やめる</button>
+        <button type="button" class="btn ghost small" id="quit-practice"><svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-close"></use></svg> やめる</button>
         <h1 id="practice-title" class="practice-title">練習</h1>
         <span id="practice-counter">1 / 10</span>
       </div>
@@ -217,7 +388,7 @@
           <p class="answer-en" id="card-en"></p>
           <p class="type-result" id="type-result" hidden></p>
           <div class="speak-row">
-            <button type="button" class="btn small" id="speak-btn">🔊 もう一度聞く <kbd>R</kbd></button>
+            <button type="button" class="btn small" id="speak-btn"><svg class="ui-icon" aria-hidden="true"><use href="#icon-speaker"></use></svg> もう一度聞く <kbd>R</kbd></button>
             <span class="tts-badge" id="tts-source" aria-live="polite"></span>
           </div>
           <p class="answer-note" id="card-note"></p>
@@ -238,12 +409,12 @@
     <section id="view-result" class="view" hidden aria-labelledby="result-title">
       <div class="card result-card">
         <h1 id="result-title">おつかれさま！</h1>
-        <p class="result-emoji" id="result-emoji">🎉</p>
+        <p class="result-emoji" id="result-emoji"><svg class="ui-icon" aria-hidden="true"><use href="#icon-party"></use></svg></p>
         <p id="result-summary"></p>
         <p id="result-streak" class="result-streak"></p>
         <div class="menu-grid">
           <button type="button" class="btn primary" id="result-again">もう1セット</button>
-          <button type="button" class="btn" data-nav="report">📊 弱点分析</button>
+          <button type="button" class="btn" data-nav="report"><svg class="ui-icon" aria-hidden="true"><use href="#icon-chart"></use></svg> 弱点分析</button>
           <button type="button" class="btn" data-nav="home">ホームへ</button>
         </div>
       </div>
@@ -260,11 +431,11 @@
       <!-- 🔄 コース切り替えタブ（構文一覧） -->
       <div class="course-switch-container compact" id="list-course-switch" role="tablist" aria-label="コース切り替え">
         <button type="button" class="course-tab-btn active" data-course="conversation" role="tab" aria-selected="true">
-          <span class="course-tab-icon">🗣️</span>
+          <span class="course-tab-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-speech"></use></svg></span>
           <span class="course-tab-title">口語編 (型30)</span>
         </button>
         <button type="button" class="course-tab-btn" data-course="grit" role="tab" aria-selected="false">
-          <span class="course-tab-icon">🎓</span>
+          <span class="course-tab-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-grad-cap"></use></svg></span>
           <span class="course-tab-title">TED・GRIT編 (30)</span>
         </button>
       </div>
@@ -276,7 +447,7 @@
     <section id="view-report" class="view" hidden aria-labelledby="report-title">
       <div class="practice-top">
         <button type="button" class="btn ghost small" data-nav="home">← 戻る</button>
-        <h1 id="report-title" class="practice-title">📊 弱点分析レポート</h1>
+        <h1 id="report-title" class="practice-title"><svg class="ui-icon" aria-hidden="true"><use href="#icon-chart"></use></svg> 弱点分析レポート</h1>
         <span></span>
       </div>
 
@@ -305,7 +476,7 @@
       <!-- コーチのアドバイスカード -->
       <div class="card report-coach-card">
         <div class="coach-head">
-          <span class="coach-avatar">💡</span>
+          <span class="coach-avatar"><svg class="ui-icon icon-lg" aria-hidden="true"><use href="#icon-lightbulb"></use></svg></span>
           <h3>AI弱点診断・学習アドバイス</h3>
         </div>
         <p class="coach-message" id="rep-coach-text">データを分析しています...</p>
@@ -313,13 +484,13 @@
 
       <!-- 弱点集中特訓CTA -->
       <div class="card report-cta-card">
-        <button type="button" class="btn primary big wide" id="start-weak-drill">⚡️ 苦手な構文をまとめて特訓する（10問）</button>
+        <button type="button" class="btn primary big wide" id="start-weak-drill"><svg class="ui-icon" aria-hidden="true"><use href="#icon-bolt"></use></svg> 苦手な構文をまとめて特訓する（10問）</button>
       </div>
 
       <!-- ⚠️ 苦手構文ランキング -->
       <div class="card">
         <div class="card-head-row">
-          <h2>⚠️ 苦手構文ランキング</h2>
+          <h2><svg class="ui-icon" aria-hidden="true"><use href="#icon-warning"></use></svg> 苦手構文ランキング</h2>
           <small class="text-muted">ミス率の高い順</small>
         </div>
         <p class="card-subtext">特に復習が必要な構文です。ボタンからその構文をピンポイントで練習できます。</p>
@@ -328,7 +499,7 @@
 
       <!-- 📈 Part別習得バランス -->
       <div class="card">
-        <h2>📈 パート・場面別の習得状況</h2>
+        <h2><svg class="ui-icon" aria-hidden="true"><use href="#icon-trending-up"></use></svg> パート・場面別の習得状況</h2>
         <p class="card-subtext">各パートの定着度と正答率のバランスです。</p>
         <div class="part-report-list" id="rep-part-list"></div>
       </div>
@@ -345,18 +516,18 @@
     <!-- 🎧 聞き流し・耳トレ -->
     <section id="view-listening" class="view" hidden aria-labelledby="listening-title">
       <div class="practice-top">
-        <button type="button" class="btn ghost small" id="quit-listening">✕ やめる</button>
-        <h1 id="listening-title" class="practice-title">🎧 聞き流し・耳トレ</h1>
+        <button type="button" class="btn ghost small" id="quit-listening"><svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-close"></use></svg> やめる</button>
+        <h1 id="listening-title" class="practice-title"><svg class="ui-icon" aria-hidden="true"><use href="#icon-headphones"></use></svg> 聞き流し・耳トレ</h1>
         <span id="listening-counter" style="font-weight:700; color:var(--accent);">1 / 120</span>
       </div>
 
       <!-- 🔄 耳トレ コース切り替え -->
       <div class="listening-course-bar" id="listening-course-bar" role="tablist" aria-label="耳トレコース切り替え">
         <button type="button" class="listening-course-pill active" data-course="conversation" role="tab" aria-selected="true">
-          <span>🗣️ 口語編 (267問)</span>
+          <span><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-speech"></use></svg> 口語編 (267問)</span>
         </button>
         <button type="button" class="listening-course-pill" data-course="grit" role="tab" aria-selected="false">
-          <span>🎓 TED・GRIT編 (90問)</span>
+          <span><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-grad-cap"></use></svg> TED・GRIT編 (90問)</span>
         </button>
       </div>
 
@@ -424,19 +595,19 @@
 
         <!-- コントロールボタン -->
         <div class="listening-transport">
-          <button type="button" class="ctrl-btn-sub" id="listening-btn-shuffle" aria-label="シャッフル" title="シャッフル（S）">🔀</button>
-          <button type="button" class="ctrl-btn-skip" id="listening-btn-prev" aria-label="前の例文" title="前の例文（←）">⏮️</button>
+          <button type="button" class="ctrl-btn-sub" id="listening-btn-shuffle" aria-label="シャッフル" title="シャッフル（S）"><svg class="ui-icon" aria-hidden="true"><use href="#icon-shuffle"></use></svg></button>
+          <button type="button" class="ctrl-btn-skip" id="listening-btn-prev" aria-label="前の例文" title="前の例文（←）"><svg class="ui-icon" aria-hidden="true"><use href="#icon-prev"></use></svg></button>
           <button type="button" class="ctrl-btn-main" id="listening-btn-play" aria-label="再生・一時停止" title="再生/一時停止（Space）">
-            <span id="listening-play-icon">▶︎</span>
+            <span id="listening-play-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-play"></use></svg></span>
           </button>
-          <button type="button" class="ctrl-btn-skip" id="listening-btn-next" aria-label="次の例文" title="次の例文（→）">⏭️</button>
-          <button type="button" class="ctrl-btn-sub active" id="listening-btn-loop" aria-label="ループ再生" title="ループ再生（L）">🔁</button>
+          <button type="button" class="ctrl-btn-skip" id="listening-btn-next" aria-label="次の例文" title="次の例文（→）"><svg class="ui-icon" aria-hidden="true"><use href="#icon-next"></use></svg></button>
+          <button type="button" class="ctrl-btn-sub active" id="listening-btn-loop" aria-label="ループ再生" title="ループ再生（L）"><svg class="ui-icon" aria-hidden="true"><use href="#icon-loop"></use></svg></button>
         </div>
 
         <!-- クイック設定ストリップ -->
         <div class="listening-settings-strip">
           <div class="l-setting-group">
-            <span class="l-setting-label">⏱️ 思考ポーズ</span>
+            <span class="l-setting-label"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-timer"></use></svg> 思考ポーズ</span>
             <div class="btn-toggle-group" id="l-pause-toggles">
               <button type="button" class="btn-toggle" data-val="1">1秒</button>
               <button type="button" class="btn-toggle" data-val="2">2秒</button>
@@ -446,7 +617,7 @@
           </div>
 
           <div class="l-setting-group">
-            <span class="l-setting-label">🔁 英語再生</span>
+            <span class="l-setting-label"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-loop"></use></svg> 英語再生</span>
             <div class="btn-toggle-group" id="l-repeat-toggles">
               <button type="button" class="btn-toggle active" data-val="1">1回</button>
               <button type="button" class="btn-toggle" data-val="2">2回連続</button>
@@ -454,7 +625,7 @@
           </div>
 
           <div class="l-setting-group">
-            <span class="l-setting-label">⚡️ 速度</span>
+            <span class="l-setting-label"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-bolt"></use></svg> 速度</span>
             <div class="btn-toggle-group" id="l-speed-toggles">
               <button type="button" class="btn-toggle" data-val="0.9">0.9x</button>
               <button type="button" class="btn-toggle" data-val="1.0">1.0x</button>
@@ -464,7 +635,7 @@
           </div>
 
           <div class="l-setting-group">
-            <span class="l-setting-label">👁️ 英語の事前表示</span>
+            <span class="l-setting-label"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-eye"></use></svg> 英語の事前表示</span>
             <button type="button" class="btn small ghost" id="l-toggle-show-en">思考中は隠す（テスト）</button>
           </div>
         </div>
@@ -475,19 +646,19 @@
   <!-- 📱 ボトムナビゲーションバー（アプリ風固定タブ） -->
   <nav class="bottom-nav" id="bottom-nav" aria-label="メインナビゲーション">
     <button type="button" class="nav-tab active" data-nav="home" aria-label="ホーム">
-      <span class="nav-tab-icon">🏠</span>
+      <span class="nav-tab-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-home"></use></svg></span>
       <span class="nav-tab-label">ホーム</span>
     </button>
     <button type="button" class="nav-tab" data-nav="listening" aria-label="耳トレ">
-      <span class="nav-tab-icon">🎧</span>
+      <span class="nav-tab-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-headphones"></use></svg></span>
       <span class="nav-tab-label">耳トレ</span>
     </button>
     <button type="button" class="nav-tab" data-nav="list" aria-label="構文一覧">
-      <span class="nav-tab-icon">📚</span>
+      <span class="nav-tab-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-book"></use></svg></span>
       <span class="nav-tab-label">構文一覧</span>
     </button>
     <button type="button" class="nav-tab" data-nav="report" aria-label="弱点分析">
-      <span class="nav-tab-icon">📊</span>
+      <span class="nav-tab-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-chart"></use></svg></span>
       <span class="nav-tab-label">弱点分析</span>
     </button>
   </nav>
@@ -570,7 +741,7 @@
             </select>
           </label>
           <div class="test-row" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <button type="button" class="btn small" id="test-tts-btn">🔊 英語をテスト</button>
+            <button type="button" class="btn small" id="test-tts-btn"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-speaker"></use></svg> 英語をテスト</button>
             <button type="button" class="btn small" id="test-tts-ja-btn">🇯🇵 日本語をテスト</button>
             <span id="test-tts-status" class="status-msg"></span>
           </div>
@@ -580,7 +751,7 @@
           </div>
           <div class="batch-cache-box" style="margin-top: 12px; padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px dashed var(--accent);">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-              <span style="font-size: .84rem; font-weight: 700;">⚡️ Gemini一括キャッシュ</span>
+              <span style="font-size: .84rem; font-weight: 700; display:inline-flex; align-items:center; gap:4px;"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-bolt"></use></svg> Gemini一括キャッシュ</span>
               <button type="button" class="btn small primary" id="batch-cache-btn">全357問 一括生成を開始</button>
             </div>
             <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
@@ -598,7 +769,7 @@
 
         <div class="speech-rate-control" style="margin-top: 14px; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
-            <span style="font-weight:600; font-size:0.88rem;">⚡️ 音声読み上げ速度</span>
+            <span style="font-weight:600; font-size:0.88rem; display:inline-flex; align-items:center; gap:4px;"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-bolt"></use></svg> 音声読み上げ速度</span>
             <span id="speech-rate-val" style="font-weight:700; color:var(--accent); font-size:0.95rem;">1.15x</span>
           </div>
           <input type="range" name="speechRate" id="speech-rate-input" min="0.7" max="1.5" step="0.05" value="1.15" style="width:100%; accent-color:var(--accent); cursor:pointer;">
@@ -615,13 +786,13 @@
       </fieldset>
 
       <div class="sync-section" style="margin: 16px 0; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;">
-        <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;">📱 端末間データ同期（PC ⇄ iPhone）</div>
+        <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; display:inline-flex; align-items:center; gap:5px;"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-device"></use></svg> 端末間データ同期（PC ⇄ iPhone）</div>
         <div style="color: var(--muted); font-size: 0.78rem; margin-bottom: 10px; line-height: 1.4;">
           設定・APIキー・学習記録・生成済み音声を1ファイルに書き出し、AirDrop等でiPhoneに送って丸ごと復元・同期できます。
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="button" class="btn small" id="export-sync-btn">📤 データを書き出す (PC)</button>
-          <button type="button" class="btn small ghost" id="import-sync-btn">📥 データを復元 (iPhone)</button>
+          <button type="button" class="btn small" id="export-sync-btn"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-upload"></use></svg> データを書き出す (PC)</button>
+          <button type="button" class="btn small ghost" id="import-sync-btn"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-download"></use></svg> データを復元 (iPhone)</button>
           <input type="file" id="sync-file-input" accept=".json" hidden>
         </div>
         <div id="sync-status" class="status-msg" style="display:none; margin-top: 8px; font-size: 0.8rem;"></div>
@@ -632,7 +803,7 @@
           <div style="font-weight: 600; font-size: 0.9rem;">アプリの更新</div>
           <div style="color: var(--muted); font-size: 0.78rem;">キャッシュを更新して最新版を取得</div>
         </div>
-        <button type="button" class="btn small report-btn" id="force-update-btn">🔄 最新版に更新</button>
+        <button type="button" class="btn small report-btn" id="force-update-btn"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-refresh"></use></svg> 最新版に更新</button>
       </div>
 
       <div class="dialog-actions">
@@ -646,8 +817,8 @@
   <dialog id="ai-modal" closedby="any" aria-labelledby="ai-title">
     <div class="ai-modal-content">
       <div class="dialog-header">
-        <h2 id="ai-title">🤖 自分専用の例文をAI生成</h2>
-        <button type="button" class="icon-btn" id="close-ai-modal" aria-label="閉じる">✕</button>
+        <h2 id="ai-title"><svg class="ui-icon" aria-hidden="true"><use href="#icon-robot"></use></svg> 自分専用の例文をAI生成</h2>
+        <button type="button" class="icon-btn" id="close-ai-modal" aria-label="閉じる"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"></use></svg></button>
       </div>
       <p class="dialog-intro">あなたの職業や趣味に合わせた、リアルで使いやすいオリジナル例文をGeminiが自動作成します。</p>
 
@@ -685,7 +856,7 @@
 
       <div id="ai-key-hint" class="ai-key-hint"></div>
 
-      <button type="button" class="btn primary big" id="ai-generate-btn">✨ 例文を生成する</button>
+      <button type="button" class="btn primary big" id="ai-generate-btn"><svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg> 例文を生成する</button>
 
       <!-- ローディング表示 -->
       <div id="ai-loading" class="ai-loading" hidden>
@@ -703,7 +874,7 @@
 
         <div class="dialog-actions">
           <button type="button" class="btn ghost" id="ai-cancel-btn">やり直す</button>
-          <button type="button" class="btn primary" id="ai-save-btn">✓ アプリに追加して練習する</button>
+          <button type="button" class="btn primary" id="ai-save-btn"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-check"></use></svg> アプリに追加して練習する</button>
         </div>
       </div>
     </div>
@@ -714,12 +885,12 @@
     <div class="achievement-content">
       <div class="achievement-burst-ring"></div>
       <div class="achievement-icon-wrap" id="ach-icon-wrap">
-        <span class="achievement-icon" id="ach-icon">🏆</span>
+        <span class="achievement-icon" id="ach-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-trophy"></use></svg></span>
       </div>
-      <span class="achievement-unlocked-tag">✨ ACHIEVEMENT UNLOCKED! ✨</span>
+      <span class="achievement-unlocked-tag"><svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-sparkle"></use></svg> ACHIEVEMENT UNLOCKED! <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-sparkle"></use></svg></span>
       <h2 id="ach-title">実績タイトル</h2>
       <p id="ach-desc">実績の説明文</p>
-      <button type="button" class="btn primary big" id="ach-close-btn">やった！🔥</button>
+      <button type="button" class="btn primary big" id="ach-close-btn">やった！ <svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-flame"></use></svg></button>
     </div>
   </dialog>
 
@@ -728,11 +899,11 @@
     <div class="badge-detail-content">
       <div class="dialog-header">
         <h3 id="badge-detail-title">バッジ詳細</h3>
-        <button type="button" class="icon-btn" id="close-badge-detail" aria-label="閉じる">✕</button>
+        <button type="button" class="icon-btn" id="close-badge-detail" aria-label="閉じる"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"></use></svg></button>
       </div>
       <div class="badge-detail-main">
         <div class="badge-detail-icon-wrap" id="badge-detail-icon-wrap">
-          <span class="badge-detail-icon" id="badge-detail-icon">🏆</span>
+          <span class="badge-detail-icon" id="badge-detail-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-trophy"></use></svg></span>
         </div>
         <div class="badge-detail-info">
           <span class="badge-tier-tag" id="badge-detail-tier">GOLD</span>
@@ -754,8 +925,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=32"></script>
-  <script src="app.js?v=32"></script>
+  <script src="data.js?v=33"></script>
+  <script src="app.js?v=33"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

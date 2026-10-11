@@ -11,6 +11,7 @@
   --hard: #d97706;
   --again: #dc2626;
   --fire: #f97316;
+  --icon-pop: #f97316;
   --heat-0: #e7e9f2;
   --heat-1: #c7d2fe;
   --heat-2: #818cf8;
@@ -28,6 +29,7 @@
     --border: #2c2f3d;
     --accent: #818cf8;
     --accent-soft: #262a45;
+    --icon-pop: #fb923c;
     --heat-0: #262836;
     --heat-1: #312e81;
     --heat-2: #4338ca;
@@ -37,6 +39,28 @@
 }
 
 * { box-sizing: border-box; }
+
+/* 2-Tone Pop UI Vector Icons */
+.ui-icon {
+  display: inline-block;
+  width: 1.25em;
+  height: 1.25em;
+  vertical-align: -0.22em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+  pointer-events: none;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.ui-icon.icon-xs { width: 0.9em; height: 0.9em; vertical-align: -0.1em; }
+.ui-icon.icon-sm { width: 1.05em; height: 1.05em; vertical-align: -0.16em; }
+.ui-icon.icon-md { width: 1.25em; height: 1.25em; }
+.ui-icon.icon-lg { width: 1.6em; height: 1.6em; vertical-align: -0.3em; }
+.ui-icon.icon-xl { width: 2.4em; height: 2.4em; vertical-align: -0.4em; }
 
 html, body {
   margin: 0;
@@ -143,17 +167,32 @@ html, body {
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   font-size: .88rem;
   line-height: 1;
   flex-shrink: 0;
+}
+.streak-badge .ui-icon {
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -0.15em;
 }
 .streak-badge.inactive { filter: grayscale(1); opacity: .6; }
 .icon-btn {
   border: none; background: transparent; font-size: 1.25rem; cursor: pointer;
   border-radius: 8px; padding: 4px 6px; flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  transition: background .15s ease, color .15s ease, transform .1s ease;
 }
-.icon-btn:hover { background: var(--accent-soft); }
+.icon-btn:hover { background: var(--accent-soft); color: var(--accent); }
+.icon-btn:active { transform: scale(0.94); }
+.icon-btn .ui-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
 
 main {
   max-width: 720px;
@@ -212,6 +251,19 @@ progress.done::-moz-progress-bar { background: var(--good); }
   border-radius: 12px; padding: 10px 16px;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   transition: transform .08s, background .15s, border-color .15s;
+}
+.btn .ui-icon {
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: middle;
+}
+.btn.big .ui-icon {
+  width: 1.25em;
+  height: 1.25em;
+}
+.btn.small .ui-icon {
+  width: 1.05em;
+  height: 1.05em;
 }
 .btn:hover { border-color: var(--accent); }
 .btn:active { transform: scale(.97); }
@@ -323,8 +375,16 @@ progress.done::-moz-progress-bar { background: var(--good); }
   border-color: color-mix(in srgb, #8b5cf6 30%, transparent);
 }
 .quick-tile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 1.25rem;
   line-height: 1;
+}
+.quick-tile-icon .ui-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  vertical-align: middle;
 }
 .quick-tile-body {
   display: flex;
@@ -612,7 +672,17 @@ progress.done::-moz-progress-bar { background: var(--good); }
 .nav-tab-icon {
   font-size: 1.3rem;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
   transition: transform 0.15s ease;
+}
+.nav-tab-icon .ui-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  vertical-align: middle;
 }
 .nav-tab-label {
   font-size: 0.72rem;
@@ -681,7 +751,17 @@ progress.done::-moz-progress-bar { background: var(--good); }
 /* Result */
 .result-card { text-align: center; }
 .result-card h1 { margin: 0; }
-.result-emoji { font-size: 3.5rem; margin: 8px 0; }
+.result-emoji {
+  font-size: 3.5rem;
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.result-emoji .ui-icon {
+  width: 3.8rem;
+  height: 3.8rem;
+}
 .result-streak { font-weight: 700; color: var(--fire); }
 
 /* Pattern list */
@@ -1044,6 +1124,11 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
   position: relative;
   transition: transform .2s ease;
 }
+.badge-icon-box .ui-icon {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+}
 .badge-item:hover .badge-icon-box {
   transform: scale(1.1);
 }
@@ -1154,6 +1239,15 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
 .achievement-icon {
   font-size: 3rem;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.achievement-icon .ui-icon {
+  width: 48px;
+  height: 48px;
+  color: #78350f;
+  vertical-align: middle;
 }
 
 .achievement-unlocked-tag {
@@ -1202,6 +1296,11 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
   justify-content: center;
   font-size: 2rem;
   flex-shrink: 0;
+}
+.badge-detail-icon-wrap .ui-icon {
+  width: 32px;
+  height: 32px;
+  vertical-align: middle;
 }
 .badge-detail-info {
   flex: 1;
@@ -1342,6 +1441,14 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
 }
 .coach-avatar {
   font-size: 1.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.coach-avatar .ui-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  vertical-align: middle;
 }
 .coach-message {
   font-size: .88rem;
@@ -1853,6 +1960,12 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
 .ctrl-btn-main.playing {
   background: #4338ca;
 }
+.ctrl-btn-main .ui-icon {
+  width: 28px;
+  height: 28px;
+  color: #fff;
+  vertical-align: middle;
+}
 .ctrl-btn-skip {
   width: 46px;
   height: 46px;
@@ -1866,6 +1979,11 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
   justify-content: center;
   cursor: pointer;
   transition: transform .08s, background .15s, border-color .15s;
+}
+.ctrl-btn-skip .ui-icon {
+  width: 22px;
+  height: 22px;
+  vertical-align: middle;
 }
 .ctrl-btn-skip:hover {
   border-color: var(--accent);
@@ -1886,6 +2004,11 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
   justify-content: center;
   cursor: pointer;
   transition: all .15s;
+}
+.ctrl-btn-sub .ui-icon {
+  width: 19px;
+  height: 19px;
+  vertical-align: middle;
 }
 .ctrl-btn-sub:hover {
   border-color: var(--accent);
@@ -2002,6 +2125,17 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
   font-size: 1.35rem;
   flex-shrink: 0;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.course-tab-icon .ui-icon {
+  width: 1.4rem;
+  height: 1.4rem;
+  vertical-align: middle;
+}
+.course-tab-btn.active .course-tab-icon .ui-icon {
+  color: var(--accent);
 }
 .course-tab-text {
   display: flex;

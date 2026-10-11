@@ -5,6 +5,39 @@
   const DB_NAME = "shunkan-eisakubun-audio";
   const DB_STORE = "cache";
 
+  // 2-Tone Pop UI Vector Icon Helper
+  function uiIcon(name, extraClass = "") {
+    return `<svg class="ui-icon ${extraClass}" aria-hidden="true"><use href="#icon-${name}"></use></svg>`;
+  }
+
+  function renderBadgeIcon(iconName, extraClass = "") {
+    const iconMap = {
+      "🌱": "sparkle",
+      "🔥": "flame",
+      "⚡": "bolt",
+      "⚡️": "bolt",
+      "👑": "trophy",
+      "🎯": "target",
+      "🏃‍♂️": "trending-up",
+      "⚔️": "bolt",
+      "🏆": "trophy",
+      "💡": "lightbulb",
+      "🌟": "sparkle",
+      "💎": "trophy",
+      "🌌": "sparkle",
+      "🤖": "robot",
+      "🌅": "sparkle",
+      "🌙": "timer",
+      "🎧": "headphones",
+      "📻": "speaker"
+    };
+    const key = iconMap[iconName] || (typeof iconName === "string" && iconName.startsWith("icon-") ? iconName.slice(5) : null);
+    if (key) {
+      return uiIcon(key, extraClass);
+    }
+    return iconName;
+  }
+
   // Leitner式の復習間隔（日）。レベルが上がるほど間隔が空く。
   const INTERVALS = [0, 1, 2, 4, 7, 15, 30];
   const MASTERED_LEVEL = 3;
@@ -338,7 +371,7 @@
     const convTabSub = $("#conv-tab-sub");
     if (convTabSub) convTabSub.textContent = `実戦フレーズ・${CONV_CARDS.length}問`;
     const convListeningPill = $('#listening-course-bar .listening-course-pill[data-course="conversation"] span');
-    if (convListeningPill) convListeningPill.textContent = `🗣️ 口語編 (${CONV_CARDS.length}問)`;
+    if (convListeningPill) convListeningPill.innerHTML = `${uiIcon("speech", "icon-sm")} 口語編 (${CONV_CARDS.length}問)`;
   }
 
   function switchCourse(courseName) {
@@ -426,7 +459,7 @@
   function renderHeaderStreak() {
     const s = currentStreak();
     const badge = $("#header-streak");
-    badge.textContent = `🔥 ${s}`;
+    badge.innerHTML = `${uiIcon("flame")} <span>${s}</span>`;
     badge.classList.toggle("inactive", !dayMet(todayKey()));
   }
 
@@ -1080,16 +1113,16 @@
     const streak = currentStreak();
     let msg;
     if (met && !session.metBefore) {
-      msg = `🔥 今日の目標達成！ ${streak}日連続！`;
-      $("#result-emoji").textContent = "🔥";
+      msg = `${uiIcon("flame")} 今日の目標達成！ ${streak}日連続！`;
+      $("#result-emoji").innerHTML = uiIcon("party", "icon-xl");
     } else if (met) {
-      msg = `🔥 ${streak}日連続キープ中`;
-      $("#result-emoji").textContent = rate >= 80 ? "🎉" : "💪";
+      msg = `${uiIcon("flame")} ${streak}日連続キープ中`;
+      $("#result-emoji").innerHTML = rate >= 80 ? uiIcon("party", "icon-xl") : uiIcon("trophy", "icon-xl");
     } else {
       msg = `今日の目標まであと${state.settings.dailyGoal - todayAnswered()}問`;
-      $("#result-emoji").textContent = "💪";
+      $("#result-emoji").innerHTML = uiIcon("target", "icon-xl");
     }
-    $("#result-streak").textContent = msg;
+    $("#result-streak").innerHTML = msg;
 
     const mode = session.mode;
     $("#result-again").onclick = () => startSession(mode);
@@ -1979,7 +2012,7 @@
 
     const b = achievementQueue.shift();
     const modal = $("#achievement-dialog");
-    $("#ach-icon").textContent = b.icon;
+    $("#ach-icon").innerHTML = renderBadgeIcon(b.icon, "icon-xl");
     $("#ach-title").textContent = b.name;
     $("#ach-desc").textContent = b.desc;
 
@@ -2010,7 +2043,7 @@
       const item = document.createElement("div");
       item.className = `badge-item ${isUnlocked ? 'unlocked' : 'locked'} tier-${b.tier}`;
       item.innerHTML = `
-        <div class="badge-icon-box">${b.icon}</div>
+        <div class="badge-icon-box">${renderBadgeIcon(b.icon)}</div>
         <span class="badge-name">${b.name}</span>
       `;
       item.addEventListener("click", () => openBadgeDetailModal(b));
@@ -2024,7 +2057,7 @@
     const ctx = getAchievementContext();
     const prog = b.progress(ctx);
 
-    $("#badge-detail-icon").textContent = b.icon;
+    $("#badge-detail-icon").innerHTML = renderBadgeIcon(b.icon, "icon-lg");
     const tierTag = $("#badge-detail-tier");
     tierTag.textContent = b.tier.toUpperCase();
     tierTag.className = `badge-tier-tag tier-${b.tier}`;
@@ -3168,7 +3201,7 @@ ${targetPatterns}
     const playIcon = $("#listening-play-icon");
     if (playBtn && playIcon) {
       playBtn.classList.toggle("playing", listening.playing);
-      playIcon.textContent = listening.playing ? "⏸" : "▶︎";
+      playIcon.innerHTML = listening.playing ? uiIcon("pause") : uiIcon("play");
     }
     const shuffleBtn = $("#listening-btn-shuffle");
     if (shuffleBtn) shuffleBtn.classList.toggle("active", listening.shuffle);
