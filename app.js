@@ -1902,8 +1902,16 @@
 
   const testTtsJaBtn = $("#test-tts-ja-btn");
   const batchCacheBtn = $("#batch-cache-btn");
+  const batchCacheScope = $("#batch-cache-scope");
   const batchCacheProgress = $("#batch-cache-progress");
   let batchCacheAborted = false;
+
+  batchCacheScope?.addEventListener("change", () => {
+    const val = batchCacheScope.value;
+    if (val === "all") batchCacheBtn.textContent = "全210問 一括生成を開始";
+    else if (val === "conv") batchCacheBtn.textContent = "口語編(120問) 一括生成を開始";
+    else batchCacheBtn.textContent = "GRIT編(90問) 一括生成を開始";
+  });
 
   testTtsBtn.addEventListener("click", async () => {
     const key = keyInput.value.trim();
@@ -2019,12 +2027,24 @@
     // 入力値とGemini設定を即座に永続化
     saveCurrentSettingsFromForm();
 
-    const courseCards = CARDS;
+    const scope = batchCacheScope ? batchCacheScope.value : "all";
+    let targetCards = [];
+    let scopeTitle = "";
+    if (scope === "all") {
+      targetCards = ALL_CARDS;
+      scopeTitle = "全210問（口語編＋GRIT編 / 英語・日本語 計420ファイル）";
+    } else if (scope === "conv") {
+      targetCards = CONV_CARDS;
+      scopeTitle = "口語編（120問 / 英語・日本語 計240ファイル）";
+    } else {
+      targetCards = GRIT_CARDS;
+      scopeTitle = "GRIT編（90問 / 英語・日本語 計180ファイル）";
+    }
+
     const model = form.geminiModel.value;
     const voice = form.geminiVoice.value;
-    const courseTitle = getActiveCourse() === "grit" ? "TED・GRIT編" : "口語編";
 
-    if (!confirm(`【${courseTitle}（全${courseCards.length}問）】の英語・日本語音声をGemini 3.8で順次キャッシュしますか？\n\n※無料枠（15 RPM）に配慮し安全なインターバルを挟みながら自動保存します。いつでも中断可能です。`)) {
+    if (!confirm(`【${scopeTitle}】の音声をGemini 3.8 (${voice}) で一括生成・端末に保存しますか？\n\n・推定費用: 約60円〜100円（従量課金）\n・所要時間: 約6〜9分\n・生成中は画面のスリープを防止します\n\n※途中で中断しても、保存済みの音声はそのまま残ります。`)) {
       return;
     }
 
@@ -2033,71 +2053,98 @@
     batchCacheBtn.textContent = "✕ 生成を中止";
     batchCacheProgress.hidden = false;
 
+    let wakeLock = null;
+    try {
+      if ("wakeLock" in navigator) {
+        wakeLock = await navigator.wakeLock.request("screen");
+      }
+    } catch {}
+
     let processedCount = 0;
-    const totalItems = courseCards.length;
+    const totalItems = targetCards.length;
 
     for (let i = 0; i < totalItems; i++) {
       if (batchCacheAborted) break;
-      const card = courseCards[i];
-      batchCacheProgress.textContent = `${i + 1} / ${totalItems}問 処理中... (${card.pattern.en.slice(0, 15)}...)`;
+      const card = targetCards[i];
+      const courseLabel = card.course === "grit" ? "🎓 GRIT" : "🗣️ 口語";
+      batchCacheProgress.textContent = `⚡️ [${i + 1}/${totalItems}問] ${courseLabel} (${processedCount}ファイル保存済) - ${card.pattern.en.slice(0, 16)}...`;
 
-      // 英語キャッシュ確認
+      // 1. 英語キャッシュ確認・生成
       const enCacheKey = `${card.id}_${model}_${voice}`;
       const enCached = await getCachedAudio(enCacheKey);
       if (!enCached) {
-        try {
-          const blob = await generateGeminiSpeech(card.en, key, model, voice, "en");
-          await setCachedAudio(enCacheKey, blob);
-          processedCount++;
-          await updateCacheCount();
-          await new Promise((r) => setTimeout(r, 4000));
-        } catch (e) {
-          console.warn("Batch cache EN error:", e);
-          if (e.message.includes("Quota exceeded") || e.message.includes("quota") || e.message.includes("limit: 10")) {
-            batchCacheProgress.textContent = `⚠️ Google無料枠上限（1日10件）に到達したため中断しました（${processedCount}件保存済み）。未保存の問題は自動で同梱の高音質音声（Brian/Nanami）で再生されます。`;
-            batchCacheAborted = true;
+        let retry = 0;
+        while (retry < 2 && !batchCacheAborted) {
+          try {
+            const blob = await generateGeminiSpeech(card.en, key, model, voice, "en");
+            await setCachedAudio(enCacheKey, blob);
+            processedCount++;
+            await updateCacheCount();
+            await new Promise((r) => setTimeout(r, 800));
             break;
-          }
-          if (e.message.includes("429") || e.message.includes("RESOURCE_EXHAUSTED")) {
-            batchCacheProgress.textContent = `⚠️ レート制限到達のため一時待機中（15秒）...`;
-            await new Promise((r) => setTimeout(r, 15000));
+          } catch (e) {
+            console.warn("Batch cache EN error:", e);
+            if (e.message.includes("Quota exceeded") || e.message.includes("limit: 10")) {
+              batchCacheProgress.textContent = `⚠️ Google無料枠上限（1日10件）に到達しました。従量課金プロジェクトが正しく紐付いているか確認してください。`;
+              batchCacheAborted = true;
+              break;
+            }
+            if (e.message.includes("429") || e.message.includes("RESOURCE_EXHAUSTED")) {
+              batchCacheProgress.textContent = `⚠️ レート制限のため一時待機中（10秒）...`;
+              await new Promise((r) => setTimeout(r, 10000));
+              retry++;
+            } else {
+              break;
+            }
           }
         }
       }
 
       if (batchCacheAborted) break;
 
-      // 日本語キャッシュ確認
+      // 2. 日本語キャッシュ確認・生成
       const jaCacheKey = `ja_${card.id}_${model}_${voice}`;
       const jaCached = await getCachedAudio(jaCacheKey);
       if (!jaCached) {
-        try {
-          const blob = await generateGeminiSpeech(card.ja, key, model, voice, "ja");
-          await setCachedAudio(jaCacheKey, blob);
-          processedCount++;
-          await updateCacheCount();
-          await new Promise((r) => setTimeout(r, 4000));
-        } catch (e) {
-          console.warn("Batch cache JA error:", e);
-          if (e.message.includes("Quota exceeded") || e.message.includes("quota") || e.message.includes("limit: 10")) {
-            batchCacheProgress.textContent = `⚠️ Google無料枠上限（1日10件）に到達したため中断しました（${processedCount}件保存済み）。未保存の問題は自動で同梱の高音質音声（Brian/Nanami）で再生されます。`;
-            batchCacheAborted = true;
+        let retry = 0;
+        while (retry < 2 && !batchCacheAborted) {
+          try {
+            const blob = await generateGeminiSpeech(card.ja, key, model, voice, "ja");
+            await setCachedAudio(jaCacheKey, blob);
+            processedCount++;
+            await updateCacheCount();
+            await new Promise((r) => setTimeout(r, 800));
             break;
-          }
-          if (e.message.includes("429") || e.message.includes("RESOURCE_EXHAUSTED")) {
-            batchCacheProgress.textContent = `⚠️ レート制限到達のため一時待機中（15秒）...`;
-            await new Promise((r) => setTimeout(r, 15000));
+          } catch (e) {
+            console.warn("Batch cache JA error:", e);
+            if (e.message.includes("Quota exceeded") || e.message.includes("limit: 10")) {
+              batchCacheProgress.textContent = `⚠️ Google無料枠上限（1日10件）に到達しました。従量課金プロジェクトが正しく紐付いているか確認してください。`;
+              batchCacheAborted = true;
+              break;
+            }
+            if (e.message.includes("429") || e.message.includes("RESOURCE_EXHAUSTED")) {
+              batchCacheProgress.textContent = `⚠️ レート制限のため一時待機中（10秒）...`;
+              await new Promise((r) => setTimeout(r, 10000));
+              retry++;
+            } else {
+              break;
+            }
           }
         }
       }
     }
 
+    if (wakeLock) {
+      wakeLock.release().catch(() => {});
+      wakeLock = null;
+    }
+
     batchCacheBtn.dataset.running = "false";
-    batchCacheBtn.textContent = "一括生成を開始";
+    batchCacheBtn.textContent = scope === "all" ? "全210問 一括生成を開始" : "一括生成を開始";
     if (batchCacheAborted) {
-      batchCacheProgress.textContent = "⏹ 中止しました。保存済みのキャッシュはそのまま利用できます。";
+      batchCacheProgress.textContent = `⏹ 中止しました。保存済みの音声（${await countCachedAudio()}件）はそのままご利用いただけます。`;
     } else {
-      batchCacheProgress.textContent = "🎉 完了！オフラインでも超自然なGemini音声で学習できます。";
+      batchCacheProgress.textContent = `🎉 完了！全問のGemini音声が端末に保存されました。オフラインでも超自然な音声で練習できます！`;
     }
     saveCurrentSettingsFromForm();
     await updateCacheCount();

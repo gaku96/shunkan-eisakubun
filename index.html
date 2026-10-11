@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間英作文 | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css?v=18">
+  <link rel="stylesheet" href="style.css?v=19">
 </head>
 <body>
   <header class="app-header">
@@ -566,9 +566,17 @@
           <div class="batch-cache-box" style="margin-top: 12px; padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px dashed var(--accent);">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
               <span style="font-size: .84rem; font-weight: 700;">⚡️ Gemini一括キャッシュ</span>
-              <button type="button" class="btn small primary" id="batch-cache-btn">一括生成を開始</button>
+              <button type="button" class="btn small primary" id="batch-cache-btn">全210問 一括生成を開始</button>
             </div>
-            <p style="font-size: .74rem; color: var(--muted); margin: 4px 0 0;">※Google AI Studio無料枠のTTSモデルは1日10件の上限があります。上限到達時は自動で同梱の自然な音声（Brian/Nanami）で再生されます。</p>
+            <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+              <span style="font-size: .78rem; color: var(--muted); white-space:nowrap;">生成範囲:</span>
+              <select id="batch-cache-scope" style="font-size: .8rem; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--fg); flex: 1;">
+                <option value="all">全210問（口語編＋GRIT編 / 計420ファイル）</option>
+                <option value="conv">口語編のみ（120問 / 計240ファイル）</option>
+                <option value="grit">GRIT編のみ（90問 / 計180ファイル）</option>
+              </select>
+            </div>
+            <p style="font-size: .74rem; color: var(--muted); margin: 6px 0 0;">※従量課金APIキーで全210問（420ファイル）を自動生成・端末保存（約60〜100円 / 所要7〜10分）。生成中は画面スリープを防止します。</p>
             <div id="batch-cache-progress" hidden style="margin-top: 8px; font-size: .8rem; color: var(--accent); font-weight:600;"></div>
           </div>
         </div>
@@ -704,8 +712,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=18"></script>
-  <script src="app.js?v=18"></script>
+  <script src="data.js?v=19"></script>
+  <script src="app.js?v=19"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
