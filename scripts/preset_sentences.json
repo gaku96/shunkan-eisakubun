@@ -1,0 +1,612 @@
+{
+  "ITエンジニア・プログラミング": {
+    "1": {
+      "en": "I'd say 80% of our codebase is written in TypeScript.",
+      "ja": "コードベースの8割くらいはTypeScriptかな。"
+    },
+    "2": {
+      "en": "It depends on which cloud provider we choose.",
+      "ja": "どのクラウドを使うかによるかな。"
+    },
+    "3": {
+      "en": "We discussed API endpoints, caching and stuff like that.",
+      "ja": "APIエンドポイントとかキャッシュとか、そういう話をしたよ。"
+    },
+    "4": {
+      "en": "Just because the tests pass doesn't mean there are no bugs.",
+      "ja": "テストが通ったからといってバグがないとは限らない。"
+    },
+    "5": {
+      "en": "A popular framework is not necessarily the best choice.",
+      "ja": "人気のフレームワークが必ずしもベストとは限らない。"
+    },
+    "6": {
+      "en": "I have a brain that works best late at night.",
+      "ja": "私は深夜のほうが頭が働くタイプなんだ。"
+    },
+    "7": {
+      "en": "When the build broke, I was like, \"Wait, who merged this?\"",
+      "ja": "ビルドが落ちたとき「え、誰がマージしたの？」って感じだった。"
+    },
+    "8": {
+      "en": "I can't function without dual monitors when coding.",
+      "ja": "コーディング中はデュアルモニターがないと無理。"
+    },
+    "9": {
+      "en": "I used to write monolithic apps, but now I build microservices.",
+      "ja": "昔はモノリスを書いてたけど、今はマイクロサービスを作ってる。"
+    },
+    "10": {
+      "en": "I'm used to reviewing dozens of pull requests a day.",
+      "ja": "1日に何十件もプルリクをレビューするのには慣れてるよ。"
+    },
+    "11": {
+      "en": "I can't wait to deploy the new release.",
+      "ja": "新しいリリースのデプロイが待ちきれない！"
+    },
+    "12": {
+      "en": "I can't stand unhandled exceptions crashing the app.",
+      "ja": "未処理の例外でアプリが落ちるのは耐えられない。"
+    },
+    "13": {
+      "en": "I don't feel like debugging this legacy code today.",
+      "ja": "今日はこのレガシーコードをデバッグする気分じゃないな。"
+    },
+    "14": {
+      "en": "I can't help checking the server logs every hour.",
+      "ja": "1時間おきについサーバーログをチェックしてしまう。"
+    },
+    "15": {
+      "en": "The query was so slow that the database timed out.",
+      "ja": "クエリが遅すぎてデータベースがタイムアウトした。"
+    },
+    "16": {
+      "en": "I'm supposed to release the hotfix by five.",
+      "ja": "5時までに緊急パッチをリリースすることになってるんだ。"
+    },
+    "17": {
+      "en": "How about we refactor this function tomorrow?",
+      "ja": "明日この関数をリファクタリングするのはどう？"
+    },
+    "18": {
+      "en": "I'm willing to handle the server migration this weekend.",
+      "ja": "今週末のサーバー移行なら喜んで引き受けるよ。"
+    },
+    "19": {
+      "en": "Let me know when you create the pull request.",
+      "ja": "プルリクを作ったら教えてね。"
+    },
+    "20": {
+      "en": "Are you down for pair programming this afternoon?",
+      "ja": "今日の午後、ペアプロやらない？"
+    },
+    "21": {
+      "en": "What I like about Git is the fast branching.",
+      "ja": "Gitの好きなところは、ブランチが素早く切れること。"
+    },
+    "22": {
+      "en": "I ended up staying up late to fix the critical bug.",
+      "ja": "重大なバグを直すため、結局夜更かしすることになった。"
+    },
+    "23": {
+      "en": "I found the new framework surprisingly easy to use.",
+      "ja": "新しいフレームワークは使ってみたら驚くほど簡単だった。"
+    },
+    "24": {
+      "en": "It takes two hours to run the full test suite.",
+      "ja": "全テストを実行するのに2時間かかる。"
+    },
+    "25": {
+      "en": "I gotta back up the database before the update.",
+      "ja": "アップデートの前にデータベースをバックアップしなきゃ。"
+    },
+    "26": {
+      "en": "This error message is kind of confusing.",
+      "ja": "このエラーメッセージ、なんか分かりにくいな。"
+    },
+    "27": {
+      "en": "What's your take on using AI code generators?",
+      "ja": "AIコード生成ツールを使うことについてどう思う？"
+    },
+    "28": {
+      "en": "You want to use Vim for everything? I respect that.",
+      "ja": "何でもVimでやるの？それもアリだね。"
+    },
+    "29": {
+      "en": "I'd rather use command-line tools than a GUI.",
+      "ja": "どちらかというとGUIよりコマンドラインツールを使いたいな。"
+    },
+    "30": {
+      "en": "At the end of the day, clean and readable code matters most.",
+      "ja": "結局のところ、読みやすく綺麗なコードが一番大事だよ。"
+    }
+  },
+  "ビジネス・営業・職場": {
+    "1": {
+      "en": "I'd say we'll reach our sales target by next week.",
+      "ja": "来週までには売上目標に届くくらいかな。"
+    },
+    "2": {
+      "en": "It depends on the client's budget.",
+      "ja": "クライアントの予算によるかな。"
+    },
+    "3": {
+      "en": "We discussed pricing, timelines and stuff like that.",
+      "ja": "価格やスケジュールとか、そういうことを話したよ。"
+    },
+    "4": {
+      "en": "Just because they showed interest doesn't mean they'll sign.",
+      "ja": "興味を示したからといって契約してくれるとは限らない。"
+    },
+    "5": {
+      "en": "Lowering the price is not necessarily good for business.",
+      "ja": "値下げが必ずしもビジネスにとって良いとは限らない。"
+    },
+    "6": {
+      "en": "I have a brain that loves organizing spreadsheets.",
+      "ja": "私はスプレッドシートを整理するのが得意なタイプなんだ。"
+    },
+    "7": {
+      "en": "When the deal closed, I was like, \"We finally did it!\"",
+      "ja": "成約したとき「ついにやった！」って感じだったよ。"
+    },
+    "8": {
+      "en": "I can't function without checking my calendar first thing.",
+      "ja": "朝イチで予定表を確認しないと動けない。"
+    },
+    "9": {
+      "en": "I used to work in the office, but now I work remotely.",
+      "ja": "昔は出社してたけど、今はリモートワークしてる。"
+    },
+    "10": {
+      "en": "I'm used to pitching to enterprise clients.",
+      "ja": "大手企業に提案プレゼンするのには慣れてるよ。"
+    },
+    "11": {
+      "en": "I can't wait for the quarterly bonus announcement.",
+      "ja": "四半期ボーナスの発表が待ちきれない！"
+    },
+    "12": {
+      "en": "I can't stand meetings that could have been an email.",
+      "ja": "メールで済むような無駄な会議は本当に耐えられない。"
+    },
+    "13": {
+      "en": "I don't feel like negotiating any more discounts today.",
+      "ja": "今日はこれ以上値引き交渉をする気分じゃないな。"
+    },
+    "14": {
+      "en": "I can't help feeling nervous before the keynote presentation.",
+      "ja": "基調講演のプレゼン前は思わず緊張してしまう。"
+    },
+    "15": {
+      "en": "The presentation was so convincing that they signed immediately.",
+      "ja": "プレゼンが素晴らしすぎて、彼らは即決でサインした。"
+    },
+    "16": {
+      "en": "I'm supposed to submit the weekly report by Friday.",
+      "ja": "金曜日までに週報を提出することになってるんだ。"
+    },
+    "17": {
+      "en": "How about we reschedule the meeting to Monday?",
+      "ja": "ミーティングを月曜日にリスケするのはどう？"
+    },
+    "18": {
+      "en": "I'm willing to negotiate better payment terms.",
+      "ja": "より良い支払い条件を交渉する覚悟があります。"
+    },
+    "19": {
+      "en": "Let me know when the client signs the contract.",
+      "ja": "クライアントが契約書にサインしたら教えてね。"
+    },
+    "20": {
+      "en": "Are you down for lunch with the new team members?",
+      "ja": "新メンバーと一緒にランチ行かない？"
+    },
+    "21": {
+      "en": "What I like about this company is the open communication.",
+      "ja": "この会社の好きなところは、率直に意見が言えるところ。"
+    },
+    "22": {
+      "en": "I ended up leading the project after the manager left.",
+      "ja": "マネージャーが異動して、結局私がプロジェクトを率いることになった。"
+    },
+    "23": {
+      "en": "I found the sales training very practical and helpful.",
+      "ja": "営業研修は受けてみたらとても実践的で役に立った。"
+    },
+    "24": {
+      "en": "It takes about three months to close an enterprise deal.",
+      "ja": "大口契約を決めるには約3ヶ月かかる。"
+    },
+    "25": {
+      "en": "I gotta prepare the slides for the board meeting.",
+      "ja": "役員会議のスライドを準備しなきゃ。"
+    },
+    "26": {
+      "en": "That proposal is kind of risky.",
+      "ja": "その提案は、ちょっとリスクが高いね。"
+    },
+    "27": {
+      "en": "What's your take on the competitor's new campaign?",
+      "ja": "競合他社の新しいキャンペーンについてどう思う？"
+    },
+    "28": {
+      "en": "You decided to change careers? I respect that.",
+      "ja": "キャリアチェンジを決めたの？その決断を尊重するよ。"
+    },
+    "29": {
+      "en": "I'd rather discuss this issue face-to-face.",
+      "ja": "できればこの件は対面で話し合いたいな。"
+    },
+    "30": {
+      "en": "At the end of the day, customer satisfaction is what drives growth.",
+      "ja": "結局のところ、顧客満足度こそが成長の原動力だよ。"
+    }
+  },
+  "海外旅行・一人旅・観光": {
+    "1": {
+      "en": "I'd say it takes about twenty minutes to reach the terminal.",
+      "ja": "ターミナルまでは大体20分くらいかな。"
+    },
+    "2": {
+      "en": "It depends on the local weather forecast.",
+      "ja": "現地の天気予報によるかな。"
+    },
+    "3": {
+      "en": "We checked out monuments, museums and stuff like that.",
+      "ja": "記念碑や美術館とか、そういうのを見て回ったよ。"
+    },
+    "4": {
+      "en": "Just because a souvenir shop is crowded doesn't mean it's cheap.",
+      "ja": "お土産屋が混んでるからといって安いとは限らない。"
+    },
+    "5": {
+      "en": "The top-rated tourist spot is not necessarily the most enjoyable.",
+      "ja": "評価1位の観光地が必ずしも一番楽しいとは限らない。"
+    },
+    "6": {
+      "en": "I have a body that adjusts quickly to different time zones.",
+      "ja": "私は時差ボケにすぐ順応できる体質なんだ。"
+    },
+    "7": {
+      "en": "When I saw the ocean view, I was like, \"This is paradise!\"",
+      "ja": "海の景色を見たとき「ここ天国じゃん！」って感じだった。"
+    },
+    "8": {
+      "en": "I can't function without Google Maps in a foreign city.",
+      "ja": "見知らぬ海外の街ではGoogleマップがないと無理。"
+    },
+    "9": {
+      "en": "I used to book packaged tours, but now I travel solo.",
+      "ja": "昔はツアー旅行を予約してたけど、今は一人旅をしてる。"
+    },
+    "10": {
+      "en": "I'm used to staying in budget hostels.",
+      "ja": "格安ホステルに泊まるのには慣れてるよ。"
+    },
+    "11": {
+      "en": "I can't wait to try authentic local street food.",
+      "ja": "本場の屋台メシを食べるのが待ち遠しい！"
+    },
+    "12": {
+      "en": "I can't stand delayed flights without any announcement.",
+      "ja": "何のアナウンスもないフライト遅延は耐えられない。"
+    },
+    "13": {
+      "en": "I don't feel like waking up early on vacation.",
+      "ja": "休暇中に早起きする気にはなれないな。"
+    },
+    "14": {
+      "en": "I can't help buying postcards everywhere I go.",
+      "ja": "行く先々で思わず絵葉書を買ってしまうんだ。"
+    },
+    "15": {
+      "en": "The sunset was so beautiful that everyone took pictures.",
+      "ja": "夕日が綺麗すぎてみんな写真を撮っていた。"
+    },
+    "16": {
+      "en": "I'm supposed to check in two hours before the flight.",
+      "ja": "フライトの2時間前にチェックインすることになってる。"
+    },
+    "17": {
+      "en": "How about we rent a scooter to explore the island?",
+      "ja": "島を回るのにスクーターを借りるのはどう？"
+    },
+    "18": {
+      "en": "I'm willing to try local specialties even if they look weird.",
+      "ja": "見た目が変わっていても現地の郷土料理を試す気はあるよ。"
+    },
+    "19": {
+      "en": "Let me know when the boarding gate opens.",
+      "ja": "搭乗口が開いたら教えてね。"
+    },
+    "20": {
+      "en": "Are you down for a sunset cruise this evening?",
+      "ja": "夕方のサンセットクルーズに乗る？"
+    },
+    "21": {
+      "en": "What I like about this city is the historic architecture.",
+      "ja": "この街の好きなところは、歴史ある建築物なんだ。"
+    },
+    "22": {
+      "en": "I missed the train and ended up taking a night bus.",
+      "ja": "電車を逃して、結局夜行バスに乗ることになった。"
+    },
+    "23": {
+      "en": "I found the local residents incredibly warm and helpful.",
+      "ja": "地元の人たちは接してみたらすごく温かくて親切だった。"
+    },
+    "24": {
+      "en": "It takes four hours to hike to the mountain summit.",
+      "ja": "山頂まで登るのに4時間かかる。"
+    },
+    "25": {
+      "en": "I gotta exchange some currency before the shops close.",
+      "ja": "店が閉まる前に現金を両替しなきゃ。"
+    },
+    "26": {
+      "en": "The hotel room is kind of small, but comfortable.",
+      "ja": "ホテルの部屋はちょっと狭いけど、快適だよ。"
+    },
+    "27": {
+      "en": "What's your take on visiting historical ruins versus modern cities?",
+      "ja": "歴史的な遺跡巡りと大都会観光、どっちがいいと思う？"
+    },
+    "28": {
+      "en": "You traveled across Asia with just a backpack? I respect that.",
+      "ja": "バックパック1つでアジアを横断したの？それはすごいね。"
+    },
+    "29": {
+      "en": "I'd rather travel off the beaten path.",
+      "ja": "どちらかというと王道ルートを外れて旅したいな。"
+    },
+    "30": {
+      "en": "At the end of the day, traveling opens your mind.",
+      "ja": "結局のところ、旅は視野を広げてくれるものだよ。"
+    }
+  },
+  "カフェ巡り・日常会話": {
+    "1": {
+      "en": "I'd say this cup of coffee costs around six dollars.",
+      "ja": "このコーヒーは6ドルくらいかな。"
+    },
+    "2": {
+      "en": "It depends on what kind of beans they have today.",
+      "ja": "今日どんな豆があるかによるかな。"
+    },
+    "3": {
+      "en": "We talked about podcasts, baking and stuff like that.",
+      "ja": "ポッドキャストやパン作りとか、そんな話をしたよ。"
+    },
+    "4": {
+      "en": "Just because a cafe is aesthetic doesn't mean the coffee is good.",
+      "ja": "映えるカフェだからってコーヒーが美味しいとは限らない。"
+    },
+    "5": {
+      "en": "The darkest roast is not necessarily the strongest in caffeine.",
+      "ja": "深煎りが必ずしもカフェインが一番強いとは限らない。"
+    },
+    "6": {
+      "en": "I have a body that gets jittery from too much caffeine.",
+      "ja": "私はカフェインを摂りすぎると手が震えちゃう体質なんだ。"
+    },
+    "7": {
+      "en": "When I tasted the pastry, I was like, \"This is out of this world!\"",
+      "ja": "その焼き菓子を食べたとき「これ異次元に美味しい！」って感じだった。"
+    },
+    "8": {
+      "en": "I can't function without an iced latte around 3 p.m.",
+      "ja": "午後3時頃にアイスラテを飲まないとやってられない。"
+    },
+    "9": {
+      "en": "I used to add syrup, but now I drink black coffee.",
+      "ja": "昔はシロップを入れてたけど、今はブラックで飲んでる。"
+    },
+    "10": {
+      "en": "I'm used to studying in noisy coffee shops.",
+      "ja": "ガヤガヤしたカフェで勉強するのには慣れてるよ。"
+    },
+    "11": {
+      "en": "I can't wait for their seasonal autumn drinks to come out.",
+      "ja": "秋の季節限定ドリンクが出るのが待ち遠しい！"
+    },
+    "12": {
+      "en": "I can't stand places that charge extra for plant milk.",
+      "ja": "植物性ミルクに追加料金を取るお店は納得がいかない。"
+    },
+    "13": {
+      "en": "I don't feel like drinking anything sweet right now.",
+      "ja": "今は甘いものを飲む気分じゃないな。"
+    },
+    "14": {
+      "en": "I can't help ordering carrot cake whenever I see it.",
+      "ja": "キャロットケーキを見かけると、思わず頼んじゃうんだ。"
+    },
+    "15": {
+      "en": "The aroma was so inviting that I walked straight inside.",
+      "ja": "香りが良すぎて、吸い寄せられるように店内に入っちゃった。"
+    },
+    "16": {
+      "en": "I'm supposed to meet my friend here at two.",
+      "ja": "ここで2時に友達と待ち合わせすることになってる。"
+    },
+    "17": {
+      "en": "How about we grab a table outside on the patio?",
+      "ja": "テラス席のテーブルを取るのはどう？"
+    },
+    "18": {
+      "en": "I'm willing to wait in line for the freshly baked cinnamon rolls.",
+      "ja": "焼きたてのシナモンロールのためなら喜んで並ぶよ。"
+    },
+    "19": {
+      "en": "Let me know when they call our order number.",
+      "ja": "番号が呼ばれたら教えてね。"
+    },
+    "20": {
+      "en": "Are you down for coffee and a walk in the park?",
+      "ja": "コーヒー買って公園を散歩しない？"
+    },
+    "21": {
+      "en": "What I like about this shop is the quiet jazz playlist.",
+      "ja": "この店の好きなところは、静かなジャズが流れているところ。"
+    },
+    "22": {
+      "en": "We chatted so much that we ended up ordering a second round.",
+      "ja": "話が弾んで、結局2杯目を頼むことになった。"
+    },
+    "23": {
+      "en": "I found oat milk surprisingly creamy with espresso.",
+      "ja": "オーツミルクはエスプレッソと合わせると驚くほどクリーミーだった。"
+    },
+    "24": {
+      "en": "It takes about five minutes to make a pour-over coffee.",
+      "ja": "ハンドドリップを淹れるのには5分くらいかかる。"
+    },
+    "25": {
+      "en": "I gotta finish this book before my battery dies.",
+      "ja": "充電が切れる前にこの本を読み終えなきゃ。"
+    },
+    "26": {
+      "en": "This matcha latte is kind of sweet.",
+      "ja": "この抹茶ラテ、なんかちょっと甘いな。"
+    },
+    "27": {
+      "en": "What's your take on cold brew versus regular iced coffee?",
+      "ja": "コールドブリューと普通のアイスコーヒー、どっちが好き？"
+    },
+    "28": {
+      "en": "You roast your own green beans at home? I respect that.",
+      "ja": "家で生豆から焙煎してるの？本格的でいいね。"
+    },
+    "29": {
+      "en": "I'd rather sit near the window with sunlight.",
+      "ja": "どちらかというと日の当たる窓際に座りたいな。"
+    },
+    "30": {
+      "en": "At the end of the day, a good cup of coffee resets your mood.",
+      "ja": "結局のところ、美味しい1杯のコーヒーが気分を切り替えてくれる。"
+    }
+  },
+  "筋トレ・フィットネス・健康": {
+    "1": {
+      "en": "I'd say I spend about an hour at the gym each time.",
+      "ja": "1回のジムでの滞在時間は1時間くらいかな。"
+    },
+    "2": {
+      "en": "It depends on how much energy I have after work.",
+      "ja": "仕事終わりにどれだけ体力が残ってるかによるかな。"
+    },
+    "3": {
+      "en": "We talked about protein, supplements and stuff like that.",
+      "ja": "プロテインとかサプリとか、そういう話をしたよ。"
+    },
+    "4": {
+      "en": "Just because you sweat a lot doesn't mean you burned more fat.",
+      "ja": "たくさん汗をかいたからといって脂肪が多く燃えたとは限らない。"
+    },
+    "5": {
+      "en": "Lifting heavier weights is not necessarily the best way to grow muscle.",
+      "ja": "重い重量を上げることが必ずしも筋肥大にベストとは限らない。"
+    },
+    "6": {
+      "en": "I have a body that builds muscle relatively quickly.",
+      "ja": "私は比較的筋肉がつきやすい体質なんだ。"
+    },
+    "7": {
+      "en": "When I hit a new personal record, I was like, \"Let's go!\"",
+      "ja": "自己ベストを更新したとき「よっしゃー！」って感じだった。"
+    },
+    "8": {
+      "en": "I can't function without drinking a liter of water in the morning.",
+      "ja": "朝イチで水を1リットル飲まないと動けない。"
+    },
+    "9": {
+      "en": "I used to skip leg days, but now I train them twice a week.",
+      "ja": "昔は脚トレをサボってたけど、今は週2回鍛えてる。"
+    },
+    "10": {
+      "en": "I'm used to preparing high-protein meals in advance.",
+      "ja": "高タンパクな食事を作り置きするのには慣れてるよ。"
+    },
+    "11": {
+      "en": "I can't wait for my rest day on Sunday.",
+      "ja": "日曜日の休息日が待ち遠しくて仕方ない！"
+    },
+    "12": {
+      "en": "I can't stand people who don't wipe down the gym benches.",
+      "ja": "ジムのベンチを拭かない人には我慢できない。"
+    },
+    "13": {
+      "en": "I don't feel like doing high-intensity cardio today.",
+      "ja": "今日はキツい有酸素運動をする気分じゃないな。"
+    },
+    "14": {
+      "en": "I can't help checking my posture in every mirror.",
+      "ja": "鏡を見るたびに思わず姿勢をチェックしてしまう。"
+    },
+    "15": {
+      "en": "The workout was so intense that my legs were shaking.",
+      "ja": "トレーニングが激しすぎて脚がプルプル震えていた。"
+    },
+    "16": {
+      "en": "I'm supposed to hit my protein goal before sleeping.",
+      "ja": "寝る前にタンパク質の目標を達成することになってるんだ。"
+    },
+    "17": {
+      "en": "How about we go for a light jog tomorrow morning?",
+      "ja": "明日の朝、軽くジョギングするのはどう？"
+    },
+    "18": {
+      "en": "I'm willing to wake up early to beat the gym rush.",
+      "ja": "ジムの混雑を避けるためなら早起きする覚悟があるよ。"
+    },
+    "19": {
+      "en": "Let me know when you finish using the squat rack.",
+      "ja": "スクワットラックを使い終わったら教えてね。"
+    },
+    "20": {
+      "en": "Are you down for a workout session this weekend?",
+      "ja": "今週末、一緒にジムで筋トレしない？"
+    },
+    "21": {
+      "en": "What I like about lifting weights is the mental clarity afterwards.",
+      "ja": "筋トレの好きなところは、終わった後の頭のスッキリ感。"
+    },
+    "22": {
+      "en": "I planned a short run but ended up running ten kilometers.",
+      "ja": "軽く走るつもりが、結局10キロ走ることになった。"
+    },
+    "23": {
+      "en": "I found stretching every night made my back pain disappear.",
+      "ja": "毎晩ストレッチをしてみたら腰痛が消えたんだ。"
+    },
+    "24": {
+      "en": "It takes consistent effort over months to see visible progress.",
+      "ja": "目に見える変化を出すには数ヶ月の地道な継続が必要だ。"
+    },
+    "25": {
+      "en": "I gotta drink my protein shake before it gets warm.",
+      "ja": "ぬるくなる前にプロテインを飲まなきゃ。"
+    },
+    "26": {
+      "en": "My shoulder feels kind of sore today.",
+      "ja": "今日、肩がなんかちょっと痛むんだ。"
+    },
+    "27": {
+      "en": "What's your take on doing intermittent fasting?",
+      "ja": "16時間プチ断食についてどう思う？"
+    },
+    "28": {
+      "en": "You gave up alcohol completely for fitness? I respect that.",
+      "ja": "筋トレのために完全に禁酒したの？そのストイックさ尊敬するよ。"
+    },
+    "29": {
+      "en": "I'd rather work out in the morning than in the evening.",
+      "ja": "どちらかというと夜より朝に運動したいな。"
+    },
+    "30": {
+      "en": "At the end of the day, health is your greatest wealth.",
+      "ja": "結局のところ、健康こそが最大の財産だよ。"
+    }
+  }
+}

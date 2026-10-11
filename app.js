@@ -31,6 +31,25 @@
   }
   const CARD_BY_ID = Object.fromEntries(CARDS.map((c) => [c.id, c]));
 
+  // ---------- プリセット音声マッピング ----------
+  const PRESET_PREFIX_MAP = {
+    "ITエンジニア・プログラミング": "it",
+    "ビジネス・営業・職場": "biz",
+    "海外旅行・一人旅・観光": "travel",
+    "カフェ巡り・日常会話": "cafe",
+    "筋トレ・フィットネス・健康": "fitness",
+  };
+
+  function getCustomAudioId(card) {
+    if (!card) return null;
+    if (card.audioId) return card.audioId;
+    const prefix = PRESET_PREFIX_MAP[card.theme];
+    if (prefix && card.patternId) {
+      return `${prefix}-${card.patternId}`;
+    }
+    return null;
+  }
+
   // ---------- IndexedDB 音声キャッシュ ----------
   let dbPromise = null;
   function getDB() {
@@ -333,6 +352,7 @@
           en: item.en,
           isCustom: true,
           theme: item.theme || "カスタム",
+          audioId: getCustomAudioId(item),
         }));
         return { title: `カスタム例文（${customList.length}問）`, queue: shuffle(customList) };
       }
@@ -662,7 +682,7 @@
     speechSynthesis.speak(u);
   }
 
-  // iOS Safari用: 最初のタップ時にAudioオブジェクトの自動再生制限を解除
+  // iOS Safari用: 最初のタップ時にAudioオブジェクトとSpeechSynthesisの自動再生制限を解除
   let audioUnlocked = false;
   function unlockAudio() {
     if (audioUnlocked) return;
@@ -673,6 +693,11 @@
       dummy.pause();
       dummy.currentTime = 0;
     }).catch(() => {});
+    if ("speechSynthesis" in window) {
+      const u = new SpeechSynthesisUtterance(" ");
+      u.volume = 0.01;
+      speechSynthesis.speak(u);
+    }
   }
   document.addEventListener("touchstart", unlockAudio, { once: true, passive: true });
   document.addEventListener("click", unlockAudio, { once: true });
@@ -701,12 +726,17 @@
     const s = state.settings;
     const badge = $("#tts-source");
 
-    // 1. 同梱のローカル高音質MP3（120問分）を優先再生（完全無料・0円）
-    const playedLocal = await tryPlayLocalAudio(card.id);
-    if (playedLocal) {
-      badge.textContent = "✨ ネイティブ音声（0円・オフライン）";
-      badge.className = "tts-badge";
-      return;
+    // 1. 同梱のローカル高音質MP3（ベース120問 ＋ プリセット150問 = 計270問）を優先再生（完全無料・0円）
+    const audioKey = card.audioId || getCustomAudioId(card) || card.id;
+    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
+
+    if (isBundled) {
+      const playedLocal = await tryPlayLocalAudio(audioKey);
+      if (playedLocal) {
+        badge.textContent = "✨ ネイティブ音声（0円・オフライン）";
+        badge.className = "tts-badge";
+        return;
+      }
     }
 
     // 2. ブラウザ標準設定の場合
@@ -1088,9 +1118,10 @@
       key = theme;
     }
     const dict = PRESET_EXAMPLES[key];
+    const prefix = PRESET_PREFIX_MAP[key] || "it";
     return targetIds.map((pid) => {
       const ex = dict[pid];
-      return { patternId: pid, ja: ex.ja, en: ex.en };
+      return { patternId: pid, ja: ex.ja, en: ex.en, audioId: `${prefix}-${pid}`, theme: key };
     });
   }
 
@@ -1284,12 +1315,14 @@ ${targetPatterns}
 
     const now = Date.now();
     currentGeneratedCards.forEach((card, idx) => {
+      const audioId = card.audioId || getCustomAudioId({ theme: currentThemeName, patternId: card.patternId });
       state.customCards.push({
         id: `c_${now}_${idx}`,
         patternId: card.patternId,
         ja: card.ja,
         en: card.en,
         theme: currentThemeName,
+        audioId: audioId,
         createdAt: new Date().toISOString(),
       });
     });
