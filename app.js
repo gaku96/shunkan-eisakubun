@@ -2075,32 +2075,39 @@
       const enCached = await getCachedAudio(enCacheKey);
       if (!enCached) {
         let retry = 0;
-        while (retry < 2 && !batchCacheAborted) {
+        while (retry < 5 && !batchCacheAborted) {
           try {
             const blob = await generateGeminiSpeech(card.en, key, model, voice, "en");
             await setCachedAudio(enCacheKey, blob);
             processedCount++;
             await updateCacheCount();
-            await new Promise((r) => setTimeout(r, 800));
+            await new Promise((r) => setTimeout(r, 2200));
             break;
           } catch (e) {
             console.warn("Batch cache EN error:", e);
             const msg = String(e.message || e);
-            if (msg.includes("Quota exceeded") || msg.includes("limit: 10") || msg.includes("quota")) {
-              abortReason = `⚠️ Google無料枠上限エラー: 現在のAPIキーがまだ従量課金プロジェクトに紐付いていません（Google AI Studioでプロジェクトの課金連携をご確認ください）`;
+            // 本当に無料枠の1日上限（10件/日）の場合のみ中断
+            if (msg.includes("free_tier_requests") && msg.includes("limit: 10")) {
+              abortReason = `⚠️ Google無料枠上限（1日10件）に到達しました。Google AI Studioでプロジェクトの課金連携をご確認ください。`;
               batchCacheAborted = true;
               break;
             }
-            if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED")) {
-              batchCacheProgress.textContent = `⚠️ レート制限のため一時待機中（10秒）...`;
-              await new Promise((r) => setTimeout(r, 10000));
-              retry++;
-            } else if (msg.includes("API key not valid") || msg.includes("403")) {
+            if (msg.includes("API key not valid") || msg.includes("403")) {
               abortReason = `⚠️ APIキー無効エラー: 正しいキーが入力されているかご確認ください`;
               batchCacheAborted = true;
               break;
+            }
+            // 一時的なレート制限（RPM: 1分間のリクエスト上限）の場合は待機して自動再開
+            if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota") || msg.includes("Quota")) {
+              retry++;
+              for (let s = 15; s > 0; s--) {
+                if (batchCacheAborted) break;
+                batchCacheProgress.textContent = `⚠️ 1分間のAPI制限のため待機中（あと${s}秒で自動再開）... [${processedCount}件完了]`;
+                await new Promise((r) => setTimeout(r, 1000));
+              }
             } else {
-              break;
+              retry++;
+              await new Promise((r) => setTimeout(r, 3000));
             }
           }
         }
@@ -2113,32 +2120,39 @@
       const jaCached = await getCachedAudio(jaCacheKey);
       if (!jaCached) {
         let retry = 0;
-        while (retry < 2 && !batchCacheAborted) {
+        while (retry < 5 && !batchCacheAborted) {
           try {
             const blob = await generateGeminiSpeech(card.ja, key, model, voice, "ja");
             await setCachedAudio(jaCacheKey, blob);
             processedCount++;
             await updateCacheCount();
-            await new Promise((r) => setTimeout(r, 800));
+            await new Promise((r) => setTimeout(r, 2200));
             break;
           } catch (e) {
             console.warn("Batch cache JA error:", e);
             const msg = String(e.message || e);
-            if (msg.includes("Quota exceeded") || msg.includes("limit: 10") || msg.includes("quota")) {
-              abortReason = `⚠️ Google無料枠上限エラー: 現在のAPIキーがまだ従量課金プロジェクトに紐付いていません（Google AI Studioでプロジェクトの課金連携をご確認ください）`;
+            // 本当に無料枠の1日上限（10件/日）の場合のみ中断
+            if (msg.includes("free_tier_requests") && msg.includes("limit: 10")) {
+              abortReason = `⚠️ Google無料枠上限（1日10件）に到達しました。Google AI Studioでプロジェクトの課金連携をご確認ください。`;
               batchCacheAborted = true;
               break;
             }
-            if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED")) {
-              batchCacheProgress.textContent = `⚠️ レート制限のため一時待機中（10秒）...`;
-              await new Promise((r) => setTimeout(r, 10000));
-              retry++;
-            } else if (msg.includes("API key not valid") || msg.includes("403")) {
+            if (msg.includes("API key not valid") || msg.includes("403")) {
               abortReason = `⚠️ APIキー無効エラー: 正しいキーが入力されているかご確認ください`;
               batchCacheAborted = true;
               break;
+            }
+            // 一時的なレート制限（RPM: 1分間のリクエスト上限）の場合は待機して自動再開
+            if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED") || msg.includes("quota") || msg.includes("Quota")) {
+              retry++;
+              for (let s = 15; s > 0; s--) {
+                if (batchCacheAborted) break;
+                batchCacheProgress.textContent = `⚠️ 1分間のAPI制限のため待機中（あと${s}秒で自動再開）... [${processedCount}件完了]`;
+                await new Promise((r) => setTimeout(r, 1000));
+              }
             } else {
-              break;
+              retry++;
+              await new Promise((r) => setTimeout(r, 3000));
             }
           }
         }
