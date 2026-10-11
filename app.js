@@ -2937,10 +2937,22 @@
 
   $("#reset-data").addEventListener("click", () => {
     if (!confirm("学習記録とストリーク、作成したカスタム例文、獲得バッジをすべて初期化します。よろしいですか？")) return;
-    state = { settings: state.settings, cards: {}, history: {}, customCards: [], achievements: {}, listeningCount: 0 };
+    state = {
+      activeCourse: "conversation",
+      settings: state.settings,
+      cards: {},
+      history: {},
+      customCards: [],
+      achievements: {},
+      listeningCount: 0,
+      streakShields: 1,
+      shieldUsedDates: [],
+      shieldAwardedMilestones: [],
+    };
     save();
     dialog.close();
     stopSession();
+    renderHome();
     showView("home");
   });
 
@@ -3055,6 +3067,9 @@
           ...backupData.state,
           settings: { ...state.settings, ...backupData.state.settings }
         };
+        if (typeof state.streakShields !== "number") state.streakShields = 1;
+        if (!Array.isArray(state.shieldUsedDates)) state.shieldUsedDates = [];
+        if (!Array.isArray(state.shieldAwardedMilestones)) state.shieldAwardedMilestones = [];
         save();
       }
 
