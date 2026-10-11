@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間英作文 | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css?v=21">
+  <link rel="stylesheet" href="style.css?v=22">
 </head>
 <body>
   <header class="app-header">
@@ -20,7 +20,7 @@
         <img src="apple-touch-icon.png" alt="" class="brand-icon-img" width="32" height="32">
       </div>
       <span class="brand-title">瞬間英作文</span>
-      <span class="brand-course-badge" id="brand-sub">口語 30</span>
+      <span class="brand-course-badge" id="brand-sub">口語 70</span>
     </button>
     <div class="header-actions">
       <span class="streak-badge" id="header-streak" aria-label="連続学習日数">🔥 0</span>
@@ -39,7 +39,7 @@
           <span class="course-tab-icon">🗣️</span>
           <div class="course-tab-text">
             <span class="course-tab-title">日常・ビジネス口語編</span>
-            <span class="course-tab-sub">会話の型30選・120例文</span>
+            <span class="course-tab-sub" id="conv-tab-sub">型30選＋実戦フレーズ・計267問</span>
           </div>
         </button>
         <button type="button" class="course-tab-btn" data-course="grit" role="tab" aria-selected="false">
@@ -151,7 +151,7 @@
           <summary class="part-accordion-summary">
             <span class="part-acc-left">
               <span class="part-acc-icon">📚</span>
-              <span>パート別に練習（Part 1〜5）</span>
+              <span>パート・場面別に練習（Part 1〜9）</span>
             </span>
             <span class="part-acc-arrow">▾</span>
           </summary>
@@ -328,7 +328,7 @@
 
       <!-- 📈 Part別習得バランス -->
       <div class="card">
-        <h2>📈 パート別（Part 1〜5）の習得状況</h2>
+        <h2>📈 パート・場面別の習得状況</h2>
         <p class="card-subtext">各パートの定着度と正答率のバランスです。</p>
         <div class="part-report-list" id="rep-part-list"></div>
       </div>
@@ -336,7 +336,7 @@
       <!-- 全構文の成績一覧（折りたたみ/展開） -->
       <div class="card">
         <details class="all-patterns-details">
-          <summary><strong>全30構文の成績一覧を見る（タップで展開）</strong></summary>
+          <summary><strong>全構文の成績一覧を見る（タップで展開）</strong></summary>
           <div class="all-patterns-matrix" id="rep-all-matrix"></div>
         </details>
       </div>
@@ -353,7 +353,7 @@
       <!-- 🔄 耳トレ コース切り替え -->
       <div class="listening-course-bar" id="listening-course-bar" role="tablist" aria-label="耳トレコース切り替え">
         <button type="button" class="listening-course-pill active" data-course="conversation" role="tab" aria-selected="true">
-          <span>🗣️ 口語編 (120問)</span>
+          <span>🗣️ 口語編 (267問)</span>
         </button>
         <button type="button" class="listening-course-pill" data-course="grit" role="tab" aria-selected="false">
           <span>🎓 TED・GRIT編 (90問)</span>
@@ -362,13 +362,17 @@
 
       <!-- 再生範囲フィルター -->
       <div class="listening-filter-bar" id="listening-filter-bar">
-        <button type="button" class="filter-pill active" data-range="all">全範囲 (120)</button>
+        <button type="button" class="filter-pill active" data-range="all">全範囲</button>
         <button type="button" class="filter-pill" data-range="weak">苦手のみ <span class="pill" id="listening-weak-count">0</span></button>
         <button type="button" class="filter-pill" data-range="p1">Part 1</button>
         <button type="button" class="filter-pill" data-range="p2">Part 2</button>
         <button type="button" class="filter-pill" data-range="p3">Part 3</button>
         <button type="button" class="filter-pill" data-range="p4">Part 4</button>
         <button type="button" class="filter-pill" data-range="p5">Part 5</button>
+        <button type="button" class="filter-pill" data-range="p6">Part 6</button>
+        <button type="button" class="filter-pill" data-range="p7">Part 7</button>
+        <button type="button" class="filter-pill" data-range="p8">Part 8</button>
+        <button type="button" class="filter-pill" data-range="p9">Part 9</button>
         <button type="button" class="filter-pill" data-range="custom" id="filter-pill-custom" hidden>カスタム</button>
       </div>
 
@@ -566,17 +570,17 @@
           <div class="batch-cache-box" style="margin-top: 12px; padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px dashed var(--accent);">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
               <span style="font-size: .84rem; font-weight: 700;">⚡️ Gemini一括キャッシュ</span>
-              <button type="button" class="btn small primary" id="batch-cache-btn">全210問 一括生成を開始</button>
+              <button type="button" class="btn small primary" id="batch-cache-btn">全357問 一括生成を開始</button>
             </div>
             <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
               <span style="font-size: .78rem; color: var(--muted); white-space:nowrap;">生成範囲:</span>
               <select id="batch-cache-scope" style="font-size: .8rem; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--fg); flex: 1;">
-                <option value="all">全210問（口語編＋GRIT編 / 計420ファイル）</option>
-                <option value="conv">口語編のみ（120問 / 計240ファイル）</option>
+                <option value="all">全357問（口語編＋GRIT編 / 計714ファイル）</option>
+                <option value="conv">口語編のみ（267問 / 計534ファイル）</option>
                 <option value="grit">GRIT編のみ（90問 / 計180ファイル）</option>
               </select>
             </div>
-            <p style="font-size: .74rem; color: var(--muted); margin: 6px 0 0;">※従量課金APIキーで全210問（420ファイル）を自動生成・端末保存（約60〜100円 / 所要7〜10分）。生成中は画面スリープを防止します。</p>
+            <p style="font-size: .74rem; color: var(--muted); margin: 6px 0 0;">※従量課金APIキーで選択範囲の音声を自動生成・端末保存（所要時間は1問あたり数秒）。生成中は画面スリープを防止します。</p>
             <div id="batch-cache-progress" hidden style="margin-top: 8px; font-size: .8rem; color: var(--accent); font-weight:600;"></div>
           </div>
         </div>
@@ -632,12 +636,16 @@
       <label class="field">
         <span>出題範囲</span>
         <select id="ai-scope-select">
-          <option value="all">全30構文（各1問・計30問）</option>
+          <option value="all">全構文からランダム出題</option>
           <option value="part1">Part① 断定を避ける構文（5問）</option>
           <option value="part2">Part② 自分について語れる構文（5問）</option>
           <option value="part3">Part③ 感情をリアルに伝える構文（5問）</option>
           <option value="part4">Part④ 会話を広げる構文（5問）</option>
           <option value="part5">Part⑤ 一歩差がつく構文（10問）</option>
+          <option value="part6">Part⑥ 日常・友人との交流・お誘い（10問）</option>
+          <option value="part7">Part⑦ 外出・カフェ・買い物・移動（9問）</option>
+          <option value="part8">Part⑧ 仕事・ビジネス・依頼・電話（10問）</option>
+          <option value="part9">Part⑨ 感情・共感・大人のスマートな返し（11問）</option>
         </select>
       </label>
 
@@ -712,8 +720,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=21"></script>
-  <script src="app.js?v=21"></script>
+  <script src="data.js?v=22"></script>
+  <script src="app.js?v=22"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

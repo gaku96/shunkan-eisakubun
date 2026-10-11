@@ -6,6 +6,10 @@ window.PARTS = [
   { id: 3, name: "Part③ 感情をリアルに伝えられる構文" },
   { id: 4, name: "Part④ 会話を広げられる構文" },
   { id: 5, name: "Part⑤ 一歩差がつく構文" },
+  { id: 6, name: "Part⑥ 日常・友人との交流・お誘い" },
+  { id: 7, name: "Part⑦ 外出・カフェ・買い物・移動" },
+  { id: 8, name: "Part⑧ 仕事・ビジネス・依頼・電話" },
+  { id: 9, name: "Part⑨ 感情・共感・大人のスマートな返し" },
 ];
 
 window.PATTERNS = [
@@ -316,6 +320,401 @@ window.PATTERNS = [
       { ja: "結局は君が決めることだよ。", en: "At the end of the day, it's your decision." },
       { ja: "結局、健康が一番だよね。", en: "At the end of the day, health comes first." },
       { ja: "結局、大事なのは結果だ。", en: "At the end of the day, results are what matter." },
+    ],
+  },
+
+  // ---------- Part 6: 日常・友人との交流・お誘い ----------
+  {
+    id: 31, part: 6, en: "挨拶・初対面・名前の確認", ja: "初めての会話や名前を尋ねる表現",
+    note: "初対面でスマートに会話を始めるフレーズ。",
+    examples: [
+      { ja: "お話しするのは初めてですよね。", en: "I think we have never spoken before." },
+      { ja: "何とお呼びすればいいですか？", en: "What should I call you?" },
+      { ja: "お名前のスペルはどう書きますか？", en: "How do you spell your name?" },
+      { ja: "どちらでお勤めですか？", en: "Where do you work?" },
+    ],
+  },
+  {
+    id: 32, part: 6, en: "Do you want to ~? / Let's ~", ja: "気軽なお誘い・提案の表現",
+    note: "友達をフランクにご飯や遊びに誘う定番。",
+    examples: [
+      { ja: "一緒に遊ばない？ / 出かけない？", en: "Do you want to hang out?" },
+      { ja: "何か軽く食べに行きたいな。", en: "I want to grab something to eat." },
+      { ja: "飲みながら積もる話をしようよ。", en: "Let's catch up over drinks." },
+      { ja: "何を食べたい（したい）気分？", en: "What are you in the mood for?" },
+    ],
+  },
+  {
+    id: 33, part: 6, en: "I'm on my way / be there in ~", ja: "移動・到着予定を伝える表現",
+    note: "待ち合わせや移動中に今どこにいるかを伝える。",
+    examples: [
+      { ja: "今向かっているところだよ。", en: "I'm on my way." },
+      { ja: "5分でそっちに行けるよ。", en: "I can be there in 5 minutes." },
+      { ja: "あとどれくらいでここに来られる？", en: "How soon can you get here?" },
+      { ja: "着いたら電話するね。", en: "I'll call you when I get there." },
+    ],
+  },
+  {
+    id: 34, part: 6, en: "合流・人数の連絡", ja: "人数の変更や後からの合流を伝える",
+    note: "飲み会や食事で追加の参加者を伝えるフレーズ。",
+    examples: [
+      { ja: "後からもう2人合流します。", en: "Two more will be joining us later." },
+      { ja: "男の子？それとも女の子？", en: "Is it he or she?" },
+      { ja: "迷わずにここまで来られましたか？", en: "Did you have any problem finding us?" },
+      { ja: "あなたは右から2番目です。", en: "You are second from right." },
+    ],
+  },
+  {
+    id: 35, part: 6, en: "What did you get up to? / 近況と習慣", ja: "休みの過ごし方や日常の習慣を語る",
+    note: "週末何してた？や体質・日課を共有する。",
+    examples: [
+      { ja: "何をして過ごしてたの？", en: "What did you get up to?" },
+      { ja: "ジムで筋トレ（運動）してきました。", en: "I worked out at the gym." },
+      { ja: "私は朝型人間じゃないんだ（朝は苦手）。", en: "I'm not a morning person." },
+      { ja: "私はお酒に強いんです（簡単には酔わない）。", en: "I don't get drunk easily." },
+    ],
+  },
+  {
+    id: 36, part: 6, en: "天気・気候の雑談", ja: "日常の会話を始める天気の話題",
+    note: "アイスブレイクにぴったりの天気の表現。",
+    examples: [
+      { ja: "今日は暖かくて気持ちいいね。", en: "It's nice and warm today." },
+      { ja: "まだ雨降ってる？", en: "Is it still raining?" },
+      { ja: "エアコンをつけてもらえますか？", en: "Turn on the air conditioner, please." },
+    ],
+  },
+  {
+    id: 37, part: 6, en: "体調・健康の気遣い", ja: "体調不良や相手の体を気遣う表現",
+    note: "くしゃみや風邪、相手の疲労を思いやる言葉。",
+    examples: [
+      { ja: "くしゃみが止まりません。", en: "I can't stop sneezing." },
+      { ja: "風邪は良くなりましたか？", en: "Has your cold gotten better?" },
+      { ja: "どうしてそんなに疲れているように見えるの？", en: "Why do you seem so tired?" },
+      { ja: "無理しすぎないでね。", en: "Don't overdo it." },
+    ],
+  },
+  {
+    id: 38, part: 6, en: "スマホ・日常のアクシデント", ja: "充電切れや度忘れなど日常のハプニング",
+    note: "日常で誰もが経験するトラブルのとっさの一言。",
+    examples: [
+      { ja: "スマホの充電（バッテリー）が切れそう。", en: "My phone's almost dead." },
+      { ja: "何を言おうとしていたか忘れちゃった。", en: "I forgot what I was going to say." },
+      { ja: "ちょっと眠いな。", en: "I'm kind of sleepy." },
+      { ja: "本当に危なかった / 間一髪だったよ。", en: "It was really close." },
+    ],
+  },
+  {
+    id: 39, part: 6, en: "ちょっとした立ち寄り・移動", ja: "コンビニや席の移動を伝える表現",
+    note: "生活の中のちょっとした行動を英語にする。",
+    examples: [
+      { ja: "コンビニに立ち寄りました。", en: "I stopped by at the convenience store." },
+      { ja: "そろそろ行かなきゃ。", en: "I should get going." },
+      { ja: "少し詰めて（席をずれて）いただけますか？", en: "Could you move over, please?" },
+      { ja: "通してください。", en: "Let me through." },
+    ],
+  },
+  {
+    id: 40, part: 6, en: "別れ際の挨拶・気遣い", ja: "会話を心地よく締めくくるフレーズ",
+    note: "別れ際に相手の素敵な1日や知り合いへの伝言を伝える。",
+    examples: [
+      { ja: "良い一日をお過ごしください。", en: "I hope you have a great day." },
+      { ja: "彼によろしく伝えておいてね。", en: "Say hi to him for me." },
+      { ja: "今日はここまでにしましょう（お開きにしよう）。", en: "Let's call it a day." },
+    ],
+  },
+
+  // ---------- Part 7: 外出・カフェ・買い物・移動 ----------
+  {
+    id: 41, part: 7, en: "Do you mind if ~? / 席・順番の確認", ja: "席や順番を丁寧に確認する表現",
+    note: "混んでいるカフェや電車・行列で使う定番。",
+    examples: [
+      { ja: "ここに座ってもいいですか？", en: "Do you mind if I sit here?" },
+      { ja: "列に並んでいますか？", en: "Are you in line?" },
+      { ja: "2人用の席は空いていますか？", en: "Do you have a table for two?" },
+      { ja: "待ち時間はどれくらいですか？", en: "How long is the wait?" },
+    ],
+  },
+  {
+    id: 42, part: 7, en: "カフェ・レストランでの注文", ja: "注文をスムーズに通す定番フレーズ",
+    note: "同じもの、持ち帰り、ドリンクのみなどの注文。",
+    examples: [
+      { ja: "私も同じものをください。", en: "I'll have the same thing." },
+      { ja: "これを持ち帰り（テイクアウト）にできますか？", en: "Can I get this to go?" },
+      { ja: "飲み物だけの注文でも大丈夫ですか？", en: "Is it okay to just order drinks?" },
+      { ja: "ステーキの焼き加減はいかがなさいますか？", en: "How would you like your steak?" },
+    ],
+  },
+  {
+    id: 43, part: 7, en: "注文のトラブル・確認", ja: "料理や注文の違いを指摘・確認する",
+    note: "頼んだものと違う時や素材を確認したい時。",
+    examples: [
+      { ja: "これは私が注文したものではありません。", en: "This isn't what I ordered." },
+      { ja: "何で作られているのですか？", en: "What's it made with?" },
+      { ja: "思っていたよりずっと大きいです。", en: "It's a lot bigger than I thought." },
+    ],
+  },
+  {
+    id: 44, part: 7, en: "お会計・割り勘の確認", ja: "支払い・レシート・金額の確認",
+    note: "レジやテーブル会計で焦らず使える表現。",
+    examples: [
+      { ja: "レシートをいただけますか？", en: "Could I have a receipt, please?" },
+      { ja: "だいたいいくらですか？", en: "About how much is it?" },
+      { ja: "1人あたり1000円ってこと？", en: "Do you mean 1,000 yen per person?" },
+      { ja: "レジ袋はご利用になりますか？", en: "Do you need a plastic bag?" },
+    ],
+  },
+  {
+    id: 45, part: 7, en: "おごり・支払い・好み", ja: "ご馳走する・家で食べる・好みを伝える",
+    note: "食事の支払いや好みをスマートに伝える。",
+    examples: [
+      { ja: "ご馳走するよ / おごるよ。", en: "I'll treat you." },
+      { ja: "家で食べたいな。", en: "I'd rather eat at home." },
+      { ja: "あまり好みじゃないな / 得意じゃないな。", en: "It's not my favorite." },
+    ],
+  },
+  {
+    id: 46, part: 7, en: "買い物でのサイズ・在庫・値引き", ja: "店員さんにサイズや在庫を聞く表現",
+    note: "ショッピングで希望のサイズや他の商品を探す時。",
+    examples: [
+      { ja: "黒の11サイズはありますか？", en: "Do you have size 11 in black?" },
+      { ja: "他にどんなものがありますか？", en: "What else do you have?" },
+      { ja: "少し値引きしてもらえませんか？", en: "Could you give me a discount?" },
+    ],
+  },
+  {
+    id: 47, part: 7, en: "移動・距離・来訪理由", ja: "目的地への距離や訪問のきっかけを尋ねる",
+    note: "道案内や旅先での会話に役立つフレーズ。",
+    examples: [
+      { ja: "ここからどれくらいの距離ですか？", en: "How far is it from here?" },
+      { ja: "どうして東京に来られたのですか？", en: "What brings you to Tokyo?" },
+      { ja: "予約をキャンセルしたいのですが。", en: "I would like to cancel my booking." },
+    ],
+  },
+  {
+    id: 48, part: 7, en: "外見・似合っていることを褒める", ja: "服や髪型を褒める定番フレーズ",
+    note: "相手の身につけているものを自然に褒める。",
+    examples: [
+      { ja: "それ、君によく似合ってるよ。", en: "That looks good on you." },
+      { ja: "お褒めの言葉ありがとうございます。", en: "I appreciate the compliment." },
+      { ja: "きっと気に入ると思うよ。", en: "I'm sure you'll like it." },
+    ],
+  },
+  {
+    id: 49, part: 7, en: "時間の合図とサロンでの指示", ja: "時間・終了予定や施術での指示",
+    note: "開始や終了の合図、サロン等での定番表現。",
+    examples: [
+      { ja: "そろそろ時間だよ / もうすぐ時間だ。", en: "It's almost time." },
+      { ja: "もうすぐ終わるよ。", en: "I'll be done soon." },
+      { ja: "うつ伏せになってください。", en: "Please lie on your stomach." },
+    ],
+  },
+
+  // ---------- Part 8: 仕事・ビジネス・依頼・電話 ----------
+  {
+    id: 50, part: 8, en: "What can I do for you? / サポートの申し出", ja: "相手への手助け・サポートを申し出る",
+    note: "困っていそうな相手に声をかけるビジネス口語。",
+    examples: [
+      { ja: "何かお手伝いしましょうか？ / ご用件は何ですか？", en: "What can I do for you?" },
+      { ja: "喜んでお手伝いしますよ / お役に立てて嬉しいです。", en: "I'm glad to help you." },
+      { ja: "どなたか志願（立候補）する方はいませんか？", en: "Any volunteers?" },
+    ],
+  },
+  {
+    id: 51, part: 8, en: "業務の引き継ぎ・依頼", ja: "作業の引き継ぎや助けを求める表現",
+    note: "同僚にバトンタッチしたり協力を頼む時。",
+    examples: [
+      { ja: "ここから引き継いでもらえる？", en: "Can you take it from here?" },
+      { ja: "ちょっと手伝ってもらえると助かるな。", en: "I could use some help." },
+      { ja: "そうしていただけると助かります。", en: "That would be appreciated." },
+      { ja: "他の人に聞いてみてください。", en: "Please ask someone else." },
+    ],
+  },
+  {
+    id: 52, part: 8, en: "急な予定・手の離せない状況", ja: "突発的な用事や多忙を伝える表現",
+    note: "急な予定が入ったり、手一杯な状態を伝える。",
+    examples: [
+      { ja: "急用ができちゃったんだ。", en: "Something came up." },
+      { ja: "今は手が離せないんだ / 忙しいんだ。", en: "I'm tied up right now." },
+      { ja: "やることが山積みなんだ / 手一杯なんだ。", en: "I have a lot on my plate." },
+      { ja: "今日は遅れるかもしれません。", en: "I may be late today." },
+    ],
+  },
+  {
+    id: 53, part: 8, en: "日程調整・都合の確認", ja: "都合の良い日時を確認・提案する",
+    note: "ミーティングやアポイントの日程調整の基本。",
+    examples: [
+      { ja: "いつなら都合がいいですか？", en: "When is a good time for you?" },
+      { ja: "明後日はどう？", en: "How about the day after tomorrow?" },
+      { ja: "6時に終わることになっているんだ。", en: "I'm supposed to finish at 6." },
+    ],
+  },
+  {
+    id: 54, part: 8, en: "電話での対応・折り返し", ja: "電話での掛け直しや間違い電話への対応",
+    note: "電話口でのスマートな英語対応フレーズ。",
+    examples: [
+      { ja: "後でかけ直してもらえますか？", en: "Can you call me back later?" },
+      { ja: "間違い電話だと思います。", en: "I think you have the wrong number." },
+      { ja: "起こしちゃってないよね？", en: "I didn't wake you, did I?" },
+    ],
+  },
+  {
+    id: 55, part: 8, en: "手続き・サイン・意見の表明", ja: "署名の依頼や会議での発言の切り出し",
+    note: "書類のサイン依頼や、会議で意見を言いたい時。",
+    examples: [
+      { ja: "ここにサインをいただけますか？", en: "Could you sign here?" },
+      { ja: "私の意見を言ってもいいですか？", en: "Can I give you my opinion?" },
+      { ja: "質問の答えになっていますでしょうか？", en: "Does that answer your question?" },
+    ],
+  },
+  {
+    id: 56, part: 8, en: "検討・善処・対応の返答", ja: "持ち帰り検討や対応できる旨を伝える",
+    note: "即答せずに持ち帰る時や「任せて」と伝える時。",
+    examples: [
+      { ja: "少し考えさせてください。", en: "Let me think about it." },
+      { ja: "何ができるかやってみるよ / 善処します。", en: "I'll see what I can do." },
+      { ja: "何とかうまくやれます / 大丈夫です。", en: "I can manage it." },
+      { ja: "やってみるよ / 挑戦してみるね。", en: "I'll give it a go." },
+    ],
+  },
+  {
+    id: 57, part: 8, en: "お詫び・限界の丁寧な伝達", ja: "力になれないことや邪魔したお詫び",
+    note: "角を立てずに丁寧にお断りやお詫びをする。",
+    examples: [
+      { ja: "お役に立てず申し訳ありません。", en: "I'm sorry I can't be of any help." },
+      { ja: "お邪魔して（お手数をおかけして）すみません。", en: "I'm sorry to bother you." },
+      { ja: "私の責任（せい）だと思う。", en: "I guess it's my fault." },
+      { ja: "私が知っているのはそれだけです。", en: "That's all I know about it." },
+    ],
+  },
+  {
+    id: 58, part: 8, en: "要点確認・聞き返し", ja: "相手の発言の要点や意味を確かめる",
+    note: "会議や議論で論点を確認したい時に使う口語。",
+    examples: [
+      { ja: "要するに何が言いたいの？", en: "What's your point?" },
+      { ja: "それはどういう意味ですか？", en: "What does that mean?" },
+      { ja: "えっ、何て言った？ / 何だって？", en: "Say what?" },
+      { ja: "求めすぎかな？ / 高望みしすぎかな？", en: "Am I asking too much?" },
+    ],
+  },
+  {
+    id: 59, part: 8, en: "相手を急かさない気遣い", ja: "相手のペースを尊重する優しい配慮",
+    note: "「時間をかけて大丈夫」と相手を安心させる。",
+    examples: [
+      { ja: "必要なだけ時間をかけて大丈夫ですよ。", en: "Take as long as you need." },
+      { ja: "無理する必要はないよ。", en: "You don't need to push yourself." },
+    ],
+  },
+
+  // ---------- Part 9: 感情・共感・大人のスマートな返し ----------
+  {
+    id: 60, part: 9, en: "共感・理解・味方になる言葉", ja: "相手の気持ちに寄り添い同意する表現",
+    note: "信頼関係を深める温かい共感のフレーズ。",
+    examples: [
+      { ja: "その気持ち、よく分かるよ。", en: "I know how you feel." },
+      { ja: "賛成だよ / 君の味方だよ。", en: "I'm with you." },
+      { ja: "言いたいことは分かります。", en: "I see what you mean." },
+      { ja: "応援しているよ！", en: "I'm rooting for you." },
+    ],
+  },
+  {
+    id: 61, part: 9, en: "お悔やみ・心配・慰め", ja: "悲しい知らせや悩みに寄り添う言葉",
+    note: "訃報や相手の辛い状況に心を込めて返す。",
+    examples: [
+      { ja: "それはお気の毒に / 残念ですね。", en: "I'm sorry to hear that." },
+      { ja: "ご愁傷様です / お悔やみ申し上げます。", en: "I'm sorry for your loss." },
+      { ja: "何が気になっているの？ / 何か悩みでもある？", en: "What's bothering you?" },
+      { ja: "悲しくなるよ / それを聞くと悲しいな。", en: "That makes me sad." },
+    ],
+  },
+  {
+    id: 62, part: 9, en: "安心させる・励ましの一言", ja: "相手の不安や緊張を和らげる表現",
+    note: "失敗やプレッシャーに直面している人を元気づける。",
+    examples: [
+      { ja: "心配しないで、大丈夫だから。", en: "Don't worry, it's fine." },
+      { ja: "よくあることだよ。", en: "It happens a lot." },
+      { ja: "慣れれば簡単だよ。", en: "It's easy once you get used to it." },
+      { ja: "もうすっかり慣れました。", en: "I've got used to it." },
+    ],
+  },
+  {
+    id: 63, part: 9, en: "挑戦の後押し・エール", ja: "一歩踏み出す背中を押すフレーズ",
+    note: "諦めそうな人や挑戦を迷う人を後押しする。",
+    examples: [
+      { ja: "思い切ってやってみたら？ / チャンスを掴んでみたら？", en: "Why not take a chance?" },
+      { ja: "やってみないと分からないよ。", en: "You never know until you try." },
+      { ja: "諦める（白旗を上げる）にはまだ早すぎるよ。", en: "It's too early to throw in the towel." },
+      { ja: "もう一度やってみますか？", en: "Do you want to try one more time?" },
+    ],
+  },
+  {
+    id: 64, part: 9, en: "驚き・初耳・強い疑い", ja: "意外な事実に対するリアルなリアクション",
+    note: "感情が大きく動いた時のネイティブの反応。",
+    examples: [
+      { ja: "それは初耳です。", en: "That's news to me." },
+      { ja: "それは意外ですね / 驚きですね。", en: "That's surprising." },
+      { ja: "そんなの嘘でしょ / 本当のはずがない。", en: "It can't be true." },
+      { ja: "どうしてそれを知っていたの？", en: "How did you know that?" },
+    ],
+  },
+  {
+    id: 65, part: 9, en: "迷い・判断・直感", ja: "決められない気持ちや直感を伝える",
+    note: "優柔不断な時や勘を口にする時のフレーズ。",
+    examples: [
+      { ja: "決められないよ / 迷っちゃうな。", en: "I can't make up my mind." },
+      { ja: "あなた次第だよ / お任せするよ。", en: "It's up to you." },
+      { ja: "なんとなくそんな気がするんだ。", en: "I just have a feeling." },
+      { ja: "嫌な予感がするな。", en: "I have a bad feeling about this." },
+    ],
+  },
+  {
+    id: 66, part: 9, en: "角を立てない断り・反論", ja: "大人のマイルドな否定や断り方",
+    note: "相手を不快にさせずに自分の立場を主張する。",
+    examples: [
+      { ja: "遠慮しておきます。", en: "I'd rather not." },
+      { ja: "言うのは簡単だよ（他人事だから言えるんだ）。", en: "That's easy for you to say." },
+      { ja: "それは全然違うよ / まるで別物だよ。", en: "That's totally different." },
+      { ja: "気のせいだよ / 思い過ごしだよ。", en: "It's your imagination." },
+    ],
+  },
+  {
+    id: 67, part: 9, en: "クッション言葉・前置き", ja: "会話を滑らかにする前置きや念押し",
+    note: "自分の言いたいことを柔らかく伝えるクッション。",
+    examples: [
+      { ja: "あまり期待しすぎないでね。", en: "Don't expect too much." },
+      { ja: "言ってる意味伝わるかな？ / 筋が通っていればいいけど。", en: "If that makes sense." },
+      { ja: "知らないほうがいいよ（聞かないほうが身のためだよ）。", en: "You don't want to know." },
+      { ja: "最後まで話を聞いてよ。", en: "Hear me out." },
+    ],
+  },
+  {
+    id: 68, part: 9, en: "感情の吐露・思い出・後悔", ja: "ノスタルジーや後悔の感情を伝える",
+    note: "心の内を素直に表現する味わい深いフレーズ。",
+    examples: [
+      { ja: "まるで子供に戻ったような気分だよ。", en: "I feel like I'm a kid again." },
+      { ja: "この写真を見ると懐かしい思い出が蘇るよ。", en: "This picture brings back memories." },
+      { ja: "それで思い出したよ / そういえば。", en: "That reminds me." },
+      { ja: "もっと分かっておくべきだった / 浅はかだった。", en: "I should have known better." },
+    ],
+  },
+  {
+    id: 69, part: 9, en: "素直な気持ち・受け答え", ja: "嬉しい返答や気分を伝える口語",
+    note: "会話のテンポを良くするスマートな受け答え。",
+    examples: [
+      { ja: "そう言っていただけて嬉しいです。", en: "It's so nice of you to say." },
+      { ja: "そうなるといいね / そうしてもらえると嬉しいな。", en: "That would be nice." },
+      { ja: "どうだった？（結果や感想）", en: "How did it go?" },
+      { ja: "気が向いたらやるよ。", en: "I'll do it if I feel like it." },
+    ],
+  },
+  {
+    id: 70, part: 9, en: "戸惑い・疑問・理由の問いかけ", ja: "確信が持てない時や理由を尋ねる表現",
+    note: "言葉に詰まった時や感情の理由を深く聞く時。",
+    examples: [
+      { ja: "何と言っていいか分かりません。", en: "I don't know what to say." },
+      { ja: "よく分かりません / はっきりとは言えません。", en: "I'm not sure." },
+      { ja: "君ならそうすると思う？", en: "Is that what you would do?" },
+      { ja: "どうしてそう思うの？", en: "How come you think so?" },
+      { ja: "どうして怒っているの（取り乱しているの）？", en: "Why are you upset?" },
     ],
   },
 ];

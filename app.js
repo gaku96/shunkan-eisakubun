@@ -204,7 +204,7 @@
   function updateBrandSub() {
     const brandSub = $("#brand-sub");
     if (brandSub) {
-      brandSub.textContent = getActiveCourse() === "grit" ? "GRIT 30" : "口語 30";
+      brandSub.textContent = getActiveCourse() === "grit" ? "GRIT 30" : `口語 ${window.PATTERNS.length}`;
     }
   }
 
@@ -217,6 +217,10 @@
         btn.setAttribute("aria-selected", active ? "true" : "false");
       }
     });
+    const convTabSub = $("#conv-tab-sub");
+    if (convTabSub) convTabSub.textContent = `型30選＋実戦フレーズ・計${CONV_CARDS.length}問`;
+    const convListeningPill = $('#listening-course-bar .listening-course-pill[data-course="conversation"] span');
+    if (convListeningPill) convListeningPill.textContent = `🗣️ 口語編 (${CONV_CARDS.length}問)`;
   }
 
   function switchCourse(courseName) {
@@ -1906,12 +1910,14 @@
   const batchCacheProgress = $("#batch-cache-progress");
   let batchCacheAborted = false;
 
-  batchCacheScope?.addEventListener("change", () => {
+  function updateBatchCacheBtnText() {
+    if (!batchCacheScope || !batchCacheBtn) return;
     const val = batchCacheScope.value;
-    if (val === "all") batchCacheBtn.textContent = "全210問 一括生成を開始";
-    else if (val === "conv") batchCacheBtn.textContent = "口語編(120問) 一括生成を開始";
-    else batchCacheBtn.textContent = "GRIT編(90問) 一括生成を開始";
-  });
+    if (val === "all") batchCacheBtn.textContent = `全${ALL_CARDS.length}問 一括生成を開始`;
+    else if (val === "conv") batchCacheBtn.textContent = `口語編(${CONV_CARDS.length}問) 一括生成を開始`;
+    else batchCacheBtn.textContent = `GRIT編(${GRIT_CARDS.length}問) 一括生成を開始`;
+  }
+  batchCacheScope?.addEventListener("change", updateBatchCacheBtnText);
 
   testTtsBtn.addEventListener("click", async () => {
     const key = keyInput.value.trim();
@@ -2032,13 +2038,13 @@
     let scopeTitle = "";
     if (scope === "all") {
       targetCards = ALL_CARDS;
-      scopeTitle = "全210問（口語編＋GRIT編 / 英語・日本語 計420ファイル）";
+      scopeTitle = `全${ALL_CARDS.length}問（口語編＋GRIT編 / 英語・日本語 計${ALL_CARDS.length * 2}ファイル）`;
     } else if (scope === "conv") {
       targetCards = CONV_CARDS;
-      scopeTitle = "口語編（120問 / 英語・日本語 計240ファイル）";
+      scopeTitle = `口語編（${CONV_CARDS.length}問 / 英語・日本語 計${CONV_CARDS.length * 2}ファイル）`;
     } else {
       targetCards = GRIT_CARDS;
-      scopeTitle = "GRIT編（90問 / 英語・日本語 計180ファイル）";
+      scopeTitle = `GRIT編（${GRIT_CARDS.length}問 / 英語・日本語 計${GRIT_CARDS.length * 2}ファイル）`;
     }
 
     const model = form.geminiModel.value;
@@ -2165,7 +2171,7 @@
     }
 
     batchCacheBtn.dataset.running = "false";
-    batchCacheBtn.textContent = scope === "all" ? "全210問 一括生成を開始" : "一括生成を開始";
+    updateBatchCacheBtnText();
     if (abortReason) {
       batchCacheProgress.textContent = `${abortReason}（保存済み: ${await countCachedAudio()}件）`;
     } else if (batchCacheAborted) {
@@ -2416,7 +2422,11 @@
     if (scope === "part3") return [11, 12, 13, 14, 15];
     if (scope === "part4") return [16, 17, 18, 19, 20];
     if (scope === "part5") return [21, 22, 23, 24, 25, 26, 27, 28, 29, 30];
-    return Array.from({ length: 30 }, (_, i) => i + 1);
+    if (scope === "part6") return Array.from({ length: 10 }, (_, i) => 31 + i);
+    if (scope === "part7") return Array.from({ length: 9 }, (_, i) => 41 + i);
+    if (scope === "part8") return Array.from({ length: 10 }, (_, i) => 50 + i);
+    if (scope === "part9") return Array.from({ length: 11 }, (_, i) => 60 + i);
+    return Array.from({ length: window.PATTERNS.length }, (_, i) => i + 1);
   }
 
   function getPresetFallbackSentences(theme, targetIds) {
@@ -2712,16 +2722,15 @@ ${targetPatterns}
   }
 
   function getListeningPool(range) {
+    if (range && range.startsWith("p")) {
+      const partNum = parseInt(range.slice(1), 10);
+      return CARDS.filter((c) => c.pattern.part === partNum);
+    }
     switch (range) {
       case "weak": {
         const w = weakCards();
         return w.length ? w : CARDS.slice(0, 20);
       }
-      case "p1": return CARDS.filter((c) => c.pattern.part === 1);
-      case "p2": return CARDS.filter((c) => c.pattern.part === 2);
-      case "p3": return CARDS.filter((c) => c.pattern.part === 3);
-      case "p4": return CARDS.filter((c) => c.pattern.part === 4);
-      case "p5": return CARDS.filter((c) => c.pattern.part === 5);
       case "custom": {
         return (state.customCards || []).map((item) => ({
           id: item.id,
@@ -2749,9 +2758,15 @@ ${targetPatterns}
 
   function renderListeningView() {
     listening.active = true;
+    const isGrit = getActiveCourse() === "grit";
     const customCount = (state.customCards || []).length;
     const customPill = $("#filter-pill-custom");
-    if (customPill) customPill.hidden = customCount === 0 || getActiveCourse() === "grit";
+    if (customPill) customPill.hidden = customCount === 0 || isGrit;
+
+    $$('#listening-filter-bar .filter-pill[data-range^="p"]').forEach((btn) => {
+      const partNum = parseInt(btn.dataset.range.slice(1), 10);
+      btn.hidden = isGrit && partNum > 5;
+    });
 
     const weakCount = weakCards().length;
     const weakPill = $("#listening-weak-count");
