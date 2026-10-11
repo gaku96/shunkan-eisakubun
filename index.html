@@ -7,11 +7,20 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="瞬間パターンプラクティス">
+  <meta name="description" content="ネイティブが毎日使う「英会話の型」30選＋TED知性思考GRITで瞬間パターンプラクティス。スワイプ操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
+  <meta property="og:title" content="瞬間パターンプラクティス | 英会話の型30">
+  <meta property="og:description" content="ネイティブが毎日使う「英会話の型」30選＋TED知性思考GRITで瞬間パターンプラクティス。スワイプ操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="icon-512.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="瞬間パターンプラクティス | 英会話の型30">
+  <meta name="twitter:description" content="ネイティブが毎日使う「英会話の型」30選＋TED知性思考GRITで瞬間パターンプラクティス。スワイプ操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
+  <meta name="twitter:image" content="icon-512.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターンプラクティス | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css?v=35">
+  <link rel="stylesheet" href="style.css?v=36">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -186,6 +195,13 @@
     <symbol id="icon-shield" viewBox="0 0 24 24">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M9 12l2 2 4-4" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-share" viewBox="0 0 24 24">
+      <circle cx="18" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+      <circle cx="6" cy="12" r="3" fill="var(--icon-pop, #f97316)" stroke="none"/>
+      <circle cx="18" cy="19" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" stroke="currentColor" stroke-width="2"/>
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" stroke="currentColor" stroke-width="2"/>
     </symbol>
   </defs>
 </svg>
@@ -459,6 +475,11 @@
         <p class="result-emoji" id="result-emoji"><svg class="ui-icon" aria-hidden="true"><use href="#icon-party"></use></svg></p>
         <p id="result-summary"></p>
         <p id="result-streak" class="result-streak"></p>
+        <div class="result-share-wrap" style="margin: 14px 0 16px;">
+          <button type="button" class="btn primary-ghost wide" id="result-share-btn" style="font-size: 0.95rem;">
+            <svg class="ui-icon" aria-hidden="true"><use href="#icon-share"></use></svg> 今日の成果をシェア（X / SNS）
+          </button>
+        </div>
         <div class="menu-grid">
           <button type="button" class="btn primary" id="result-again">もう1セット</button>
           <button type="button" class="btn" data-nav="report"><svg class="ui-icon" aria-hidden="true"><use href="#icon-chart"></use></svg> 弱点分析</button>
@@ -739,14 +760,27 @@
           <span>✅ <strong>日本語・英語 全270問の自然な音声を同梱済み</strong></span>
           <small>追加費用0円・APIキー不要・オフラインで高音質な日本語ナレーター＆ネイティブ英語音声がそのまま再生されます。</small>
         </div>
+        <div class="bulk-download-section" style="margin: 10px 0 12px; padding: 10px 12px; background: color-mix(in srgb, var(--accent) 7%, var(--surface)); border: 1px solid var(--border); border-radius: 10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:180px;">
+              <span style="font-weight:600; font-size:0.84rem; display:inline-flex; align-items:center; gap:4px;"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-download"></use></svg> 全音声の一括保存（完全オフライン化）</span>
+              <small style="color:var(--muted); font-size:0.75rem; display:block; margin-top:2px;">地下鉄や機内など圏外でも全音声（約18MB）が途切れません。</small>
+            </div>
+            <button type="button" class="btn small primary-ghost" id="bulk-download-btn" style="white-space:nowrap;">一括保存 (18MB)</button>
+          </div>
+          <div id="bulk-download-box" hidden style="margin-top: 8px;">
+            <progress id="bulk-download-progress" max="100" value="0" style="margin: 4px 0; height: 6px;"></progress>
+            <div id="bulk-download-status" style="font-size: 0.76rem; color: var(--accent); font-weight:600;">準備中...</div>
+          </div>
+        </div>
         <label class="check">
           <input type="checkbox" name="autoSpeak"> 答えを表示したら自動で読み上げる
         </label>
         <label class="field">
           <span>音声エンジン</span>
           <select name="ttsEngine" id="tts-engine-select">
-            <option value="gemini" selected>✨ Gemini 3.8 TTS（Google AI・多国籍アクセント対応・推奨）</option>
-            <option value="bundled">✨ 同梱ネイティブ音声（Brian & Nanami・0円・無制限）</option>
+            <option value="bundled" selected>✨ 同梱ネイティブ音声（Brian & Nanami・0円・無制限）</option>
+            <option value="gemini">✨ Gemini 3.8 TTS（Google AI・多国籍アクセント対応・要APIキー）</option>
             <option value="browser">ブラウザ標準音声（Web Speech API）</option>
           </select>
         </label>
@@ -851,6 +885,11 @@
           <div style="color: var(--muted); font-size: 0.78rem;">キャッシュを更新して最新版を取得</div>
         </div>
         <button type="button" class="btn small report-btn" id="force-update-btn"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-refresh"></use></svg> 最新版に更新</button>
+      </div>
+
+      <div class="settings-legal-row" style="margin: 14px 0 16px; display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap;">
+        <button type="button" class="btn small ghost" id="open-legal-dialog" style="flex:1; min-width:140px;">📜 利用規約・クレジット</button>
+        <a href="https://github.com/gaku96/shunkan-eisakubun/issues" target="_blank" rel="noopener noreferrer" class="btn small ghost" style="flex:1; min-width:140px; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">💬 不具合・改善要望</a>
       </div>
 
       <div class="dialog-actions">
@@ -967,6 +1006,8 @@
         <p class="badge-detail-status" id="badge-detail-status">未達成 🔒</p>
       </div>
     </div>
+  </dialog>
+
   <!-- ストリーク保護モーダル -->
   <dialog id="shield-dialog" class="badge-detail-dialog" closedby="any" aria-labelledby="shield-dialog-title">
     <div class="badge-detail-content shield-modal-content">
@@ -1010,11 +1051,81 @@
     </div>
   </dialog>
 
+  <!-- 利用規約・プライバシー・クレジットモーダル -->
+  <dialog id="legal-dialog" class="badge-detail-dialog" closedby="any" aria-labelledby="legal-title">
+    <div class="badge-detail-content legal-modal-content" style="text-align:left;">
+      <div class="dialog-header">
+        <h3 id="legal-title">利用規約・プライバシー・クレジット</h3>
+        <button type="button" class="icon-btn" id="close-legal-dialog" aria-label="閉じる"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"></use></svg></button>
+      </div>
+      <div class="legal-scroll-body" style="max-height: 58vh; overflow-y: auto; padding: 6px 2px; font-size: 0.82rem; line-height: 1.6; color: var(--text);">
+        <h4 style="margin: 6px 0 2px; font-size: 0.92rem; color: var(--accent);">1. サービスについて</h4>
+        <p style="margin: 0 0 10px; color: var(--muted);">「瞬間パターンプラクティス」は、英語の瞬発力と構文運用力を高めるための無料学習Webアプリケーション（PWA）です。</p>
+
+        <h4 style="margin: 6px 0 2px; font-size: 0.92rem; color: var(--accent);">2. プライバシー & データの保護方針</h4>
+        <p style="margin: 0 0 10px; color: var(--muted);">・本アプリはユーザー登録不要でご利用いただけます。<br>・学習進捗、設定、および入力されたGemini APIキーは、お客様の端末（ブラウザのLocalStorage / IndexedDB）内にのみ安全に保存され、外部サーバーへ無断送信されることは一切ありません。</p>
+
+        <h4 style="margin: 6px 0 2px; font-size: 0.92rem; color: var(--accent);">3. 免責事項</h4>
+        <p style="margin: 0 0 10px; color: var(--muted);">・本アプリのコンテンツやAI生成結果の正確性・完全性については細心の注意を払っておりますが、いかなる保証も行うものではありません。<br>・本アプリの利用によって生じたいかなる損害についても、開発者は責任を負いかねます。</p>
+
+        <h4 style="margin: 6px 0 2px; font-size: 0.92rem; color: var(--accent);">4. クレジット & ライセンス</h4>
+        <p style="margin: 0 0 6px; color: var(--muted);">
+          ・TED / GRIT編の構文・フレーズは、アンジェラ・リー・ダックワース氏のTED Talk「Grit: the power of passion and perseverance」の学術的理念に敬意を表し、クリエイティブ・コモンズ（CC BY-NC-ND 4.0）の非営利・教育的趣旨に基づき作成・引用されています。<br>
+          ・「瞬間英作文」はベレ出版および森沢洋介氏の登録商標です。本アプリは独自の型反復・パターンプラクティスメソッドを採用した独立した学習ツールです。
+        </p>
+      </div>
+      <button type="button" class="btn primary big" id="legal-dialog-ok-btn" style="margin-top: 14px;">閉じる</button>
+    </div>
+  </dialog>
+
+  <!-- PWAホーム画面追加手順ダイアログ -->
+  <dialog id="pwa-guide-dialog" class="badge-detail-dialog" closedby="any" aria-labelledby="pwa-guide-title">
+    <div class="badge-detail-content" style="text-align:left;">
+      <div class="dialog-header">
+        <h3 id="pwa-guide-title">📲 ホーム画面に追加する方法</h3>
+        <button type="button" class="icon-btn" id="close-pwa-guide" aria-label="閉じる"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"></use></svg></button>
+      </div>
+      <div style="font-size: 0.85rem; line-height: 1.6; color: var(--text); margin-top: 10px;">
+        <div style="margin-bottom: 12px; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;">
+          <strong style="color: var(--accent); display:block; margin-bottom: 4px;">🍎 iPhone (Safari) の場合:</strong>
+          <ol style="margin: 0; padding-left: 18px; color: var(--muted); font-size: 0.82rem;">
+            <li>画面下の <strong>「共有アイコン（四角から上矢印 ⎋）」</strong> をタップ</li>
+            <li>メニューをスクロールして <strong>「ホーム画面に追加」</strong> を選択</li>
+            <li>右上の <strong>「追加」</strong> をタップすると、ホーム画面に専用アイコンが作成されます！</li>
+          </ol>
+        </div>
+        <div style="padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;">
+          <strong style="color: var(--accent); display:block; margin-bottom: 4px;">🤖 Android (Chrome) の場合:</strong>
+          <ol style="margin: 0; padding-left: 18px; color: var(--muted); font-size: 0.82rem;">
+            <li>画面右上の <strong>「メニュー（︙）」</strong> をタップ</li>
+            <li><strong>「アプリをインストール」</strong> または <strong>「ホーム画面に追加」</strong> を選択</li>
+          </ol>
+        </div>
+      </div>
+      <button type="button" class="btn primary big" id="pwa-guide-ok-btn" style="margin-top: 16px;">わかった！</button>
+    </div>
+  </dialog>
+
+  <!-- PWAホーム画面追加案内バナー -->
+  <aside id="pwa-install-banner" class="pwa-install-banner" hidden aria-label="ホーム画面追加の案内">
+    <div class="pwa-banner-left">
+      <img src="apple-touch-icon.png" alt="" class="pwa-banner-icon" width="36" height="36">
+      <div class="pwa-banner-text">
+        <strong>ホーム画面に追加してアプリ化</strong>
+        <p>全画面・完全オフライン・快適スワイプで練習できます</p>
+      </div>
+    </div>
+    <div class="pwa-banner-right">
+      <button type="button" class="btn small primary" id="pwa-open-guide-btn">追加方法</button>
+      <button type="button" class="icon-btn-sub" id="pwa-banner-close-btn" aria-label="閉じる"><svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-close"></use></svg></button>
+    </div>
+  </aside>
+
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=35"></script>
-  <script src="app.js?v=35"></script>
+  <script src="data.js?v=36"></script>
+  <script src="app.js?v=36"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

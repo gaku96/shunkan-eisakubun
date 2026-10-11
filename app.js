@@ -59,7 +59,7 @@
     autoSpeak: true,
     showHint: true,
     typingMode: false,
-    ttsEngine: "gemini", // "bundled", "gemini", or "browser"
+    ttsEngine: "bundled", // "bundled", "gemini", or "browser"
     geminiApiKey: "",
     geminiModel: "gemini-3.8-flash-tts",
     geminiVoice: "Kore", // Kore, Puck, Aoede, Fenrir, Charon
@@ -326,8 +326,11 @@
       const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (raw && typeof raw === "object") {
         const settings = { ...DEFAULT_SETTINGS, ...raw.settings };
-        if (settings.geminiApiKey && settings.ttsEngine === "bundled") {
+        if (settings.geminiApiKey && settings.ttsEngine === "bundled" && raw.settings?.ttsEngine === "gemini") {
           settings.ttsEngine = "gemini";
+        }
+        if (!settings.geminiApiKey && settings.ttsEngine === "gemini") {
+          settings.ttsEngine = "bundled";
         }
         if (raw.settings && (raw.settings.speechRate === 1 || raw.settings.speechRate === "1" || !raw.settings.speechRate)) {
           settings.speechRate = 1.15;
@@ -361,6 +364,13 @@
   }
   let state = loadState();
   const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+  // 🔒 iOS Safari ITP / Android 自動削除対策（ストレージ永続化要請）
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().then((persisted) => {
+      if (persisted) console.log("Storage persistence enabled.");
+    }).catch(() => {});
+  }
 
   function showToast(msg) {
     let t = $("#app-toast");
@@ -1385,6 +1395,23 @@
     stopSession();
     showView("result");
   }
+
+  // 📢 結果シェア（X / Web Share API）
+  function shareResult() {
+    const streak = currentStreak();
+    const courseName = getActiveCourse() === "grit" ? "TED・知的思考GRIT編" : "日常・口語編";
+    const summaryText = $("#result-summary")?.textContent || "今日の学習完了！";
+    const text = `【瞬間パターンプラクティス】\n今日の練習を完了！🔥 連続${streak}日目達成（${courseName}）\n${summaryText}\n#瞬間パターンプラクティス #英語学習 #英会話`;
+    const url = window.location.href.split("#")[0];
+
+    if (navigator.share) {
+      navigator.share({ title: "瞬間パターンプラクティス", text, url }).catch(() => {});
+    } else {
+      const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+      window.open(tweetUrl, "_blank", "noopener,noreferrer");
+    }
+  }
+  $("#result-share-btn")?.addEventListener("click", shareResult);
 
   // ---------- 音声フォーマット変換（PCM/WAV） ----------
   function base64ToBlob(base64, mimeType = "audio/wav") {
@@ -4029,12 +4056,120 @@ ${targetPatterns}
   $("#shield-modal-ok-btn")?.addEventListener("click", () => {
     $("#shield-dialog")?.close();
   });
+  // 📜 利用規約・クレジットモーダルイベント
+  $("#open-legal-dialog")?.addEventListener("click", () => {
+    $("#legal-dialog")?.showModal();
+  });
+  $("#close-legal-dialog")?.addEventListener("click", () => {
+    $("#legal-dialog")?.close();
+  });
+  $("#legal-dialog-ok-btn")?.addEventListener("click", () => {
+    $("#legal-dialog")?.close();
+  });
+
+  // 📲 PWAインストール案内バナー & 手順モーダル
+  function checkPwaInstallBanner() {
+    const isStandalone = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+    if (isStandalone) return;
+    const dismissed = localStorage.getItem("pwa-banner-dismissed");
+    if (dismissed) return;
+
+    const banner = $("#pwa-install-banner");
+    if (banner) {
+      setTimeout(() => {
+        if (!isStandalone && !localStorage.getItem("pwa-banner-dismissed")) {
+          banner.hidden = false;
+        }
+      }, 2500);
+    }
+  }
+
+  $("#pwa-open-guide-btn")?.addEventListener("click", () => {
+    $("#pwa-guide-dialog")?.showModal();
+  });
+  $("#close-pwa-guide")?.addEventListener("click", () => {
+    $("#pwa-guide-dialog")?.close();
+  });
+  $("#pwa-guide-ok-btn")?.addEventListener("click", () => {
+    $("#pwa-guide-dialog")?.close();
+  });
+  $("#pwa-banner-close-btn")?.addEventListener("click", () => {
+    const banner = $("#pwa-install-banner");
+    if (banner) banner.hidden = true;
+    localStorage.setItem("pwa-banner-dismissed", "true");
+  });
+
+  // 📶 全音声一括ダウンロード（完全オフライン化）
+  let isBulkDownloading = false;
+  async function startBulkAudioDownload() {
+    if (isBulkDownloading) return;
+    isBulkDownloading = true;
+    const btn = $("#bulk-download-btn");
+    const box = $("#bulk-download-box");
+    const progress = $("#bulk-download-progress");
+    const status = $("#bulk-download-status");
+    if (btn) btn.disabled = true;
+    if (box) box.hidden = false;
+
+    const audioUrls = new Set();
+    for (const card of ALL_CARDS) {
+      const audioKey = card.audioId || getCustomAudioId(card) || card.id;
+      if (audioKey && !audioKey.startsWith("c_")) {
+        audioUrls.add(`audio/${audioKey}.mp3`);
+      }
+    }
+    const urls = Array.from(audioUrls);
+    let completed = 0;
+    const total = urls.length;
+    if (progress) {
+      progress.max = total;
+      progress.value = 0;
+    }
+
+    try {
+      const concurrency = 6;
+      let currentIndex = 0;
+
+      const worker = async () => {
+        while (currentIndex < urls.length) {
+          const idx = currentIndex++;
+          const url = urls[idx];
+          try {
+            await fetch(url, { cache: "force-cache" });
+          } catch (e) {
+            // スキップ
+          }
+          completed++;
+          if (progress) progress.value = completed;
+          if (status) status.textContent = `保存中... ${completed} / ${total} 問 (${Math.round((completed / total) * 100)}%)`;
+        }
+      };
+
+      const workers = [];
+      for (let i = 0; i < concurrency; i++) workers.push(worker());
+      await Promise.all(workers);
+
+      if (status) status.textContent = `✅ 全${total}問の音声を保存しました！オフラインで利用可能です。`;
+      if (btn) {
+        btn.textContent = "保存完了 ✓";
+        btn.disabled = false;
+      }
+      showToast("✅ 全音声の一括保存が完了しました！");
+    } catch (err) {
+      if (status) status.textContent = `⚠️ エラー: ${err.message}`;
+      if (btn) btn.disabled = false;
+    } finally {
+      isBulkDownloading = false;
+    }
+  }
+  $("#bulk-download-btn")?.addEventListener("click", startBulkAudioDownload);
 
   updateBrandSub();
   updateCourseSwitchUI();
   checkAchievements(false);
   checkStreakShield();
   checkShieldReward();
+  checkPwaInstallBanner();
   initSwipeCard();
   showView("home");
 })();
