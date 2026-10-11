@@ -222,6 +222,42 @@ main {
 .stat-card.streak {
   background: linear-gradient(135deg, #fb923c, #f43f5e); color: #fff; border: none;
 }
+.stat-card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.streak-shield-btn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.streak-shield-btn:hover {
+  background: rgba(255, 255, 255, 0.32);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+.streak-shield-btn:active {
+  transform: scale(0.94);
+}
+.streak-shield-btn .ui-icon {
+  width: 1.1em;
+  height: 1.1em;
+  color: #fff;
+  --icon-pop: #fff;
+}
 .stat-label { margin: 0; font-size: .8rem; opacity: .8; }
 .stat-value { margin: 4px 0 0; font-size: 2rem; font-weight: 800; line-height: 1.1; }
 .stat-value small { font-size: .9rem; font-weight: 600; margin-left: 2px; opacity: .8; }
@@ -620,8 +656,23 @@ progress.done::-moz-progress-bar { background: var(--good); }
 .cal-dot.completed {
   background: var(--good);
 }
+.cal-dot.shielded {
+  background: #f97316;
+}
 .cal-dot.partial {
   background: var(--accent);
+}
+.cal-day.status-shielded {
+  background: color-mix(in srgb, #f97316 15%, var(--surface));
+  border-color: color-mix(in srgb, #f97316 45%, transparent);
+  color: #ea580c;
+}
+.cal-day.status-shielded::after {
+  content: "🛡️";
+  position: absolute;
+  bottom: 2px;
+  font-size: 0.58rem;
+  line-height: 1;
 }
 .calendar-footer-text {
   margin-left: auto;
@@ -868,6 +919,60 @@ progress.done::-moz-progress-bar { background: var(--good); }
 .type-result { margin: 0; font-size: .9rem; font-weight: 600; }
 .type-result.ok { color: var(--good); }
 .type-result.ng { color: var(--hard); }
+
+/* 💡 ニュアンス解説 & 💬 別解ボックス */
+.card-detail-box {
+  width: 100%;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+.card-detail-block {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+.detail-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+  margin-bottom: 5px;
+}
+.detail-label .ui-icon {
+  width: 1.05em;
+  height: 1.05em;
+}
+.card-nuance-text {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+.card-alts-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.card-alt-item {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--accent);
+  padding: 6px 12px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  border-left: 3px solid var(--icon-pop, #f97316);
+  border-radius: 0 8px 8px 0;
+  line-height: 1.35;
+}
 
 .actions { display: flex; gap: 10px; }
 .actions[hidden] { display: none; }
@@ -1498,6 +1603,92 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
 }
 .badge-detail-status.unlocked {
   color: var(--good);
+}
+
+/* 🛡️ ストリーク保護モーダル */
+.shield-modal-content {
+  text-align: center;
+}
+.shield-hero-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 16px;
+  padding: 16px;
+  background: color-mix(in srgb, #f97316 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, #f97316 25%, transparent);
+  border-radius: 16px;
+}
+.shield-hero-icon-wrap {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
+}
+.shield-big-icon {
+  width: 36px;
+  height: 36px;
+  color: #fff;
+  --icon-pop: #ffedd5;
+}
+.shield-stock-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+.shield-stock-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-weight: 700;
+  color: #ea580c;
+}
+.shield-stock-pill strong {
+  font-size: 1.15rem;
+  margin-right: 2px;
+}
+.shield-explanation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  margin-top: 6px;
+}
+.shield-expl-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.shield-expl-bullet {
+  font-size: 1.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.shield-expl-body strong {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.shield-expl-body p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.45;
 }
 
 /* 🎉 紙吹雪 Canvas */
@@ -2418,5 +2609,31 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition: none !important; }
+}
+
+/* 🍞 トースト通知 */
+.app-toast {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translate(-50%, -120%);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  z-index: 10000;
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  max-width: 90vw;
+  text-align: center;
+}
+.app-toast.show {
+  transform: translate(-50%, 0);
+  opacity: 1;
 }
 

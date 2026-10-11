@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターンプラクティス | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css?v=34">
+  <link rel="stylesheet" href="style.css?v=35">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -183,6 +183,10 @@
       <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     </symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M9 12l2 2 4-4" fill="none" stroke="var(--icon-pop, #f97316)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
   </defs>
 </svg>
   <header class="app-header">
@@ -224,7 +228,13 @@
 
       <div class="stats-grid">
         <div class="stat-card streak">
-          <p class="stat-label">連続学習</p>
+          <div class="stat-card-top-row">
+            <p class="stat-label">連続学習</p>
+            <button type="button" class="streak-shield-btn" id="open-shield-modal" aria-label="ストリーク保護シールドを確認">
+              <svg class="ui-icon" aria-hidden="true"><use href="#icon-shield"></use></svg>
+              <span>シールド: <strong id="shield-count-val">1</strong>/3</span>
+            </button>
+          </div>
           <p class="stat-value"><span id="stat-streak">0</span><small>日</small></p>
           <p class="stat-sub" id="streak-message"></p>
         </div>
@@ -348,6 +358,7 @@
         <div class="calendar-grid" id="calendar-grid" role="grid" aria-label="月間学習カレンダー"></div>
         <div class="calendar-footer" id="cal-footer">
           <span class="calendar-legend-item"><i class="cal-dot completed"></i> 目標達成 (✓)</span>
+          <span class="calendar-legend-item"><i class="cal-dot shielded"></i> 🛡️ 保護発動</span>
           <span class="calendar-legend-item"><i class="cal-dot partial"></i> 学習あり</span>
           <span class="calendar-footer-text" id="cal-footer-text">日付をタップすると詳細を表示</span>
         </div>
@@ -405,6 +416,18 @@
             <span class="tts-badge" id="tts-source" aria-live="polite"></span>
           </div>
           <p class="answer-note" id="card-note"></p>
+
+          <!-- 💡 ニュアンス解説 & 💬 別解ボックス -->
+          <div class="card-detail-box" id="card-detail-box">
+            <div class="card-detail-block" id="card-nuance-block">
+              <span class="detail-label"><svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-lightbulb"></use></svg> ネイティブのニュアンス</span>
+              <p class="card-nuance-text" id="card-nuance-text"></p>
+            </div>
+            <div class="card-detail-block" id="card-alts-block">
+              <span class="detail-label"><svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-speech"></use></svg> 自然な別解・言い換え</span>
+              <ul class="card-alts-list" id="card-alts-list"></ul>
+            </div>
+          </div>
         </div>
 
         <div class="card-tap-cue" id="card-tap-cue">
@@ -944,13 +967,54 @@
         <p class="badge-detail-status" id="badge-detail-status">未達成 🔒</p>
       </div>
     </div>
+  <!-- ストリーク保護モーダル -->
+  <dialog id="shield-dialog" class="badge-detail-dialog" closedby="any" aria-labelledby="shield-dialog-title">
+    <div class="badge-detail-content shield-modal-content">
+      <div class="dialog-header">
+        <h3 id="shield-dialog-title">🛡️ ストリーク保護システム</h3>
+        <button type="button" class="icon-btn" id="close-shield-modal" aria-label="閉じる"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"></use></svg></button>
+      </div>
+      <div class="shield-hero-box">
+        <div class="shield-hero-icon-wrap">
+          <svg class="ui-icon shield-big-icon" aria-hidden="true"><use href="#icon-shield"></use></svg>
+        </div>
+        <div class="shield-stock-row">
+          <span class="shield-stock-label">現在の保有ストック:</span>
+          <span class="shield-stock-pill"><strong id="modal-shield-count">1</strong> / 3 個</span>
+        </div>
+      </div>
+      <div class="shield-explanation-list">
+        <div class="shield-expl-item">
+          <div class="shield-expl-bullet">✨</div>
+          <div class="shield-expl-body">
+            <strong>うっかり忘れても安心（自動発動）</strong>
+            <p>1日学習できなかった日があっても、シールドを1つ自動消費して連続ストリーク記録をそのまま維持・保護します。</p>
+          </div>
+        </div>
+        <div class="shield-expl-item">
+          <div class="shield-expl-bullet">🎁</div>
+          <div class="shield-expl-body">
+            <strong>7日連続学習ごとに+1個プレゼント！</strong>
+            <p>7日、14日、21日…と7日刻みのストリークを達成するたびにシールドが1個補充されます（最大3個まで保有可能）。</p>
+          </div>
+        </div>
+        <div class="shield-expl-item">
+          <div class="shield-expl-bullet">🎉</div>
+          <div class="shield-expl-body">
+            <strong>ウェルカムギフト</strong>
+            <p>全ユーザーに初回スターターギフトとしてシールドが【1個】付与されています！</p>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="btn primary big" id="shield-modal-ok-btn" style="margin-top: 14px;">わかった！ 練習を続ける</button>
+    </div>
   </dialog>
 
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=34"></script>
-  <script src="app.js?v=34"></script>
+  <script src="data.js?v=35"></script>
+  <script src="app.js?v=35"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

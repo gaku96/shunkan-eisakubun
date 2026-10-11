@@ -340,13 +340,45 @@
           customCards: Array.isArray(raw.customCards) ? raw.customCards : [],
           achievements: raw.achievements || {},
           listeningCount: typeof raw.listeningCount === "number" ? raw.listeningCount : 0,
+          streakShields: typeof raw.streakShields === "number" ? raw.streakShields : 1, // 初期ギフト1個
+          shieldUsedDates: Array.isArray(raw.shieldUsedDates) ? raw.shieldUsedDates : [],
+          shieldAwardedMilestones: Array.isArray(raw.shieldAwardedMilestones) ? raw.shieldAwardedMilestones : [],
         };
       }
     } catch (e) { /* 破損データは無視して初期化 */ }
-    return { activeCourse: "conversation", settings: { ...DEFAULT_SETTINGS }, cards: {}, history: {}, customCards: [], achievements: {}, listeningCount: 0 };
+    return {
+      activeCourse: "conversation",
+      settings: { ...DEFAULT_SETTINGS },
+      cards: {},
+      history: {},
+      customCards: [],
+      achievements: {},
+      listeningCount: 0,
+      streakShields: 1,
+      shieldUsedDates: [],
+      shieldAwardedMilestones: [],
+    };
   }
   let state = loadState();
   const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+  function showToast(msg) {
+    let t = $("#app-toast");
+    if (!t) {
+      t = document.createElement("div");
+      t.id = "app-toast";
+      t.className = "app-toast";
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.remove("show");
+    void t.offsetWidth;
+    t.classList.add("show");
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => {
+      t.classList.remove("show");
+    }, 3800);
+  }
 
   const getActiveCourse = () => state.activeCourse || "conversation";
   const getActiveParts = () => (getActiveCourse() === "grit" ? (window.GRIT_PARTS || []) : window.PARTS);
@@ -408,6 +440,7 @@
 
   // ---------- ストリーク ----------
   function dayMet(k) {
+    if (Array.isArray(state.shieldUsedDates) && state.shieldUsedDates.includes(k)) return true;
     const h = state.history[k];
     return !!h && h.answered >= (h.goal || state.settings.dailyGoal);
   }
@@ -427,6 +460,48 @@
       prev = k;
     }
     return best;
+  }
+
+  // 🛡️ ストリーク保護シールド判定
+  function checkStreakShield() {
+    const tKey = todayKey();
+    const yKey = addDays(tKey, -1);
+    const byKey = addDays(tKey, -2);
+
+    if (!Array.isArray(state.shieldUsedDates)) state.shieldUsedDates = [];
+
+    // 「昨日が未達成」かつ「一昨日が達成されていた」かつ「シールド残数 > 0」かつ「昨日がまだ保護されていない」
+    if (!dayMet(yKey) && dayMet(byKey) && (state.streakShields || 0) > 0 && !state.shieldUsedDates.includes(yKey)) {
+      state.streakShields = Math.max(0, state.streakShields - 1);
+      state.shieldUsedDates.push(yKey);
+      save();
+      setTimeout(() => {
+        showToast(`🛡️ ストリーク保護が発動しました！ 昨日の記録を守りました（残りシールド: ${state.streakShields}/3）`);
+      }, 700);
+      return true;
+    }
+    return false;
+  }
+
+  // 🎁 7日連続ごとのシールド獲得判定
+  function checkShieldReward() {
+    const s = currentStreak();
+    if (s < 7) return;
+    if (!Array.isArray(state.shieldAwardedMilestones)) state.shieldAwardedMilestones = [];
+    const milestone = Math.floor(s / 7) * 7;
+    if (milestone >= 7 && !state.shieldAwardedMilestones.includes(milestone)) {
+      state.shieldAwardedMilestones.push(milestone);
+      const prev = state.streakShields || 0;
+      if (prev < 3) {
+        state.streakShields = Math.min(3, prev + 1);
+        save();
+        setTimeout(() => {
+          showToast(`🛡️ ${milestone}日連続達成！ ストリーク保護シールドを+1個獲得（現在: ${state.streakShields}/3）`);
+        }, 1200);
+      } else {
+        save();
+      }
+    }
   }
   const todayAnswered = () => state.history[todayKey()]?.answered || 0;
 
@@ -481,6 +556,10 @@
 
     $("#stat-streak").textContent = streak;
     $("#stat-best").textContent = bestStreak();
+    const shieldCountVal = $("#shield-count-val");
+    if (shieldCountVal) shieldCountVal.textContent = state.streakShields ?? 1;
+    const modalShieldCount = $("#modal-shield-count");
+    if (modalShieldCount) modalShieldCount.textContent = state.streakShields ?? 1;
     $("#streak-message").textContent = metToday
       ? "今日の目標達成！また明日も続けよう"
       : streak > 0
@@ -586,9 +665,12 @@
       cell.setAttribute("role", "gridcell");
       cell.dataset.date = k;
 
+      const isShielded = Array.isArray(state.shieldUsedDates) && state.shieldUsedDates.includes(k);
       if (isToday) cell.classList.add("today");
       if (isFuture) cell.classList.add("future");
-      if (met) {
+      if (isShielded) {
+        cell.classList.add("status-shielded");
+      } else if (met) {
         cell.classList.add("status-completed");
       } else if (ans > 0) {
         cell.classList.add("status-partial");
@@ -598,7 +680,7 @@
       }
 
       cell.innerHTML = `<span class="cal-day-num">${d}</span>`;
-      cell.setAttribute("aria-label", `${month + 1}月${d}日: ${ans}問解答${met ? " (目標達成)" : ""}`);
+      cell.setAttribute("aria-label", `${month + 1}月${d}日: ${ans}問解答${isShielded ? " (ストリーク保護発動)" : met ? " (目標達成)" : ""}`);
 
       cell.addEventListener("click", () => {
         calSelectedKey = k;
@@ -610,7 +692,7 @@
           if (isFuture) {
             footerText.textContent = `${month + 1}月${d}日: まだ学習していません`;
           } else {
-            const statusLabel = met ? " (目標達成！ 🎉)" : ans > 0 ? " (あと少し！)" : " (学習記録なし)";
+            const statusLabel = isShielded ? " (🛡️ ストリーク保護発動)" : met ? " (目標達成！ 🎉)" : ans > 0 ? " (あと少し！)" : " (学習記録なし)";
             footerText.textContent = `${month + 1}月${d}日: ${ans}問解答${statusLabel}`;
           }
         }
@@ -1025,6 +1107,10 @@
     $("#grade-actions").hidden = true;
     $("#tts-source").textContent = "";
     $("#tts-source").className = "tts-badge";
+    const nuanceEl = $("#card-nuance-text");
+    const altsListEl = $("#card-alts-list");
+    if (nuanceEl) nuanceEl.textContent = "";
+    if (altsListEl) altsListEl.replaceChildren();
 
     const form = $("#type-form");
     const input = $("#type-input");
@@ -1053,6 +1139,95 @@
     .replace(/[^a-z0-9' ]+/g, " ")
     .replace(/\s+/g, " ").trim();
 
+  // 💡 ネイティブニュアンス取得
+  function getCardNuance(card) {
+    if (!card) return "";
+    if (window.PATTERN_NUANCES && card.pattern && window.PATTERN_NUANCES[card.pattern.id]) {
+      return window.PATTERN_NUANCES[card.pattern.id];
+    }
+    if (card.pattern && card.pattern.note) {
+      return card.pattern.note;
+    }
+    return "日常会話でネイティブが頻繁に使う自然な定型表現です。";
+  }
+
+  // 💬 自然な言い換え・別解の自動生成ルール
+  function generateNaturalAlternatives(enText) {
+    if (!enText) return [];
+    const alts = new Set();
+    const pairs = [
+      [/\bI'd say\b/gi, "I would say"],
+      [/\bI would say\b/gi, "I'd say"],
+      [/\bI'm\b/gi, "I am"],
+      [/\bI am\b/gi, "I'm"],
+      [/\bit's\b/gi, "it is"],
+      [/\bit is\b/gi, "it's"],
+      [/\bhe's\b/gi, "he is"],
+      [/\bhe is\b/gi, "he's"],
+      [/\bshe's\b/gi, "she is"],
+      [/\bshe is\b/gi, "she's"],
+      [/\bthat's\b/gi, "that is"],
+      [/\bthat is\b/gi, "that's"],
+      [/\bthere's\b/gi, "there is"],
+      [/\bthere is\b/gi, "there's"],
+      [/\bwe're\b/gi, "we are"],
+      [/\bwe are\b/gi, "we're"],
+      [/\byou're\b/gi, "you are"],
+      [/\byou are\b/gi, "you're"],
+      [/\bthey're\b/gi, "they are"],
+      [/\bthey are\b/gi, "they're"],
+      [/\bdon't\b/gi, "do not"],
+      [/\bdo not\b/gi, "don't"],
+      [/\bdoesn't\b/gi, "does not"],
+      [/\bdoes not\b/gi, "doesn't"],
+      [/\bcan't\b/gi, "cannot"],
+      [/\bcannot\b/gi, "can't"],
+      [/\bwon't\b/gi, "will not"],
+      [/\bwill not\b/gi, "won't"],
+      [/\bisn't\b/gi, "is not"],
+      [/\bis not\b/gi, "isn't"],
+      [/\baren't\b/gi, "are not"],
+      [/\bare not\b/gi, "aren't"],
+      [/\baround\b/gi, "about"],
+      [/\babout\b/gi, "around"],
+      [/\bgonna\b/gi, "going to"],
+      [/\bgoing to\b/gi, "gonna"],
+      [/\bwanna\b/gi, "want to"],
+      [/\bwant to\b/gi, "wanna"],
+      [/\bgotta\b/gi, "got to"],
+      [/\bgot to\b/gi, "gotta"],
+      [/\byeah\b/gi, "yes"],
+      [/\b80%\b/g, "80 percent"],
+      [/\b10-minute\b/gi, "10 minute"]
+    ];
+
+    for (const [regex, expanded] of pairs) {
+      if (regex.test(enText)) {
+        const swapped = enText.replace(regex, (match) => {
+          const isCap = match[0] === match[0].toUpperCase();
+          return isCap ? (expanded[0].toUpperCase() + expanded.slice(1)) : expanded.toLowerCase();
+        });
+        if (swapped !== enText) alts.add(swapped);
+      }
+    }
+    return [...alts];
+  }
+
+  function getCardAlts(card) {
+    if (!card) return [];
+    const list = [];
+    if (window.CARD_ALTERNATIVES && window.CARD_ALTERNATIVES[card.id]) {
+      list.push(...window.CARD_ALTERNATIVES[card.id]);
+    }
+    const auto = generateNaturalAlternatives(card.en);
+    for (const a of auto) {
+      if (!list.includes(a) && a.toLowerCase().trim() !== card.en.toLowerCase().trim()) {
+        list.push(a);
+      }
+    }
+    return list;
+  }
+
   function reveal() {
     if (!session || session.revealed) return;
     session.revealed = true;
@@ -1062,11 +1237,40 @@
     if (fc) fc.classList.add("revealed");
 
     const card = session.queue[session.index];
+    const nuance = getCardNuance(card);
+    const alts = getCardAlts(card);
+
+    // 💡 ネイティブニュアンス解説
+    const nuanceEl = $("#card-nuance-text");
+    const nuanceBlock = $("#card-nuance-block");
+    if (nuanceEl && nuanceBlock) {
+      nuanceEl.textContent = nuance;
+      nuanceBlock.hidden = !nuance;
+    }
+
+    // 💬 自然な別解・言い換え
+    const altsBlock = $("#card-alts-block");
+    const altsListEl = $("#card-alts-list");
+    if (altsBlock && altsListEl) {
+      if (alts.length > 0) {
+        altsBlock.hidden = false;
+        altsListEl.replaceChildren(...alts.slice(0, 3).map((alt) => {
+          const li = document.createElement("li");
+          li.className = "card-alt-item";
+          li.textContent = alt;
+          return li;
+        }));
+      } else {
+        altsBlock.hidden = true;
+      }
+    }
+
     if (state.settings.typingMode) {
       const input = $("#type-input");
       input.disabled = true;
       const typed = normalize(input.value);
       const answer = normalize(card.en);
+      const normalizedAlts = alts.map(normalize);
       const res = $("#type-result");
       res.hidden = false;
       if (!typed) {
@@ -1074,6 +1278,9 @@
         res.className = "type-result ng";
       } else if (typed === answer) {
         res.textContent = "✓ 完全一致！";
+        res.className = "type-result ok";
+      } else if (normalizedAlts.includes(typed)) {
+        res.textContent = "✓ 正解！（自然な別解表現と一致）";
         res.className = "type-result ok";
       } else {
         const aw = answer.split(" ");
@@ -1168,6 +1375,7 @@
       state.achievements.night_owl = { unlockedAt: new Date().toISOString() };
     }
     save();
+    checkShieldReward();
 
     if (rate === 100 && total >= 10) {
       launchConfetti(2500);
@@ -3806,9 +4014,27 @@ ${targetPatterns}
     }
   });
 
+  // 🛡️ ストリーク保護モーダルイベント
+  $("#open-shield-modal")?.addEventListener("click", () => {
+    const dialog = $("#shield-dialog");
+    if (dialog) {
+      const modalShieldCount = $("#modal-shield-count");
+      if (modalShieldCount) modalShieldCount.textContent = state.streakShields ?? 1;
+      dialog.showModal();
+    }
+  });
+  $("#close-shield-modal")?.addEventListener("click", () => {
+    $("#shield-dialog")?.close();
+  });
+  $("#shield-modal-ok-btn")?.addEventListener("click", () => {
+    $("#shield-dialog")?.close();
+  });
+
   updateBrandSub();
   updateCourseSwitchUI();
   checkAchievements(false);
+  checkStreakShield();
+  checkShieldReward();
   initSwipeCard();
   showView("home");
 })();
