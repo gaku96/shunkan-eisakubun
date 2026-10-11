@@ -1100,55 +1100,68 @@
 
   // ---------- Gemini 3.8 TTS API呼び出し ----------
   async function generateGeminiSpeech(text, apiKey, model = "gemini-3.8-flash-tts", voice = "Kore", lang = "en", accent = "us") {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
-    const stylePrompt = lang === "ja"
-      ? "natural, clear, polite and warm Japanese narration by a native speaker with authentic standard Tokyo intonation"
-      : (ACCENT_STYLE_PROMPTS[accent] || ACCENT_STYLE_PROMPTS.us);
+    const callApi = async (targetModel) => {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const stylePrompt = lang === "ja"
+        ? "natural, clear, polite and warm Japanese narration by a native speaker with authentic standard Tokyo intonation"
+        : (ACCENT_STYLE_PROMPTS[accent] || ACCENT_STYLE_PROMPTS.us);
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: text,
-                speechMetadata: {
-                  style: stylePrompt
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: text,
+                  speechMetadata: {
+                    style: stylePrompt
+                  }
                 }
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          responseModalities: ["AUDIO"],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: {
-                voiceName: voice
+              ]
+            }
+          ],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: {
+                  voiceName: voice
+                }
               }
             }
           }
-        }
-      })
-    });
+        })
+      });
 
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      const msg = errJson.error?.message || `HTTP ${res.status}`;
-      throw new Error(msg);
-    }
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        const msg = errJson.error?.message || `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
 
-    const data = await res.json();
-    const candidate = data.candidates?.[0];
-    const part = candidate?.content?.parts?.[0];
-    const inline = part?.inlineData;
-    if (!inline || !inline.data) {
-      throw new Error("APIから音声データが返されませんでした");
+      const data = await res.json();
+      const candidate = data.candidates?.[0];
+      const part = candidate?.content?.parts?.[0];
+      const inline = part?.inlineData;
+      if (!inline || !inline.data) {
+        throw new Error("APIから音声データが返されませんでした");
+      }
+      return base64ToBlob(inline.data, inline.mimeType || "audio/wav");
+    };
+
+    try {
+      return await callApi(model);
+    } catch (err) {
+      // 1日あたりのモデル上限（limit: 100/day）に達した場合、別モデル（flash-lite-tts）の枠へ自動フォールバック！
+      if (model === "gemini-3.8-flash-tts" && (err.message.includes("per_model_per_day") || err.message.includes("limit: 100") || err.message.includes("quota") || err.message.includes("429"))) {
+        console.warn("gemini-3.8-flash-tts quota exhausted, auto-trying gemini-3.8-flash-lite-tts...");
+        return await callApi("gemini-3.8-flash-lite-tts");
+      }
+      throw err;
     }
-    return base64ToBlob(inline.data, inline.mimeType || "audio/wav");
   }
 
   // ---------- 音声再生エンジン ----------
@@ -1538,7 +1551,9 @@
         console.warn("Gemini TTS エラー, 同梱音声へフォールバック:", err);
         const msg = String(err.message || err);
         lastTtsError = msg;
-        if (msg.includes("free_tier_requests") || msg.includes("limit: 10")) {
+        if (msg.includes("per_model_per_day") || msg.includes("limit: 100")) {
+          geminiFailReason = "本日の上限(100件/日)到達";
+        } else if (msg.includes("free_tier_requests") || msg.includes("limit: 10")) {
           geminiFailReason = "無料枠扱い(キー再作成で解消)";
         } else if (msg.includes("429") || msg.includes("quota") || msg.includes("ResourceExhausted")) {
           geminiFailReason = "API制限/残高(429)";
