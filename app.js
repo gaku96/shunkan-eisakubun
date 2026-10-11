@@ -1161,7 +1161,7 @@
     const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
 
     if (isBundled) {
-      if (badge) badge.textContent = "✨ ネイティブ音声（オフライン）";
+      if (badge) badge.textContent = "✨ リアル口語ネイティブ（崩し・リンキング）";
       const ok = await playAudioUrlPromise(`audio/${audioKey}.mp3`, rate);
       if (ok) return;
     }
