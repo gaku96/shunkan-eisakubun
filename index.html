@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間英作文 | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
   <header class="app-header">
@@ -66,6 +66,23 @@
         </div>
       </div>
 
+      <!-- 🎧 ハンズフリー耳トレカード -->
+      <div class="card listening-hero-card">
+        <div class="card-head-row">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="ai-badge" style="background: rgba(249, 115, 22, 0.12); color: var(--fire); border-color: rgba(249, 115, 22, 0.3);">🎧 NEW</span>
+            <h2 style="margin:0;">聞き流し・耳トレ</h2>
+          </div>
+          <button type="button" class="btn small primary" id="open-listening-btn">▶︎ 再生する</button>
+        </div>
+        <p class="card-subtext" style="margin: 6px 0 10px; font-size: 0.88rem; color: var(--muted);">画面を見ずに通勤・散歩・家事中に耳だけで瞬間英作文！日本語 → 思考ポーズ → ネイティブ英語を自動再生します。</p>
+        <div class="listening-card-pills">
+          <span class="tag-pill">📻 バックグラウンド再生</span>
+          <span class="tag-pill">🎧 イヤホン操作対応</span>
+          <span class="tag-pill">🔀 シャッフル/ループ</span>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-head-row">
           <h2>練習メニュー</h2>
@@ -75,6 +92,7 @@
           <button type="button" class="btn" id="start-weak">苦手な例文を復習 <span class="pill" id="weak-count">0</span></button>
           <button type="button" class="btn" id="start-random">全範囲からランダム</button>
         </div>
+        <button type="button" class="btn report-btn" id="menu-start-listening" style="margin-top: 10px; width: 100%;">🎧 耳トレ・聞き流しを再生する</button>
         <h3>パート別</h3>
         <div class="menu-grid" id="part-buttons"></div>
       </div>
@@ -91,7 +109,7 @@
       <div class="card badge-card">
         <div class="card-head-row">
           <h2>🏆 実績・バッジ</h2>
-          <span class="badge-total-pill" id="badge-unlocked-summary">0 / 16 獲得</span>
+          <span class="badge-total-pill" id="badge-unlocked-summary">0 / 18 獲得</span>
         </div>
         <p class="card-subtext">学習を継続してバッジを集めよう！タップで達成条件と進捗を確認できます。</p>
         <div class="badge-grid" id="badge-grid"></div>
@@ -234,6 +252,117 @@
           <summary><strong>全30構文の成績一覧を見る（タップで展開）</strong></summary>
           <div class="all-patterns-matrix" id="rep-all-matrix"></div>
         </details>
+      </div>
+    </section>
+
+    <!-- 🎧 聞き流し・耳トレ -->
+    <section id="view-listening" class="view" hidden aria-labelledby="listening-title">
+      <div class="practice-top">
+        <button type="button" class="btn ghost small" id="quit-listening">✕ やめる</button>
+        <h1 id="listening-title" class="practice-title">🎧 聞き流し・耳トレ</h1>
+        <span id="listening-counter" style="font-weight:700; color:var(--accent);">1 / 120</span>
+      </div>
+
+      <!-- 再生範囲フィルター -->
+      <div class="listening-filter-bar" id="listening-filter-bar">
+        <button type="button" class="filter-pill active" data-range="all">全範囲 (120)</button>
+        <button type="button" class="filter-pill" data-range="weak">苦手のみ <span class="pill" id="listening-weak-count">0</span></button>
+        <button type="button" class="filter-pill" data-range="p1">Part 1</button>
+        <button type="button" class="filter-pill" data-range="p2">Part 2</button>
+        <button type="button" class="filter-pill" data-range="p3">Part 3</button>
+        <button type="button" class="filter-pill" data-range="p4">Part 4</button>
+        <button type="button" class="filter-pill" data-range="p5">Part 5</button>
+        <button type="button" class="filter-pill" data-range="custom" id="filter-pill-custom" hidden>カスタム</button>
+      </div>
+
+      <!-- メイン・オーディオデッキカード -->
+      <article class="listening-deck-card" id="listening-deck-card">
+        <div class="listening-deck-head">
+          <span class="pattern-chip" id="listening-pattern-chip">Part 1 / 型01: I'd say ~</span>
+          <div class="listening-step-pill step-ja" id="listening-step-pill">
+            <span class="listening-step-dot"></span>
+            <span id="listening-step-text">準備中...</span>
+          </div>
+        </div>
+
+        <div class="listening-phase-progress">
+          <div class="listening-phase-bar" id="listening-phase-bar"></div>
+        </div>
+
+        <!-- 日本語 -->
+        <div class="listening-prompt-section">
+          <span class="listening-label">🇯🇵 日本語</span>
+          <p class="listening-prompt-ja" id="listening-prompt-ja">...</p>
+        </div>
+
+        <!-- サウンドウェーブ -->
+        <div class="listening-soundwave" id="listening-soundwave">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+
+        <!-- 英語 -->
+        <div class="listening-answer-section" id="listening-answer-section">
+          <div class="listening-en-head">
+            <span class="listening-label">🇺🇸 英語</span>
+            <span class="listening-tts-source" id="listening-tts-source">✨ ネイティブ音声</span>
+          </div>
+          <p class="listening-answer-en blurred" id="listening-answer-en">...</p>
+          <p class="listening-pattern-note" id="listening-pattern-note"></p>
+        </div>
+      </article>
+
+      <!-- プレーヤー操作パネル -->
+      <div class="card listening-controls-card">
+        <!-- プログレスバー -->
+        <div class="listening-timeline">
+          <progress id="listening-session-progress" max="100" value="0" aria-label="再生進捗"></progress>
+        </div>
+
+        <!-- コントロールボタン -->
+        <div class="listening-transport">
+          <button type="button" class="ctrl-btn-sub" id="listening-btn-shuffle" aria-label="シャッフル" title="シャッフル（S）">🔀</button>
+          <button type="button" class="ctrl-btn-skip" id="listening-btn-prev" aria-label="前の例文" title="前の例文（←）">⏮️</button>
+          <button type="button" class="ctrl-btn-main" id="listening-btn-play" aria-label="再生・一時停止" title="再生/一時停止（Space）">
+            <span id="listening-play-icon">▶︎</span>
+          </button>
+          <button type="button" class="ctrl-btn-skip" id="listening-btn-next" aria-label="次の例文" title="次の例文（→）">⏭️</button>
+          <button type="button" class="ctrl-btn-sub active" id="listening-btn-loop" aria-label="ループ再生" title="ループ再生（L）">🔁</button>
+        </div>
+
+        <!-- クイック設定ストリップ -->
+        <div class="listening-settings-strip">
+          <div class="l-setting-group">
+            <span class="l-setting-label">⏱️ 思考ポーズ</span>
+            <div class="btn-toggle-group" id="l-pause-toggles">
+              <button type="button" class="btn-toggle" data-val="1">1秒</button>
+              <button type="button" class="btn-toggle" data-val="2">2秒</button>
+              <button type="button" class="btn-toggle active" data-val="3">3秒</button>
+              <button type="button" class="btn-toggle" data-val="5">5秒</button>
+            </div>
+          </div>
+
+          <div class="l-setting-group">
+            <span class="l-setting-label">🔁 英語再生</span>
+            <div class="btn-toggle-group" id="l-repeat-toggles">
+              <button type="button" class="btn-toggle active" data-val="1">1回</button>
+              <button type="button" class="btn-toggle" data-val="2">2回連続</button>
+            </div>
+          </div>
+
+          <div class="l-setting-group">
+            <span class="l-setting-label">⚡️ 速度</span>
+            <div class="btn-toggle-group" id="l-speed-toggles">
+              <button type="button" class="btn-toggle" data-val="0.8">0.8x</button>
+              <button type="button" class="btn-toggle active" data-val="1.0">1.0x</button>
+              <button type="button" class="btn-toggle" data-val="1.2">1.2x</button>
+            </div>
+          </div>
+
+          <div class="l-setting-group">
+            <span class="l-setting-label">👁️ 英語の事前表示</span>
+            <button type="button" class="btn small ghost" id="l-toggle-show-en">思考中は隠す（テスト）</button>
+          </div>
+        </div>
       </div>
     </section>
   </main>
@@ -445,8 +574,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=9"></script>
-  <script src="app.js?v=9"></script>
+  <script src="data.js?v=10"></script>
+  <script src="app.js?v=10"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

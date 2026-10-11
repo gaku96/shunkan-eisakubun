@@ -128,10 +128,11 @@
           history: raw.history || {},
           customCards: Array.isArray(raw.customCards) ? raw.customCards : [],
           achievements: raw.achievements || {},
+          listeningCount: typeof raw.listeningCount === "number" ? raw.listeningCount : 0,
         };
       }
     } catch (e) { /* 破損データは無視して初期化 */ }
-    return { settings: { ...DEFAULT_SETTINGS }, cards: {}, history: {}, customCards: [], achievements: {} };
+    return { settings: { ...DEFAULT_SETTINGS }, cards: {}, history: {}, customCards: [], achievements: {}, listeningCount: 0 };
   }
   let state = loadState();
   const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -165,16 +166,22 @@
 
   // ---------- DOM ----------
   const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
   const views = {
     home: $("#view-home"), practice: $("#view-practice"),
     result: $("#view-result"), list: $("#view-list"),
     report: $("#view-report"),
+    listening: $("#view-listening"),
   };
   function showView(name) {
+    if (name !== "listening" && typeof stopListening === "function" && listening && listening.active) {
+      stopListening();
+    }
     for (const [k, el] of Object.entries(views)) if (el) el.hidden = k !== name;
     if (name === "home") renderHome();
     if (name === "list") renderList();
     if (name === "report") renderReport();
+    if (name === "listening") renderListeningView();
     window.scrollTo({ top: 0 });
   }
   document.addEventListener("click", (e) => {
@@ -863,6 +870,7 @@
   // ---------- 音声再生エンジン ----------
   let currentAudio = null;
   let browserVoice = null;
+  let browserJaVoice = null;
 
   function stopAudio() {
     if (currentAudio) {
@@ -884,10 +892,16 @@
 
   function pickBrowserVoice() {
     if (!("speechSynthesis" in window)) return;
-    const voices = speechSynthesis.getVoices().filter((v) => v.lang.startsWith("en"));
-    const prefer = ["Samantha", "Google US English", "Alex", "Microsoft Aria", "Microsoft Jenny"];
-    browserVoice = prefer.map((n) => voices.find((v) => v.name.includes(n))).find(Boolean)
-      || voices.find((v) => v.lang === "en-US") || voices[0] || null;
+    const voices = speechSynthesis.getVoices();
+    const enVoices = voices.filter((v) => v.lang.startsWith("en"));
+    const preferEn = ["Samantha", "Google US English", "Alex", "Microsoft Aria", "Microsoft Jenny"];
+    browserVoice = preferEn.map((n) => enVoices.find((v) => v.name.includes(n))).find(Boolean)
+      || enVoices.find((v) => v.lang === "en-US") || enVoices[0] || null;
+
+    const jaVoices = voices.filter((v) => v.lang.startsWith("ja"));
+    const preferJa = ["Kyoko", "Otoya", "Google 日本語", "Microsoft Nanami"];
+    browserJaVoice = preferJa.map((n) => jaVoices.find((v) => v.name.includes(n))).find(Boolean)
+      || jaVoices.find((v) => v.lang.startsWith("ja")) || null;
   }
   if ("speechSynthesis" in window) {
     pickBrowserVoice();
@@ -902,6 +916,132 @@
     if (browserVoice) u.voice = browserVoice;
     u.rate = Number(state.settings.speechRate) || 1;
     speechSynthesis.speak(u);
+  }
+
+  function speakJapanesePromise(text) {
+    return new Promise((resolve) => {
+      if (!("speechSynthesis" in window)) { resolve(); return; }
+      stopAudio();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "ja-JP";
+      if (browserJaVoice) u.voice = browserJaVoice;
+      u.rate = 1.0;
+      let finished = false;
+      const safety = setTimeout(() => {
+        if (!finished) { finished = true; resolve(); }
+      }, Math.max(3000, text.length * 400));
+
+      u.onend = () => {
+        if (!finished) { finished = true; clearTimeout(safety); resolve(); }
+      };
+      u.onerror = () => {
+        if (!finished) { finished = true; clearTimeout(safety); resolve(); }
+      };
+      speechSynthesis.speak(u);
+    });
+  }
+
+  function playAudioUrlPromise(url, rate = 1) {
+    return new Promise((resolve) => {
+      stopAudio();
+      const audio = new Audio(url);
+      currentAudio = audio;
+      audio.playbackRate = rate;
+      let finished = false;
+      const done = (result) => {
+        if (!finished) {
+          finished = true;
+          if (currentAudio === audio) currentAudio = null;
+          resolve(result);
+        }
+      };
+      audio.onended = () => done(true);
+      audio.onerror = () => done(false);
+      audio.play().catch(() => done(false));
+    });
+  }
+
+  function playBlobPromise(blob, rate = 1) {
+    return new Promise((resolve) => {
+      stopAudio();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      currentAudio = audio;
+      audio.playbackRate = rate;
+      let finished = false;
+      const done = (result) => {
+        if (!finished) {
+          finished = true;
+          URL.revokeObjectURL(url);
+          if (currentAudio === audio) currentAudio = null;
+          resolve(result);
+        }
+      };
+      audio.onended = () => done(true);
+      audio.onerror = () => { URL.revokeObjectURL(url); done(false); };
+      audio.play().catch(() => { URL.revokeObjectURL(url); done(false); });
+    });
+  }
+
+  function speakBrowserPromise(text, rate = 1) {
+    return new Promise((resolve) => {
+      if (!("speechSynthesis" in window)) { resolve(); return; }
+      stopAudio();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-US";
+      if (browserVoice) u.voice = browserVoice;
+      u.rate = rate;
+      let finished = false;
+      const safety = setTimeout(() => {
+        if (!finished) { finished = true; resolve(); }
+      }, Math.max(3000, text.length * 400));
+
+      u.onend = () => {
+        if (!finished) { finished = true; clearTimeout(safety); resolve(); }
+      };
+      u.onerror = () => {
+        if (!finished) { finished = true; clearTimeout(safety); resolve(); }
+      };
+      speechSynthesis.speak(u);
+    });
+  }
+
+  async function playEnglishCardPromise(card, rate = 1) {
+    const s = state.settings;
+    const badge = $("#listening-tts-source");
+    const audioKey = card.audioId || getCustomAudioId(card) || card.id;
+    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
+
+    if (isBundled) {
+      if (badge) badge.textContent = "✨ ネイティブ音声（オフライン）";
+      const ok = await playAudioUrlPromise(`audio/${audioKey}.mp3`, rate);
+      if (ok) return;
+    }
+
+    if (s.ttsEngine !== "browser") {
+      const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}`;
+      const cached = await getCachedAudio(cacheKey);
+      if (cached) {
+        if (badge) badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
+        const ok = await playBlobPromise(cached, rate);
+        if (ok) return;
+      }
+      if (s.geminiApiKey) {
+        try {
+          if (badge) badge.textContent = "✨ Gemini 生成中...";
+          const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice);
+          await setCachedAudio(cacheKey, blob);
+          if (badge) badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
+          const ok = await playBlobPromise(blob, rate);
+          if (ok) return;
+        } catch (err) {
+          console.warn("Gemini listening speech error:", err);
+        }
+      }
+    }
+
+    if (badge) badge.textContent = "ブラウザ音声";
+    await speakBrowserPromise(card.en, rate);
   }
 
   // iOS Safari用: 最初のタップ時にAudioオブジェクトとSpeechSynthesisの自動再生制限を解除
@@ -1158,6 +1298,24 @@
       desc: "夜遅く（22時〜翌4時）に学習セッションを完了する",
       check: (ctx) => !!ctx.hadNightOwl,
       progress: (ctx) => ({ current: ctx.hadNightOwl ? 1 : 0, target: 1, text: ctx.hadNightOwl ? "達成済" : "未達成" })
+    },
+    {
+      id: "ear_listener",
+      tier: "bronze",
+      icon: "🎧",
+      name: "耳トレデビュー",
+      desc: "ハンズフリー聞き流しモードで累計10問を耳トレする",
+      check: (ctx) => (ctx.listeningCount || 0) >= 10,
+      progress: (ctx) => ({ current: Math.min(ctx.listeningCount || 0, 10), target: 10, text: `${Math.min(ctx.listeningCount || 0, 10)} / 10問` })
+    },
+    {
+      id: "ear_master",
+      tier: "gold",
+      icon: "📻",
+      name: "リスニングの鬼",
+      desc: "ハンズフリー聞き流しモードで累計50問を耳トレする",
+      check: (ctx) => (ctx.listeningCount || 0) >= 50,
+      progress: (ctx) => ({ current: Math.min(ctx.listeningCount || 0, 50), target: 50, text: `${Math.min(ctx.listeningCount || 0, 50)} / 50問` })
     }
   ];
 
@@ -1254,6 +1412,7 @@
       masteredCount: mastered,
       customCount: (state.customCards || []).length,
       hour: hour,
+      listeningCount: state.listeningCount || 0,
       hadEarlyBird: state.achievements?.early_bird || false,
       hadNightOwl: state.achievements?.night_owl || false,
       hadPerfectRound: state.achievements?.perfect_round || false,
@@ -1500,7 +1659,7 @@
 
   $("#reset-data").addEventListener("click", () => {
     if (!confirm("学習記録とストリーク、作成したカスタム例文、獲得バッジをすべて初期化します。よろしいですか？")) return;
-    state = { settings: state.settings, cards: {}, history: {}, customCards: [], achievements: {} };
+    state = { settings: state.settings, cards: {}, history: {}, customCards: [], achievements: {}, listeningCount: 0 };
     save();
     dialog.close();
     stopSession();
@@ -1936,6 +2095,507 @@ ${targetPatterns}
     // ユーザーに練習をすぐ促す
     if (confirm(`✨ ${currentGeneratedCards.length}問のオリジナル例文を追加しました！\n今すぐ練習を始めますか？`)) {
       startSession({ type: "custom" });
+    }
+  });
+
+  // ==========================================
+  // 🎧 ハンズフリー「聞き流し・耳トレ」モード
+  // ==========================================
+  let listening = {
+    active: false,
+    playing: false,
+    queue: [],
+    index: 0,
+    step: "idle", // "ja" | "think" | "en" | "repeat" | "done"
+    range: "all",
+    shuffle: false,
+    loop: true,
+    thinkSec: 3,
+    repeatSec: 2,
+    enRepeats: 1,
+    speed: 1.0,
+    showEnAlways: false,
+    runId: 0,
+    currentSleepReject: null,
+  };
+
+  let silentBgAudio = null;
+  function ensureSilentBgAudio() {
+    if (!silentBgAudio) {
+      silentBgAudio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==");
+      silentBgAudio.loop = true;
+      silentBgAudio.volume = 0.01;
+    }
+    silentBgAudio.play().catch(() => {});
+  }
+  function stopSilentBgAudio() {
+    if (silentBgAudio) {
+      silentBgAudio.pause();
+    }
+  }
+
+  function cancellableSleep(ms) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        listening.currentSleepReject = null;
+        resolve();
+      }, ms);
+      listening.currentSleepReject = () => {
+        clearTimeout(timer);
+        reject(new Error("aborted"));
+      };
+    });
+  }
+
+  function abortCurrentSleep() {
+    if (listening.currentSleepReject) {
+      const fn = listening.currentSleepReject;
+      listening.currentSleepReject = null;
+      try { fn(); } catch (e) {}
+    }
+  }
+
+  function getListeningPool(range) {
+    switch (range) {
+      case "weak": {
+        const w = weakCards();
+        return w.length ? w : CARDS.slice(0, 20);
+      }
+      case "p1": return CARDS.filter((c) => c.pattern.part === 1);
+      case "p2": return CARDS.filter((c) => c.pattern.part === 2);
+      case "p3": return CARDS.filter((c) => c.pattern.part === 3);
+      case "p4": return CARDS.filter((c) => c.pattern.part === 4);
+      case "p5": return CARDS.filter((c) => c.pattern.part === 5);
+      case "custom": {
+        return (state.customCards || []).map((item) => ({
+          id: item.id,
+          pattern: window.PATTERNS.find((p) => p.id === item.patternId) || window.PATTERNS[0],
+          ja: item.ja,
+          en: item.en,
+          isCustom: true,
+          theme: item.theme || "カスタム",
+          audioId: getCustomAudioId(item),
+        }));
+      }
+      case "all":
+      default:
+        return CARDS;
+    }
+  }
+
+  function loadListeningQueue(range = listening.range) {
+    listening.range = range;
+    let pool = getListeningPool(range);
+    if (!pool.length) pool = CARDS;
+    listening.queue = listening.shuffle ? shuffle(pool) : [...pool];
+    listening.index = 0;
+  }
+
+  function renderListeningView() {
+    listening.active = true;
+    const customCount = (state.customCards || []).length;
+    const customPill = $("#filter-pill-custom");
+    if (customPill) customPill.hidden = customCount === 0;
+
+    const weakCount = weakCards().length;
+    const weakPill = $("#listening-weak-count");
+    if (weakPill) weakPill.textContent = weakCount;
+
+    if (!listening.queue.length) {
+      loadListeningQueue(listening.range);
+    }
+    updateListeningControlsUI();
+    updateListeningFilterPills();
+    if (listening.queue[listening.index]) {
+      renderListeningCard(listening.queue[listening.index], false);
+    }
+    if (!listening.playing) {
+      resumeListening();
+    }
+  }
+
+  function updateListeningFilterPills() {
+    $$("#listening-filter-bar .filter-pill").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.range === listening.range);
+    });
+  }
+
+  function updateListeningControlsUI() {
+    const playBtn = $("#listening-btn-play");
+    const playIcon = $("#listening-play-icon");
+    if (playBtn && playIcon) {
+      playBtn.classList.toggle("playing", listening.playing);
+      playIcon.textContent = listening.playing ? "⏸" : "▶︎";
+    }
+    const shuffleBtn = $("#listening-btn-shuffle");
+    if (shuffleBtn) shuffleBtn.classList.toggle("active", listening.shuffle);
+    const loopBtn = $("#listening-btn-loop");
+    if (loopBtn) loopBtn.classList.toggle("active", listening.loop);
+
+    $$("#l-pause-toggles .btn-toggle").forEach((b) => {
+      b.classList.toggle("active", Number(b.dataset.val) === listening.thinkSec);
+    });
+    $$("#l-repeat-toggles .btn-toggle").forEach((b) => {
+      b.classList.toggle("active", Number(b.dataset.val) === listening.enRepeats);
+    });
+    $$("#l-speed-toggles .btn-toggle").forEach((b) => {
+      b.classList.toggle("active", Number(b.dataset.val) === listening.speed);
+    });
+    const toggleShowBtn = $("#l-toggle-show-en");
+    if (toggleShowBtn) {
+      toggleShowBtn.textContent = listening.showEnAlways ? "思考中も表示中" : "思考中は隠す（テスト）";
+      toggleShowBtn.classList.toggle("active", listening.showEnAlways);
+    }
+  }
+
+  function renderListeningCard(card, showAnswer = false) {
+    if (!card) return;
+    const chip = $("#listening-pattern-chip");
+    if (chip) chip.textContent = `Part ${card.pattern.part} / 型${card.pattern.id}: ${card.pattern.en}`;
+    const promptJa = $("#listening-prompt-ja");
+    if (promptJa) promptJa.textContent = card.ja;
+    const enEl = $("#listening-answer-en");
+    if (enEl) {
+      enEl.textContent = card.en;
+      if (showAnswer || listening.showEnAlways) {
+        enEl.classList.remove("blurred");
+        enEl.classList.add("revealed");
+      } else {
+        enEl.classList.add("blurred");
+        enEl.classList.remove("revealed");
+      }
+    }
+    const noteEl = $("#listening-pattern-note");
+    if (noteEl) noteEl.textContent = card.pattern.note || "";
+    const counterEl = $("#listening-counter");
+    if (counterEl) counterEl.textContent = `${listening.index + 1} / ${listening.queue.length}`;
+    const progress = $("#listening-session-progress");
+    if (progress) {
+      progress.max = listening.queue.length;
+      progress.value = listening.index + 1;
+    }
+  }
+
+  function setListeningStep(step, text, type = "ja") {
+    listening.step = step;
+    const pill = $("#listening-step-pill");
+    const textEl = $("#listening-step-text");
+    if (textEl) textEl.textContent = text;
+    if (pill) {
+      pill.className = `listening-step-pill step-${type}`;
+    }
+  }
+
+  function updateSoundwave(active) {
+    const wave = $("#listening-soundwave");
+    if (wave) wave.classList.toggle("active", active);
+  }
+
+  function animatePhaseBar(ms) {
+    const bar = $("#listening-phase-bar");
+    if (!bar) return;
+    bar.style.setProperty("--p-duration", `${ms}ms`);
+    bar.classList.remove("animating");
+    void bar.offsetWidth;
+    bar.classList.add("animating");
+  }
+
+  function resetPhaseBar() {
+    const bar = $("#listening-phase-bar");
+    if (!bar) return;
+    bar.classList.remove("animating");
+    bar.style.transform = "scaleX(0)";
+  }
+
+  function updateMediaSession(card, stepTitle, stepSub) {
+    if (!("mediaSession" in navigator)) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: card.ja,
+        artist: stepSub || card.en,
+        album: `瞬間英作文 - ${card.pattern.en}`,
+        artwork: [
+          { src: "icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "icon-512.png", sizes: "512x512", type: "image/png" }
+        ]
+      });
+      navigator.mediaSession.playbackState = listening.playing ? "playing" : "paused";
+    } catch (e) {}
+  }
+
+  function recordListeningProgress(card) {
+    state.listeningCount = (state.listeningCount || 0) + 1;
+    const t = todayKey();
+    const h = state.history[t] || { answered: 0, good: 0, goal: state.settings.dailyGoal };
+    h.answered++;
+    h.good++;
+    state.history[t] = h;
+
+    const s = cardState(card.id);
+    s.seen++;
+    state.cards[card.id] = s;
+
+    save();
+    renderHeaderStreak();
+    checkAchievements(false);
+  }
+
+  async function runListeningLoop() {
+    const currentRunId = ++listening.runId;
+
+    while (listening.playing && listening.index < listening.queue.length) {
+      if (listening.runId !== currentRunId || !listening.playing) return;
+      const card = listening.queue[listening.index];
+      if (!card) break;
+
+      renderListeningCard(card, false);
+      setListeningStep("ja", "🇯🇵 日本語を聞く", "ja");
+      updateSoundwave(true);
+      updateMediaSession(card, "🇯🇵 日本語", card.ja);
+
+      await speakJapanesePromise(card.ja);
+      updateSoundwave(false);
+      if (listening.runId !== currentRunId || !listening.playing) return;
+
+      try { await cancellableSleep(400); } catch (e) { return; }
+      if (listening.runId !== currentRunId || !listening.playing) return;
+
+      setListeningStep("think", `🤔 英語を思い浮かべよう (${listening.thinkSec}s)`, "think");
+      updateMediaSession(card, "🤔 英語を思い浮かべよう", card.ja);
+      animatePhaseBar(listening.thinkSec * 1000);
+      try {
+        await cancellableSleep(listening.thinkSec * 1000);
+      } catch (e) {
+        resetPhaseBar();
+        return;
+      }
+      resetPhaseBar();
+      if (listening.runId !== currentRunId || !listening.playing) return;
+
+      setListeningStep("en", "🇺🇸 英語の解答", "en");
+      const enEl = $("#listening-answer-en");
+      if (enEl) {
+        enEl.classList.remove("blurred");
+        enEl.classList.add("revealed");
+      }
+      updateSoundwave(true);
+      updateMediaSession(card, "🇺🇸 英語", card.en);
+
+      await playEnglishCardPromise(card, listening.speed);
+      updateSoundwave(false);
+      if (listening.runId !== currentRunId || !listening.playing) return;
+
+      if (listening.enRepeats === 2) {
+        try { await cancellableSleep(600); } catch (e) { return; }
+        if (listening.runId !== currentRunId || !listening.playing) return;
+        setListeningStep("en", "🔁 もう一度英語を聞く", "en");
+        updateSoundwave(true);
+        await playEnglishCardPromise(card, listening.speed);
+        updateSoundwave(false);
+        if (listening.runId !== currentRunId || !listening.playing) return;
+      }
+
+      setListeningStep("repeat", `🗣️ 声に出してリピート！ (${listening.repeatSec}s)`, "repeat");
+      animatePhaseBar(listening.repeatSec * 1000);
+      try {
+        await cancellableSleep(listening.repeatSec * 1000);
+      } catch (e) {
+        resetPhaseBar();
+        return;
+      }
+      resetPhaseBar();
+      if (listening.runId !== currentRunId || !listening.playing) return;
+
+      recordListeningProgress(card);
+      listening.index++;
+
+      if (listening.index >= listening.queue.length) {
+        if (listening.loop) {
+          listening.index = 0;
+          if (listening.shuffle) {
+            listening.queue = shuffle(listening.queue);
+          }
+        } else {
+          pauseListening();
+          setListeningStep("done", "🎉 1周完了！お疲れ様でした", "en");
+          break;
+        }
+      }
+    }
+  }
+
+  function pauseListening() {
+    listening.playing = false;
+    abortCurrentSleep();
+    resetPhaseBar();
+    stopAudio();
+    updateSoundwave(false);
+    updateListeningControlsUI();
+    stopSilentBgAudio();
+    if ("mediaSession" in navigator) {
+      try { navigator.mediaSession.playbackState = "paused"; } catch (e) {}
+    }
+  }
+
+  function resumeListening() {
+    if (!listening.queue.length) {
+      loadListeningQueue(listening.range);
+    }
+    listening.playing = true;
+    updateListeningControlsUI();
+    ensureSilentBgAudio();
+    if ("mediaSession" in navigator) {
+      try { navigator.mediaSession.playbackState = "playing"; } catch (e) {}
+    }
+    runListeningLoop();
+  }
+
+  function toggleListeningPlay() {
+    if (listening.playing) {
+      pauseListening();
+    } else {
+      resumeListening();
+    }
+  }
+
+  function nextListening() {
+    pauseListening();
+    if (!listening.queue.length) loadListeningQueue(listening.range);
+    listening.index = (listening.index + 1) % listening.queue.length;
+    renderListeningCard(listening.queue[listening.index], false);
+    resumeListening();
+  }
+
+  function prevListening() {
+    pauseListening();
+    if (!listening.queue.length) loadListeningQueue(listening.range);
+    listening.index = (listening.index - 1 + listening.queue.length) % listening.queue.length;
+    renderListeningCard(listening.queue[listening.index], false);
+    resumeListening();
+  }
+
+  function stopListening() {
+    pauseListening();
+    listening.active = false;
+  }
+
+  // Setup Listening UI event listeners
+  $("#open-listening-btn")?.addEventListener("click", () => showView("listening"));
+  $("#menu-start-listening")?.addEventListener("click", () => showView("listening"));
+  $("#quit-listening")?.addEventListener("click", () => {
+    stopListening();
+    showView("home");
+  });
+  $("#listening-btn-play")?.addEventListener("click", toggleListeningPlay);
+  $("#listening-btn-next")?.addEventListener("click", nextListening);
+  $("#listening-btn-prev")?.addEventListener("click", prevListening);
+  $("#listening-btn-shuffle")?.addEventListener("click", () => {
+    listening.shuffle = !listening.shuffle;
+    pauseListening();
+    loadListeningQueue(listening.range);
+    renderListeningCard(listening.queue[listening.index], false);
+    updateListeningControlsUI();
+    resumeListening();
+  });
+  $("#listening-btn-loop")?.addEventListener("click", () => {
+    listening.loop = !listening.loop;
+    updateListeningControlsUI();
+  });
+
+  // Filter bar clicks
+  $("#listening-filter-bar")?.addEventListener("click", (e) => {
+    const pill = e.target.closest(".filter-pill");
+    if (!pill) return;
+    const range = pill.dataset.range;
+    if (range === listening.range) return;
+    pauseListening();
+    loadListeningQueue(range);
+    updateListeningFilterPills();
+    renderListeningCard(listening.queue[listening.index], false);
+    updateListeningControlsUI();
+    resumeListening();
+  });
+
+  // Settings toggles
+  $("#l-pause-toggles")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".btn-toggle");
+    if (!btn) return;
+    listening.thinkSec = Number(btn.dataset.val) || 3;
+    updateListeningControlsUI();
+  });
+  $("#l-repeat-toggles")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".btn-toggle");
+    if (!btn) return;
+    listening.enRepeats = Number(btn.dataset.val) || 1;
+    updateListeningControlsUI();
+  });
+  $("#l-speed-toggles")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".btn-toggle");
+    if (!btn) return;
+    listening.speed = Number(btn.dataset.val) || 1.0;
+    updateListeningControlsUI();
+  });
+  $("#l-toggle-show-en")?.addEventListener("click", () => {
+    listening.showEnAlways = !listening.showEnAlways;
+    updateListeningControlsUI();
+    const enEl = $("#listening-answer-en");
+    if (enEl) {
+      if (listening.showEnAlways) {
+        enEl.classList.remove("blurred");
+      } else if (listening.step === "ja" || listening.step === "think") {
+        enEl.classList.add("blurred");
+      }
+    }
+  });
+
+  // Tap blurred answer to reveal manually
+  $("#listening-answer-en")?.addEventListener("click", () => {
+    const enEl = $("#listening-answer-en");
+    if (enEl) enEl.classList.toggle("blurred");
+  });
+
+  // MediaSession Action Handlers
+  if ("mediaSession" in navigator) {
+    try {
+      navigator.mediaSession.setActionHandler("play", () => {
+        if (!views.listening.hidden) resumeListening();
+      });
+      navigator.mediaSession.setActionHandler("pause", () => {
+        if (!views.listening.hidden) pauseListening();
+      });
+      navigator.mediaSession.setActionHandler("nexttrack", () => {
+        if (!views.listening.hidden) nextListening();
+      });
+      navigator.mediaSession.setActionHandler("previoustrack", () => {
+        if (!views.listening.hidden) prevListening();
+      });
+    } catch (e) {}
+  }
+
+  // Keyboard shortcut listener for listening view
+  document.addEventListener("keydown", (e) => {
+    if (!views.listening.hidden && !$("#settings-dialog").open) {
+      if (e.target.matches("input, textarea, select")) return;
+      if (e.key === " ") {
+        e.preventDefault();
+        toggleListeningPlay();
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        nextListening();
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        prevListening();
+      } else if (e.key.toLowerCase() === "s") {
+        listening.shuffle = !listening.shuffle;
+        pauseListening();
+        loadListeningQueue(listening.range);
+        renderListeningCard(listening.queue[listening.index], false);
+        updateListeningControlsUI();
+        resumeListening();
+      } else if (e.key.toLowerCase() === "l") {
+        listening.loop = !listening.loop;
+        updateListeningControlsUI();
+      }
     }
   });
 
