@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間英作文 | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
   <header class="app-header">
@@ -341,7 +341,10 @@
 
         <!-- 日本語 -->
         <div class="listening-prompt-section">
-          <span class="listening-label">🇯🇵 日本語</span>
+          <div class="listening-ja-head" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+            <span class="listening-label">🇯🇵 日本語</span>
+            <span class="listening-tts-source" id="listening-ja-source">✨ ナレーター音声</span>
+          </div>
           <p class="listening-prompt-ja" id="listening-prompt-ja">...</p>
         </div>
 
@@ -463,8 +466,8 @@
       <fieldset class="settings-group">
         <legend>音声設定</legend>
         <div class="audio-status-banner">
-          <span>✅ <strong>全120問のネイティブ音声（MP3）を同梱済み</strong></span>
-          <small>追加費用0円・APIキー不要・オフラインで超自然な英語音声がそのまま再生されます。</small>
+          <span>✅ <strong>日本語・英語 全270問の自然な音声を同梱済み</strong></span>
+          <small>追加費用0円・APIキー不要・オフラインで高音質な日本語ナレーター＆ネイティブ英語音声がそのまま再生されます。</small>
         </div>
         <label class="check">
           <input type="checkbox" name="autoSpeak"> 答えを表示したら自動で読み上げる
@@ -644,8 +647,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=11"></script>
-  <script src="app.js?v=11"></script>
+  <script src="data.js?v=12"></script>
+  <script src="app.js?v=12"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

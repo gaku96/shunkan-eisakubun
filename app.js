@@ -1021,14 +1021,59 @@
     speechSynthesis.speak(u);
   }
 
-  function speakJapanesePromise(text) {
+  async function speakJapanesePromise(cardOrText, rate = 1.0) {
+    let card = null;
+    let text = "";
+    if (typeof cardOrText === "object" && cardOrText !== null) {
+      card = cardOrText;
+      text = card.ja;
+    } else {
+      text = String(cardOrText || "");
+      card = CARDS.find((c) => c.ja === text) || null;
+    }
+
+    const badge = $("#listening-ja-source");
+    const audioKey = card ? (card.audioId || getCustomAudioId(card) || card.id) : null;
+    if (audioKey) {
+      if (badge) badge.textContent = "✨ 自然な日本語音声";
+      const ok = await playAudioUrlPromise(`audio/${audioKey}_ja.mp3`, rate);
+      if (ok) return true;
+    }
+
+    // Fallback: Gemini TTS (if configured)
+    const s = state.settings;
+    if (s.ttsEngine !== "browser" && s.geminiApiKey) {
+      const cacheKey = `ja_${audioKey || text}_${s.geminiModel}`;
+      const cached = await getCachedAudio(cacheKey);
+      if (cached) {
+        if (badge) badge.textContent = "✨ Gemini 日本語";
+        const ok = await playBlobPromise(cached, rate);
+        if (ok) return true;
+      }
+      try {
+        if (badge) badge.textContent = "✨ Gemini 生成中...";
+        const blob = await generateGeminiSpeech(text, s.geminiApiKey, s.geminiModel, "Aoede");
+        await setCachedAudio(cacheKey, blob);
+        if (badge) badge.textContent = "✨ Gemini 日本語";
+        const ok = await playBlobPromise(blob, rate);
+        if (ok) return true;
+      } catch (e) {
+        console.warn("Gemini Ja TTS fallback error:", e);
+      }
+    }
+
+    if (badge) badge.textContent = "ブラウザ音声";
+    return speakJapaneseBrowserPromise(text, rate);
+  }
+
+  function speakJapaneseBrowserPromise(text, rate = 1.0) {
     return new Promise((resolve) => {
       if (!("speechSynthesis" in window)) { resolve(); return; }
       stopAudio();
       const u = new SpeechSynthesisUtterance(text);
       u.lang = "ja-JP";
       if (browserJaVoice) u.voice = browserJaVoice;
-      u.rate = 1.0;
+      u.rate = rate;
       let finished = false;
       const safety = setTimeout(() => {
         if (!finished) { finished = true; resolve(); }
@@ -2456,7 +2501,7 @@ ${targetPatterns}
       updateSoundwave(true);
       updateMediaSession(card, "🇯🇵 日本語", card.ja);
 
-      await speakJapanesePromise(card.ja);
+      await speakJapanesePromise(card);
       updateSoundwave(false);
       if (listening.runId !== currentRunId || !listening.playing) return;
 
