@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間英作文 | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css?v=24">
+  <link rel="stylesheet" href="style.css?v=25">
 </head>
 <body>
   <header class="app-header">
@@ -526,8 +526,8 @@
         <label class="field">
           <span>音声エンジン</span>
           <select name="ttsEngine" id="tts-engine-select">
-            <option value="bundled">✨ 同梱ネイティブ音声（Brian & Nanami・0円・無制限・推奨）</option>
-            <option value="gemini">✨ Gemini 3.8 TTS（Google AI・無料枠は1日10件上限あり）</option>
+            <option value="gemini" selected>✨ Gemini 3.8 TTS（Google AI・多国籍アクセント対応・推奨）</option>
+            <option value="bundled">✨ 同梱ネイティブ音声（Brian & Nanami・0円・無制限）</option>
             <option value="browser">ブラウザ標準音声（Web Speech API）</option>
           </select>
         </label>
@@ -730,8 +730,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=24"></script>
-  <script src="app.js?v=24"></script>
+  <script src="data.js?v=25"></script>
+  <script src="app.js?v=25"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

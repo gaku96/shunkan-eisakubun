@@ -226,9 +226,13 @@
     try {
       const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (raw && typeof raw === "object") {
+        const settings = { ...DEFAULT_SETTINGS, ...raw.settings };
+        if (settings.geminiApiKey && settings.ttsEngine === "bundled") {
+          settings.ttsEngine = "gemini";
+        }
         return {
           activeCourse: (raw.activeCourse === "grit" ? "grit" : "conversation"),
-          settings: { ...DEFAULT_SETTINGS, ...raw.settings },
+          settings,
           cards: raw.cards || {},
           history: raw.history || {},
           customCards: Array.isArray(raw.customCards) ? raw.customCards : [],
@@ -1412,6 +1416,9 @@
           if (ok) return;
         } catch (err) {
           console.warn("Gemini English TTS error, fallback to bundled audio:", err);
+          const msg = String(err.message || err);
+          const isQuota = msg.includes("429") || msg.includes("quota") || msg.includes("ResourceExhausted");
+          if (badge) badge.textContent = `⚠️ ${isQuota ? "API制限(429)" : "Geminiエラー"} → 同梱音声`;
         }
       }
     }
@@ -1419,13 +1426,15 @@
     // 2. 同梱のリアル口語ネイティブ音声（Brian）
     const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
     if (isBundled) {
-      if (badge) badge.textContent = "✨ リアル口語ネイティブ（崩し・同梱）";
+      if (badge && !badge.textContent.startsWith("⚠️")) {
+        badge.textContent = "✨ リアル口語ネイティブ（崩し・同梱）";
+      }
       const ok = await playAudioUrlPromise(`audio/${audioKey}.mp3`, rate);
       if (ok) return;
     }
 
     // 3. ブラウザ標準音声
-    if (badge) badge.textContent = "ブラウザ音声";
+    if (badge && !badge.textContent.startsWith("⚠️")) badge.textContent = "ブラウザ音声";
     await speakBrowserPromise(card.en, rate);
   }
 
@@ -1496,7 +1505,8 @@
     }
 
     // 3. キャッシュがなく、Gemini APIキーが設定されている場合はリアルタイム生成
-    if (s.ttsEngine === "gemini" && s.geminiApiKey) {
+    let geminiFailReason = null;
+    if (s.ttsEngine !== "browser" && s.geminiApiKey) {
       badge.textContent = `✨ Gemini 3.8 (${accentInfo.flag} ${accentInfo.name}生成中...)`;
       badge.className = "tts-badge loading";
 
@@ -1510,7 +1520,12 @@
         if (played) return;
       } catch (err) {
         console.warn("Gemini TTS エラー, 同梱音声へフォールバック:", err);
+        const msg = String(err.message || err);
+        const isQuota = msg.includes("429") || msg.includes("quota") || msg.includes("ResourceExhausted");
+        geminiFailReason = isQuota ? "API制限(429)" : "APIエラー";
       }
+    } else if (s.ttsEngine === "gemini" && !s.geminiApiKey) {
+      geminiFailReason = "APIキー未設定";
     }
 
     // 4. 同梱のローカル高音質MP3（オフライン・0円・フォールバック）
@@ -1520,14 +1535,23 @@
     if (isBundled) {
       const playedLocal = await tryPlayLocalAudio(audioKey);
       if (playedLocal) {
-        badge.textContent = "✨ リアル口語ネイティブ（崩し・同梱）";
-        badge.className = "tts-badge";
+        if (geminiFailReason) {
+          badge.textContent = `⚠️ ${geminiFailReason} → 同梱音声で再生`;
+          badge.className = "tts-badge fallback";
+        } else {
+          badge.textContent = "✨ リアル口語ネイティブ（崩し・同梱）";
+          badge.className = "tts-badge";
+        }
         return;
       }
     }
 
     // 5. ブラウザ音声に最終フォールバック
-    badge.textContent = "ブラウザ標準";
+    if (geminiFailReason) {
+      badge.textContent = `⚠️ ${geminiFailReason} → ブラウザ音声`;
+    } else {
+      badge.textContent = "ブラウザ標準";
+    }
     badge.className = "tts-badge fallback";
     speakBrowser(card.en);
   }
