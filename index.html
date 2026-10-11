@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="瞬間英作文">
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="manifest" href="manifest.json">
+  <title>瞬間英作文 | 英会話の型30</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <button type="button" class="brand" data-nav="home" aria-label="ホームへ">瞬間英作文<span>英会話の型30</span></button>
+    <div class="header-actions">
+      <span class="streak-badge" id="header-streak" aria-label="連続学習日数">🔥 0</span>
+      <button type="button" class="icon-btn" id="open-settings" aria-label="設定">⚙️</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ホーム -->
+    <section id="view-home" class="view" aria-labelledby="home-title">
+      <h1 id="home-title" class="visually-hidden">ホーム</h1>
+
+      <div class="stats-grid">
+        <div class="stat-card streak">
+          <p class="stat-label">連続学習</p>
+          <p class="stat-value"><span id="stat-streak">0</span><small>日</small></p>
+          <p class="stat-sub" id="streak-message"></p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">最長記録</p>
+          <p class="stat-value"><span id="stat-best">0</span><small>日</small></p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">習得した例文</p>
+          <p class="stat-value"><span id="stat-mastered">0</span><small id="stat-total">/120</small></p>
+        </div>
+      </div>
+
+      <div class="card today-card">
+        <div class="today-head">
+          <h2>今日の目標</h2>
+          <span id="today-count">0 / 10問</span>
+        </div>
+        <progress id="today-progress" max="10" value="0" aria-label="今日の進捗"></progress>
+        <button type="button" class="btn primary big" id="start-daily">今日の練習をはじめる</button>
+        <p class="hint">復習予定の例文 → まだ解いていない例文 の順に出題します。</p>
+      </div>
+
+      <div class="card">
+        <h2>練習メニュー</h2>
+        <div class="menu-grid">
+          <button type="button" class="btn" id="start-weak">苦手な例文を復習 <span class="pill" id="weak-count">0</span></button>
+          <button type="button" class="btn" id="start-random">全範囲からランダム</button>
+        </div>
+        <h3>パート別</h3>
+        <div class="menu-grid" id="part-buttons"></div>
+      </div>
+
+      <div class="card">
+        <h2>学習カレンダー</h2>
+        <div class="heatmap" id="heatmap" role="img" aria-label="過去の学習記録"></div>
+        <div class="heatmap-legend" aria-hidden="true">
+          <span>少</span><i data-l="0"></i><i data-l="1"></i><i data-l="2"></i><i data-l="3"></i><i data-l="4"></i><span>多</span>
+        </div>
+      </div>
+
+      <button type="button" class="btn ghost wide" data-nav="list">構文一覧を見る（30個）</button>
+    </section>
+
+    <!-- 練習 -->
+    <section id="view-practice" class="view" hidden aria-labelledby="practice-title">
+      <div class="practice-top">
+        <button type="button" class="btn ghost small" id="quit-practice">✕ やめる</button>
+        <h1 id="practice-title" class="practice-title">練習</h1>
+        <span id="practice-counter">1 / 10</span>
+      </div>
+      <progress id="session-progress" max="10" value="0" aria-label="セッションの進捗"></progress>
+
+      <article class="flashcard" id="flashcard">
+        <p class="pattern-chip" id="card-pattern"></p>
+        <p class="prompt-ja" id="card-ja"></p>
+
+        <div class="timer" id="timer" aria-hidden="true"><div class="timer-bar" id="timer-bar"></div></div>
+
+        <form id="type-form" class="type-form" hidden autocomplete="off">
+          <label for="type-input" class="visually-hidden">英文を入力</label>
+          <input type="text" id="type-input" placeholder="英語で入力（Enterで答え合わせ）" autocapitalize="off" spellcheck="false">
+        </form>
+
+        <div class="answer" id="answer" hidden>
+          <p class="answer-en" id="card-en"></p>
+          <p class="type-result" id="type-result" hidden></p>
+          <div class="speak-row">
+            <button type="button" class="btn small" id="speak-btn">🔊 もう一度聞く <kbd>R</kbd></button>
+            <span class="tts-badge" id="tts-source" aria-live="polite"></span>
+          </div>
+          <p class="answer-note" id="card-note"></p>
+        </div>
+      </article>
+
+      <div class="actions" id="reveal-actions">
+        <button type="button" class="btn primary big" id="reveal-btn">答えを見る <kbd>Space</kbd></button>
+      </div>
+      <div class="actions grade" id="grade-actions" hidden>
+        <button type="button" class="btn grade-again" data-grade="again">✕ 言えなかった <kbd>1</kbd></button>
+        <button type="button" class="btn grade-hard" data-grade="hard">△ あやしい <kbd>2</kbd></button>
+        <button type="button" class="btn grade-good" data-grade="good">◯ 言えた <kbd>3</kbd></button>
+      </div>
+    </section>
+
+    <!-- 結果 -->
+    <section id="view-result" class="view" hidden aria-labelledby="result-title">
+      <div class="card result-card">
+        <h1 id="result-title">おつかれさま！</h1>
+        <p class="result-emoji" id="result-emoji">🎉</p>
+        <p id="result-summary"></p>
+        <p id="result-streak" class="result-streak"></p>
+        <div class="menu-grid">
+          <button type="button" class="btn primary" id="result-again">もう1セット</button>
+          <button type="button" class="btn" data-nav="home">ホームへ</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 構文一覧 -->
+    <section id="view-list" class="view" hidden aria-labelledby="list-title">
+      <div class="practice-top">
+        <button type="button" class="btn ghost small" data-nav="home">← 戻る</button>
+        <h1 id="list-title" class="practice-title">構文一覧</h1>
+        <span></span>
+      </div>
+      <div id="pattern-list"></div>
+    </section>
+  </main>
+
+  <!-- 設定 -->
+  <dialog id="settings-dialog" closedby="any" aria-labelledby="settings-title">
+    <form method="dialog" id="settings-form">
+      <h2 id="settings-title">設定</h2>
+      
+      <fieldset class="settings-group">
+        <legend>学習</legend>
+        <label class="field">
+          <span>1日の目標（問）</span>
+          <input type="number" name="dailyGoal" min="1" max="100" step="1" required>
+        </label>
+        <label class="field">
+          <span>制限時間（秒・0でオフ）</span>
+          <input type="number" name="timerSec" min="0" max="30" step="1" required>
+        </label>
+        <label class="check">
+          <input type="checkbox" name="showHint"> 問題に構文のヒントを表示する
+        </label>
+        <label class="check">
+          <input type="checkbox" name="typingMode"> タイピングで回答する
+        </label>
+      </fieldset>
+
+      <fieldset class="settings-group">
+        <legend>音声設定</legend>
+        <div class="audio-status-banner">
+          <span>✅ <strong>全120問のネイティブ音声（MP3）を同梱済み</strong></span>
+          <small>追加費用0円・APIキー不要・オフラインで超自然な英語音声がそのまま再生されます。</small>
+        </div>
+        <label class="check">
+          <input type="checkbox" name="autoSpeak"> 答えを表示したら自動で読み上げる
+        </label>
+        <label class="field">
+          <span>音声エンジン</span>
+          <select name="ttsEngine" id="tts-engine-select">
+            <option value="gemini">Gemini 3.8 TTS（超自然・推奨）</option>
+            <option value="browser">ブラウザ標準（Web Speech）</option>
+          </select>
+        </label>
+
+        <div id="gemini-subfields" class="gemini-subfields">
+          <label class="field-stacked">
+            <span>Gemini APIキー</span>
+            <div class="input-with-action">
+              <input type="password" name="geminiApiKey" id="gemini-api-key" placeholder="AIzaSy..." autocomplete="off">
+              <button type="button" class="btn small ghost" id="toggle-key-visibility">表示</button>
+            </div>
+            <small class="field-hint">Google AI Studioで取得したキー。端末のブラウザ内にのみ保存されます。</small>
+          </label>
+          <label class="field">
+            <span>モデル</span>
+            <select name="geminiModel">
+              <option value="gemini-3.8-flash-tts">Gemini 3.8 Flash TTS（高音質）</option>
+              <option value="gemini-3.8-flash-lite-tts">Gemini 3.8 Flash-Lite TTS（高速）</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>ボイス</span>
+            <select name="geminiVoice">
+              <option value="Kore">Kore（自然な女性）</option>
+              <option value="Puck">Puck（自然な男性）</option>
+              <option value="Aoede">Aoede（明るい女性）</option>
+              <option value="Fenrir">Fenrir（落ち着いた男性）</option>
+              <option value="Charon">Charon（深みのある男性）</option>
+            </select>
+          </label>
+          <div class="test-row">
+            <button type="button" class="btn small" id="test-tts-btn">🔊 声をテスト</button>
+            <span id="test-tts-status" class="status-msg"></span>
+          </div>
+          <div class="cache-row">
+            <span id="cache-count">キャッシュ: 0件</span>
+            <button type="button" class="btn small ghost" id="clear-cache-btn">消去</button>
+          </div>
+        </div>
+
+        <div id="browser-subfields" class="browser-subfields" hidden>
+          <label class="field">
+            <span>読み上げ速度</span>
+            <input type="range" name="speechRate" min="0.6" max="1.4" step="0.1">
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn danger small" id="reset-data">学習データをリセット</button>
+        <button type="submit" class="btn primary" value="save">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

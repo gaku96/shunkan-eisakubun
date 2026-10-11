@@ -1,0 +1,17 @@
+{
+  "name": "瞬間英作文 - 英会話の型30",
+  "short_name": "英会話の型30",
+  "description": "ネイティブが毎日使う「英会話の型」30選で瞬間英作文トレーニング",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#12131a",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
