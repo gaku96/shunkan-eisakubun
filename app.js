@@ -2060,6 +2060,7 @@
       }
     } catch {}
 
+    let abortReason = null;
     let processedCount = 0;
     const totalItems = targetCards.length;
 
@@ -2084,15 +2085,20 @@
             break;
           } catch (e) {
             console.warn("Batch cache EN error:", e);
-            if (e.message.includes("Quota exceeded") || e.message.includes("limit: 10")) {
-              batchCacheProgress.textContent = `⚠️ Google無料枠上限（1日10件）に到達しました。従量課金プロジェクトが正しく紐付いているか確認してください。`;
+            const msg = String(e.message || e);
+            if (msg.includes("Quota exceeded") || msg.includes("limit: 10") || msg.includes("quota")) {
+              abortReason = `⚠️ Google無料枠上限エラー: 現在のAPIキーがまだ従量課金プロジェクトに紐付いていません（Google AI Studioでプロジェクトの課金連携をご確認ください）`;
               batchCacheAborted = true;
               break;
             }
-            if (e.message.includes("429") || e.message.includes("RESOURCE_EXHAUSTED")) {
+            if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED")) {
               batchCacheProgress.textContent = `⚠️ レート制限のため一時待機中（10秒）...`;
               await new Promise((r) => setTimeout(r, 10000));
               retry++;
+            } else if (msg.includes("API key not valid") || msg.includes("403")) {
+              abortReason = `⚠️ APIキー無効エラー: 正しいキーが入力されているかご確認ください`;
+              batchCacheAborted = true;
+              break;
             } else {
               break;
             }
@@ -2117,15 +2123,20 @@
             break;
           } catch (e) {
             console.warn("Batch cache JA error:", e);
-            if (e.message.includes("Quota exceeded") || e.message.includes("limit: 10")) {
-              batchCacheProgress.textContent = `⚠️ Google無料枠上限（1日10件）に到達しました。従量課金プロジェクトが正しく紐付いているか確認してください。`;
+            const msg = String(e.message || e);
+            if (msg.includes("Quota exceeded") || msg.includes("limit: 10") || msg.includes("quota")) {
+              abortReason = `⚠️ Google無料枠上限エラー: 現在のAPIキーがまだ従量課金プロジェクトに紐付いていません（Google AI Studioでプロジェクトの課金連携をご確認ください）`;
               batchCacheAborted = true;
               break;
             }
-            if (e.message.includes("429") || e.message.includes("RESOURCE_EXHAUSTED")) {
+            if (msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED")) {
               batchCacheProgress.textContent = `⚠️ レート制限のため一時待機中（10秒）...`;
               await new Promise((r) => setTimeout(r, 10000));
               retry++;
+            } else if (msg.includes("API key not valid") || msg.includes("403")) {
+              abortReason = `⚠️ APIキー無効エラー: 正しいキーが入力されているかご確認ください`;
+              batchCacheAborted = true;
+              break;
             } else {
               break;
             }
@@ -2141,8 +2152,10 @@
 
     batchCacheBtn.dataset.running = "false";
     batchCacheBtn.textContent = scope === "all" ? "全210問 一括生成を開始" : "一括生成を開始";
-    if (batchCacheAborted) {
-      batchCacheProgress.textContent = `⏹ 中止しました。保存済みの音声（${await countCachedAudio()}件）はそのままご利用いただけます。`;
+    if (abortReason) {
+      batchCacheProgress.textContent = `${abortReason}（保存済み: ${await countCachedAudio()}件）`;
+    } else if (batchCacheAborted) {
+      batchCacheProgress.textContent = `⏹ ユーザー操作により中止しました。保存済みの音声（${await countCachedAudio()}件）はそのままご利用いただけます。`;
     } else {
       batchCacheProgress.textContent = `🎉 完了！全問のGemini音声が端末に保存されました。オフラインでも超自然な音声で練習できます！`;
     }
