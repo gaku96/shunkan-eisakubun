@@ -12,7 +12,7 @@
   const DEFAULT_SETTINGS = {
     dailyGoal: 10,
     timerSec: 5,
-    speechRate: 1,
+    speechRate: 1.15,
     autoSpeak: true,
     showHint: true,
     typingMode: false,
@@ -68,10 +68,10 @@
     au: { flag: "🇦🇺", name: "豪語", label: "オーストラリア英語" },
   };
   const ACCENT_STYLE_PROMPTS = {
-    us: "natural, authentic native General American English with distinct American rhoticity, flap 't', and smooth conversational American connected speech",
-    uk: "authentic, distinctly British English with crisp Received Pronunciation (RP), clear non-rhotic pronunciation, sharp consonants, and characteristic refined British intonation",
-    in: "deep, strong, and unmistakably authentic native Indian English accent. Prominent Indian phonetics: distinct retroflex 't' and 'd' consonants with curled tongue, dental stops, syllable-timed cadence, characteristic melodic musical pitch inflection, light tapped 'r', crisp unaspirated consonants, rich and natural Indian subcontinent speaker pronunciation",
-    au: "authentic, distinctly Australian English with broad Aussie vowels and diphthongs, characteristic vocal warmth, and friendly rising intonation at phrase endings",
+    us: "natural, authentic native General American English with distinct American rhoticity, flap 't', and smooth conversational American connected speech at a brisk, natural conversational native pace (fluent, linked, not slow or overly enunciated)",
+    uk: "authentic, distinctly British English with crisp Received Pronunciation (RP), clear non-rhotic pronunciation, sharp consonants, and characteristic refined British intonation at a brisk, natural conversational native pace",
+    in: "deep, strong, and unmistakably authentic native Indian English accent. Prominent Indian phonetics: distinct retroflex 't' and 'd' consonants with curled tongue, dental stops, syllable-timed cadence, characteristic melodic musical pitch inflection, light tapped 'r', crisp unaspirated consonants, rich and natural Indian subcontinent speaker pronunciation at a brisk, natural conversational pace",
+    au: "authentic, distinctly Australian English with broad Aussie vowels and diphthongs, characteristic vocal warmth, and friendly rising intonation at phrase endings at a brisk, natural conversational native pace",
   };
 
   function getEffectiveAccent(cardOrId, settingAccent = "us") {
@@ -285,6 +285,9 @@
         const settings = { ...DEFAULT_SETTINGS, ...raw.settings };
         if (settings.geminiApiKey && settings.ttsEngine === "bundled") {
           settings.ttsEngine = "gemini";
+        }
+        if (raw.settings && (raw.settings.speechRate === 1 || raw.settings.speechRate === "1" || !raw.settings.speechRate)) {
+          settings.speechRate = 1.15;
         }
         return {
           activeCourse: (raw.activeCourse === "grit" ? "grit" : "conversation"),
@@ -1234,7 +1237,7 @@
     if ("speechSynthesis" in window) speechSynthesis.cancel();
   }
 
-  async function playBlob(blob) {
+  async function playBlob(blob, rate = null) {
     stopAudio();
     if (!blob) return false;
     try {
@@ -1243,7 +1246,12 @@
       const audio = new Audio();
       currentAudio = audio;
       audio.src = url;
+      const speed = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
+      audio.playbackRate = speed;
+      audio.defaultPlaybackRate = speed;
+      audio.onplay = () => { audio.playbackRate = speed; };
       audio.load();
+      audio.playbackRate = speed;
       audio.onended = () => {
         URL.revokeObjectURL(url);
         if (currentAudio === audio) currentAudio = null;
@@ -1279,13 +1287,13 @@
     speechSynthesis.addEventListener?.("voiceschanged", pickBrowserVoice);
   }
 
-  function speakBrowser(text) {
+  function speakBrowser(text, rate = null) {
     if (!("speechSynthesis" in window)) return;
     stopAudio();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "en-US";
     if (browserVoice) u.voice = browserVoice;
-    u.rate = Number(state.settings.speechRate) || 1;
+    u.rate = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
     speechSynthesis.speak(u);
   }
 
@@ -1375,12 +1383,15 @@
     });
   }
 
-  function playAudioUrlPromise(url, rate = 1) {
+  function playAudioUrlPromise(url, rate = null) {
     return new Promise((resolve) => {
       stopAudio();
       const audio = new Audio(url);
       currentAudio = audio;
-      audio.playbackRate = rate;
+      const speed = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
+      audio.playbackRate = speed;
+      audio.defaultPlaybackRate = speed;
+      audio.onplay = () => { audio.playbackRate = speed; };
       let finished = false;
       const done = (result) => {
         if (!finished) {
@@ -1395,7 +1406,7 @@
     });
   }
 
-  function playBlobPromise(blob, rate = 1) {
+  function playBlobPromise(blob, rate = null) {
     return new Promise((resolve) => {
       stopAudio();
       if (!blob) { resolve(false); return; }
@@ -1405,7 +1416,10 @@
         const audio = new Audio();
         currentAudio = audio;
         audio.src = url;
-        audio.playbackRate = rate;
+        const speed = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
+        audio.playbackRate = speed;
+        audio.defaultPlaybackRate = speed;
+        audio.onplay = () => { audio.playbackRate = speed; };
         let finished = false;
         const done = (result) => {
           if (!finished) {
@@ -1421,6 +1435,7 @@
           done(false);
         };
         audio.load();
+        audio.playbackRate = speed;
         audio.play().catch((err) => {
           console.warn("playBlobPromise audio.play() catch:", err);
           done(false);
@@ -1432,14 +1447,14 @@
     });
   }
 
-  function speakBrowserPromise(text, rate = 1) {
+  function speakBrowserPromise(text, rate = null) {
     return new Promise((resolve) => {
       if (!("speechSynthesis" in window)) { resolve(); return; }
       stopAudio();
       const u = new SpeechSynthesisUtterance(text);
       u.lang = "en-US";
       if (browserVoice) u.voice = browserVoice;
-      u.rate = rate;
+      u.rate = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
       let finished = false;
       const safety = setTimeout(() => {
         if (!finished) { finished = true; resolve(); }
@@ -1527,18 +1542,23 @@
   document.addEventListener("touchstart", unlockAudio, { once: true, passive: true });
   document.addEventListener("click", unlockAudio, { once: true });
 
-  function tryPlayLocalAudio(cardId) {
+  function tryPlayLocalAudio(cardId, rate = null) {
     return new Promise((resolve) => {
       stopAudio();
       const audio = new Audio(`audio/${cardId}.mp3`);
+      const speed = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
+      audio.playbackRate = speed;
+      audio.defaultPlaybackRate = speed;
       let done = false;
       audio.onplay = () => {
+        audio.playbackRate = speed;
         if (!done) { done = true; currentAudio = audio; resolve(true); }
       };
       audio.onerror = () => {
         if (!done) { done = true; resolve(false); }
       };
       audio.play().then(() => {
+        audio.playbackRate = speed;
         if (!done) { done = true; currentAudio = audio; resolve(true); }
       }).catch(() => {
         if (!done) { done = true; resolve(false); }
@@ -1561,13 +1581,14 @@
   // カード専用の再生（キャッシュ → Gemini API → ローカル同梱音声 → ブラウザ音声）
   async function speakCard(card) {
     const s = state.settings;
+    const rate = Number(s.speechRate) || 1.15;
     const badge = $("#tts-source");
 
     // 1. ブラウザ標準設定の場合
     if (s.ttsEngine === "browser") {
       badge.textContent = "ブラウザ標準";
       badge.className = "tts-badge fallback";
-      speakBrowser(card.en);
+      speakBrowser(card.en, rate);
       return;
     }
 
@@ -1582,7 +1603,7 @@
       badge.textContent = `✨ Gemini 3.8 (${voiceLabel}・${accentInfo.flag} ${accentInfo.name})`;
       badge.className = "tts-badge";
       badge.style.cursor = "default";
-      const played = await playBlob(cachedItem.blob);
+      const played = await playBlob(cachedItem.blob, rate);
       if (played) return;
     }
 
@@ -1601,7 +1622,7 @@
         badge.className = "tts-badge";
         badge.style.cursor = "default";
         lastTtsError = "";
-        const played = await playBlob(blob);
+        const played = await playBlob(blob, rate);
         if (played) return;
       } catch (err) {
         console.warn("Gemini TTS エラー, 同梱音声へフォールバック:", err);
@@ -1626,7 +1647,7 @@
     const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
 
     if (isBundled) {
-      const playedLocal = await tryPlayLocalAudio(audioKey);
+      const playedLocal = await tryPlayLocalAudio(audioKey, rate);
       if (playedLocal) {
         if (geminiFailReason) {
           badge.textContent = `⚠️ ${geminiFailReason} → 同梱音声 (タップで詳細)`;
@@ -1652,7 +1673,7 @@
       badge.style.cursor = "default";
     }
     badge.className = "tts-badge fallback";
-    speakBrowser(card.en);
+    speakBrowser(card.en, rate);
   }
 
   // ---------- 実績・バッジシステム ----------
@@ -2067,19 +2088,43 @@
   const form = $("#settings-form");
   const ttsSelect = $("#tts-engine-select");
   const geminiSub = $("#gemini-subfields");
-  const browserSub = $("#browser-subfields");
   const keyInput = $("#gemini-api-key");
   const toggleKeyBtn = $("#toggle-key-visibility");
   const testTtsBtn = $("#test-tts-btn");
   const testStatus = $("#test-tts-status");
   const cacheCountEl = $("#cache-count");
   const clearCacheBtn = $("#clear-cache-btn");
+  const speechRateInput = $("#speech-rate-input");
+  const speechRateVal = $("#speech-rate-val");
+
+  function updateSpeechRateDisplay(rate) {
+    const num = Number(rate) || 1.15;
+    if (speechRateVal) speechRateVal.textContent = `${num.toFixed(2)}x`;
+    $$("#speech-speed-presets .btn-toggle").forEach((btn) => {
+      btn.classList.toggle("active", Math.abs(Number(btn.dataset.speed) - num) < 0.03);
+    });
+  }
+
+  speechRateInput?.addEventListener("input", () => {
+    const spd = Number(speechRateInput.value) || 1.15;
+    updateSpeechRateDisplay(spd);
+    state.settings.speechRate = spd;
+    save();
+  });
+
+  $("#speech-speed-presets")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".btn-toggle");
+    if (!btn) return;
+    const spd = Number(btn.dataset.speed) || 1.15;
+    if (speechRateInput) speechRateInput.value = spd;
+    updateSpeechRateDisplay(spd);
+    state.settings.speechRate = spd;
+    save();
+  });
 
   function updateTtsFieldsVisibility() {
     const isGemini = ttsSelect.value === "gemini";
-    const isBrowser = ttsSelect.value === "browser";
-    geminiSub.hidden = !isGemini;
-    browserSub.hidden = !isBrowser;
+    if (geminiSub) geminiSub.hidden = !isGemini;
   }
   ttsSelect.addEventListener("change", updateTtsFieldsVisibility);
 
@@ -2181,7 +2226,7 @@
     state.settings = {
       dailyGoal: Math.max(1, Math.min(100, parseInt(form.dailyGoal.value, 10) || 10)),
       timerSec: Math.max(0, Math.min(30, parseInt(form.timerSec.value, 10) || 0)),
-      speechRate: Number(form.speechRate.value) || 1,
+      speechRate: Number(form.speechRate.value) || 1.15,
       autoSpeak: form.autoSpeak.checked,
       showHint: form.showHint.checked,
       typingMode: form.typingMode.checked,
@@ -2400,7 +2445,9 @@
     const s = state.settings;
     form.dailyGoal.value = s.dailyGoal;
     form.timerSec.value = s.timerSec;
-    form.speechRate.value = s.speechRate;
+    const spd = Number(s.speechRate) || 1.15;
+    form.speechRate.value = spd;
+    updateSpeechRateDisplay(spd);
     form.autoSpeak.checked = s.autoSpeak;
     form.showHint.checked = s.showHint;
     form.typingMode.checked = s.typingMode;
@@ -2999,7 +3046,7 @@ ${targetPatterns}
     thinkSec: 3,
     repeatSec: 2,
     enRepeats: 1,
-    speed: 1.0,
+    speed: 1.15,
     showEnAlways: false,
     runId: 0,
     currentSleepReject: null,
@@ -3135,7 +3182,7 @@ ${targetPatterns}
       b.classList.toggle("active", Number(b.dataset.val) === listening.enRepeats);
     });
     $$("#l-speed-toggles .btn-toggle").forEach((b) => {
-      b.classList.toggle("active", Number(b.dataset.val) === listening.speed);
+      b.classList.toggle("active", Math.abs(Number(b.dataset.val) - listening.speed) < 0.03);
     });
     const toggleShowBtn = $("#l-toggle-show-en");
     if (toggleShowBtn) {
@@ -3440,7 +3487,7 @@ ${targetPatterns}
   $("#l-speed-toggles")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".btn-toggle");
     if (!btn) return;
-    listening.speed = Number(btn.dataset.val) || 1.0;
+    listening.speed = Number(btn.dataset.val) || 1.15;
     updateListeningControlsUI();
   });
   $("#l-toggle-show-en")?.addEventListener("click", () => {
