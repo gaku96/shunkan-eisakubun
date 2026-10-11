@@ -10,7 +10,7 @@
   <link rel="apple-touch-icon" href="icon.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間英作文 | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
   <header class="app-header">
@@ -321,6 +321,14 @@
         </div>
       </fieldset>
 
+      <div class="setting-update-row" style="margin: 16px 0; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+        <div>
+          <div style="font-weight: 600; font-size: 0.9rem;">アプリの更新</div>
+          <div style="color: var(--muted); font-size: 0.78rem;">キャッシュを更新して最新版を取得</div>
+        </div>
+        <button type="button" class="btn small report-btn" id="force-update-btn">🔄 最新版に更新</button>
+      </div>
+
       <div class="dialog-actions">
         <button type="button" class="btn danger small" id="reset-data">学習データをリセット</button>
         <button type="submit" class="btn primary" value="save">保存</button>
@@ -382,6 +390,7 @@
           <span class="preview-theme-badge" id="ai-preview-theme"></span>
         </div>
         <div id="ai-preview-list" class="ai-preview-list"></div>
+
         <div class="dialog-actions">
           <button type="button" class="btn ghost" id="ai-cancel-btn">やり直す</button>
           <button type="button" class="btn primary" id="ai-save-btn">✓ アプリに追加して練習する</button>
@@ -435,12 +444,22 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js"></script>
-  <script src="app.js"></script>
+  <script src="data.js?v=8"></script>
+  <script src="app.js?v=8"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js").catch(() => {});
+        navigator.serviceWorker.register("./sw.js").then((reg) => {
+          reg.update().catch(() => {});
+        }).catch(() => {});
+      });
+
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
       });
     }
   </script>

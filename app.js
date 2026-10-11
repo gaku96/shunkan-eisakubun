@@ -1507,6 +1507,28 @@
     showView("home");
   });
 
+  const forceUpdateBtn = $("#force-update-btn");
+  if (forceUpdateBtn) {
+    forceUpdateBtn.addEventListener("click", async () => {
+      forceUpdateBtn.disabled = true;
+      forceUpdateBtn.textContent = "更新中...";
+      try {
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+        if ("serviceWorker" in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.unregister()));
+        }
+      } catch (err) {
+        console.warn("Cache reset error:", err);
+      }
+      const cleanUrl = window.location.origin + window.location.pathname + "?ts=" + Date.now();
+      window.location.replace(cleanUrl);
+    });
+  }
+
   // ==========================================
   // 🤖 AI自分専用例文ジェネレーター
   // ==========================================

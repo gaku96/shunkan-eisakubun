@@ -1,10 +1,10 @@
-const CACHE_NAME = "shunkan-eisakubun-v7";
+const CACHE_NAME = "shunkan-eisakubun-v8";
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css",
-  "./app.js",
-  "./data.js",
+  "./style.css?v=8",
+  "./app.js?v=8",
+  "./data.js?v=8",
   "./manifest.json",
   "./icon.png"
 ];
@@ -26,17 +26,55 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
+  // Navigation request (opening or reloading the app): Network-First
+  // This ensures iOS PWA always gets the freshest HTML when online,
+  // while smoothly falling back to cache when offline.
+  if (e.request.mode === "navigate" || e.request.destination === "document") {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          if (res && res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request).then((cached) => cached || caches.match("./index.html")))
+    );
+    return;
+  }
+
+  // Audio files: cache-first with dynamic caching
+  if (e.request.url.includes("/audio/")) {
+    e.respondWith(
+      caches.match(e.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(e.request).then((res) => {
+          if (res && res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+          }
+          return res;
+        });
+      })
+    );
+    return;
+  }
+
+  // Assets (CSS, JS, images): Stale-While-Revalidate
   e.respondWith(
     caches.match(e.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(e.request).then((res) => {
-        // Cache audio files dynamically as they are fetched
-        if (e.request.url.includes("/audio/")) {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
-        }
-        return res;
-      });
+      const fetchPromise = fetch(e.request)
+        .then((res) => {
+          if (res && res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+          }
+          return res;
+        })
+        .catch(() => null);
+
+      return cached || fetchPromise;
     })
   );
 });
