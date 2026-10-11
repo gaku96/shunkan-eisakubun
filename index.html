@@ -11,11 +11,17 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間英作文 | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
   <header class="app-header">
-    <button type="button" class="brand" data-nav="home" aria-label="ホームへ">瞬間英作文<span id="brand-sub">英会話の型30</span></button>
+    <button type="button" class="brand" data-nav="home" aria-label="ホームへ">
+      <div class="brand-icon-wrap">
+        <img src="apple-touch-icon.png" alt="" class="brand-icon-img" width="32" height="32">
+      </div>
+      <span class="brand-title">瞬間英作文</span>
+      <span class="brand-course-badge" id="brand-sub">口語 30</span>
+    </button>
     <div class="header-actions">
       <span class="streak-badge" id="header-streak" aria-label="連続学習日数">🔥 0</span>
       <button type="button" class="icon-btn" id="open-settings" aria-label="設定">⚙️</button>
@@ -688,8 +694,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=14"></script>
-  <script src="app.js?v=14"></script>
+  <script src="data.js?v=15"></script>
+  <script src="app.js?v=15"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

@@ -163,7 +163,7 @@
   function updateBrandSub() {
     const brandSub = $("#brand-sub");
     if (brandSub) {
-      brandSub.textContent = getActiveCourse() === "grit" ? "TED・GRIT知的思考編" : "英会話の型30";
+      brandSub.textContent = getActiveCourse() === "grit" ? "GRIT 30" : "口語 30";
     }
   }
 
