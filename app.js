@@ -84,6 +84,47 @@
       });
     } catch { return null; }
   }
+  async function findCachedAudio(cardId, isJa = false, preferredModel = "", preferredVoice = "") {
+    if (!cardId) return null;
+    try {
+      // 1. 指定モデル・ボイスの完全一致キーを直接取得（最速）
+      if (preferredModel && preferredVoice) {
+        const exactKey = isJa ? `ja_${cardId}_${preferredModel}_${preferredVoice}` : `${cardId}_${preferredModel}_${preferredVoice}`;
+        const exactBlob = await getCachedAudio(exactKey);
+        if (exactBlob) return { blob: exactBlob, key: exactKey };
+      }
+
+      // 2. カーソル走査でプレフィックス一致を探索（モデルやボイスが違っても確実にキャッシュから再生）
+      const db = await getDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(DB_STORE, "readonly");
+        const store = tx.objectStore(DB_STORE);
+        const prefix = isJa ? `ja_${cardId}_` : `${cardId}_`;
+        const req = store.openCursor();
+        req.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (!cursor) {
+            resolve(null);
+            return;
+          }
+          const k = String(cursor.key);
+          if (isJa) {
+            if (k.startsWith(prefix)) {
+              resolve({ blob: cursor.value, key: k });
+              return;
+            }
+          } else {
+            if (!k.startsWith("ja_") && k.startsWith(prefix)) {
+              resolve({ blob: cursor.value, key: k });
+              return;
+            }
+          }
+          cursor.continue();
+        };
+        req.onerror = () => resolve(null);
+      });
+    } catch { return null; }
+  }
   async function setCachedAudio(key, blob) {
     try {
       const db = await getDB();
@@ -1061,13 +1102,31 @@
     if ("speechSynthesis" in window) speechSynthesis.cancel();
   }
 
-  function playBlob(blob) {
+  async function playBlob(blob) {
     stopAudio();
-    const url = URL.createObjectURL(blob);
-    currentAudio = new Audio(url);
-    currentAudio.onended = () => { URL.revokeObjectURL(url); currentAudio = null; };
-    currentAudio.onerror = () => { URL.revokeObjectURL(url); currentAudio = null; };
-    return currentAudio.play();
+    if (!blob) return false;
+    try {
+      const safeBlob = (blob instanceof Blob && blob.type) ? blob : new Blob([blob], { type: "audio/wav" });
+      const url = URL.createObjectURL(safeBlob);
+      const audio = new Audio();
+      currentAudio = audio;
+      audio.src = url;
+      audio.load();
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        if (currentAudio === audio) currentAudio = null;
+      };
+      audio.onerror = (e) => {
+        console.warn("playBlob audio error:", e, audio.error);
+        URL.revokeObjectURL(url);
+        if (currentAudio === audio) currentAudio = null;
+      };
+      await audio.play();
+      return true;
+    } catch (err) {
+      console.warn("playBlob play() rejected:", err);
+      return false;
+    }
   }
 
   function pickBrowserVoice() {
@@ -1111,26 +1170,41 @@
 
     const s = state.settings;
     const badge = $("#listening-ja-source");
+    const cardId = card ? card.id : null;
     const audioKey = card ? (card.audioId || getCustomAudioId(card) || card.id) : null;
 
-    // 1. Gemini TTS 設定時は最優先
-    if (s.ttsEngine === "gemini" && s.geminiApiKey) {
-      const cacheKey = `ja_${audioKey || text}_${s.geminiModel}_${s.geminiVoice}`;
-      const cached = await getCachedAudio(cacheKey);
-      if (cached) {
-        if (badge) badge.textContent = `✨ Gemini 3.8 日本語 (${s.geminiVoice})`;
-        const ok = await playBlobPromise(cached, rate);
+    // 1. Gemini TTS（IndexedDBキャッシュを最優先再生。APIキー未入力でもオフラインでも再生可能）
+    if (s.ttsEngine !== "browser") {
+      let cachedItem = null;
+      if (cardId) {
+        cachedItem = await findCachedAudio(cardId, true, s.geminiModel, s.geminiVoice);
+      }
+      if (!cachedItem && text) {
+        const textKey = `ja_${text}_${s.geminiModel}_${s.geminiVoice}`;
+        const blob = await getCachedAudio(textKey);
+        if (blob) cachedItem = { blob, key: textKey };
+      }
+
+      if (cachedItem && cachedItem.blob) {
+        const voiceLabel = cachedItem.key.split("_").pop() || s.geminiVoice || "Gemini 3.8";
+        if (badge) badge.textContent = `✨ Gemini 3.8 日本語 (${voiceLabel})`;
+        const ok = await playBlobPromise(cachedItem.blob, rate);
         if (ok) return true;
       }
-      try {
-        if (badge) badge.textContent = "✨ Gemini 3.8 生成中...";
-        const blob = await generateGeminiSpeech(text, s.geminiApiKey, s.geminiModel, s.geminiVoice, "ja");
-        await setCachedAudio(cacheKey, blob);
-        if (badge) badge.textContent = `✨ Gemini 3.8 日本語 (${s.geminiVoice})`;
-        const ok = await playBlobPromise(blob, rate);
-        if (ok) return true;
-      } catch (e) {
-        console.warn("Gemini Ja TTS fallback to bundled audio:", e);
+
+      // キャッシュ未生成でGemini APIキーがある場合は生成
+      if (s.geminiApiKey) {
+        try {
+          if (badge) badge.textContent = "✨ Gemini 3.8 生成中...";
+          const blob = await generateGeminiSpeech(text, s.geminiApiKey, s.geminiModel, s.geminiVoice, "ja");
+          const cacheKey = `ja_${cardId || text}_${s.geminiModel}_${s.geminiVoice}`;
+          await setCachedAudio(cacheKey, blob);
+          if (badge) badge.textContent = `✨ Gemini 3.8 日本語 (${s.geminiVoice})`;
+          const ok = await playBlobPromise(blob, rate);
+          if (ok) return true;
+        } catch (e) {
+          console.warn("Gemini Ja TTS fallback to bundled audio:", e);
+        }
       }
     }
 
@@ -1192,22 +1266,37 @@
   function playBlobPromise(blob, rate = 1) {
     return new Promise((resolve) => {
       stopAudio();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      currentAudio = audio;
-      audio.playbackRate = rate;
-      let finished = false;
-      const done = (result) => {
-        if (!finished) {
-          finished = true;
-          URL.revokeObjectURL(url);
-          if (currentAudio === audio) currentAudio = null;
-          resolve(result);
-        }
-      };
-      audio.onended = () => done(true);
-      audio.onerror = () => { URL.revokeObjectURL(url); done(false); };
-      audio.play().catch(() => { URL.revokeObjectURL(url); done(false); });
+      if (!blob) { resolve(false); return; }
+      try {
+        const safeBlob = (blob instanceof Blob && blob.type) ? blob : new Blob([blob], { type: "audio/wav" });
+        const url = URL.createObjectURL(safeBlob);
+        const audio = new Audio();
+        currentAudio = audio;
+        audio.src = url;
+        audio.playbackRate = rate;
+        let finished = false;
+        const done = (result) => {
+          if (!finished) {
+            finished = true;
+            URL.revokeObjectURL(url);
+            if (currentAudio === audio) currentAudio = null;
+            resolve(result);
+          }
+        };
+        audio.onended = () => done(true);
+        audio.onerror = (e) => {
+          console.warn("playBlobPromise audio error:", e, audio.error);
+          done(false);
+        };
+        audio.load();
+        audio.play().catch((err) => {
+          console.warn("playBlobPromise audio.play() catch:", err);
+          done(false);
+        });
+      } catch (e) {
+        console.warn("playBlobPromise exception:", e);
+        resolve(false);
+      }
     });
   }
 
@@ -1239,24 +1328,29 @@
     const badge = $("#listening-tts-source");
     const audioKey = card.audioId || getCustomAudioId(card) || card.id;
 
-    // 1. Gemini TTS 設定時は最優先で生成・キャッシュ再生
-    if (s.ttsEngine === "gemini" && s.geminiApiKey) {
-      const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}`;
-      const cached = await getCachedAudio(cacheKey);
-      if (cached) {
-        if (badge) badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
-        const ok = await playBlobPromise(cached, rate);
+    // 1. Gemini 音声（IndexedDBキャッシュを最優先再生。APIキー未入力でもオフラインでも再生可能）
+    if (s.ttsEngine !== "browser") {
+      const cachedItem = await findCachedAudio(card.id, false, s.geminiModel, s.geminiVoice);
+      if (cachedItem && cachedItem.blob) {
+        const voiceLabel = cachedItem.key.split("_").pop() || s.geminiVoice || "Gemini 3.8";
+        if (badge) badge.textContent = `✨ Gemini 3.8 (${voiceLabel})`;
+        const ok = await playBlobPromise(cachedItem.blob, rate);
         if (ok) return;
       }
-      try {
-        if (badge) badge.textContent = "✨ Gemini 3.8 生成中...";
-        const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice, "en");
-        await setCachedAudio(cacheKey, blob);
-        if (badge) badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
-        const ok = await playBlobPromise(blob, rate);
-        if (ok) return;
-      } catch (err) {
-        console.warn("Gemini English TTS error, fallback to bundled audio:", err);
+
+      // キャッシュ未生成でAPIキーがある場合は生成
+      if (s.geminiApiKey) {
+        try {
+          if (badge) badge.textContent = "✨ Gemini 3.8 生成中...";
+          const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice, "en");
+          const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}`;
+          await setCachedAudio(cacheKey, blob);
+          if (badge) badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
+          const ok = await playBlobPromise(blob, rate);
+          if (ok) return;
+        } catch (err) {
+          console.warn("Gemini English TTS error, fallback to bundled audio:", err);
+        }
       }
     }
 
@@ -1312,7 +1406,7 @@
     });
   }
 
-  // カード専用の再生（ローカル同梱音声 → キャッシュ → Gemini API → ブラウザ音声）
+  // カード専用の再生（キャッシュ → Gemini API → ローカル同梱音声 → ブラウザ音声）
   async function speakCard(card) {
     const s = state.settings;
     const badge = $("#tts-source");
@@ -1325,48 +1419,49 @@
       return;
     }
 
-    // 2. Gemini 3.8 TTS 設定の場合
+    // 2. まず IndexedDB に保存された Gemini キャッシュ音声があるか確認（APIキー未入力・オフラインでも再生可能！）
+    const cachedItem = await findCachedAudio(card.id, false, s.geminiModel, s.geminiVoice);
+    if (cachedItem && cachedItem.blob) {
+      const voiceLabel = cachedItem.key.split("_").pop() || s.geminiVoice || "Gemini 3.8";
+      badge.textContent = `✨ Gemini 3.8 (${voiceLabel})`;
+      badge.className = "tts-badge";
+      const played = await playBlob(cachedItem.blob);
+      if (played) return;
+    }
+
+    // 3. キャッシュがなく、Gemini APIキーが設定されている場合はリアルタイム生成
     if (s.ttsEngine === "gemini" && s.geminiApiKey) {
-      const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}`;
-      const cached = await getCachedAudio(cacheKey);
-
-      if (cached) {
-        badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
-        badge.className = "tts-badge";
-        playBlob(cached);
-        return;
-      }
-
       badge.textContent = "✨ Gemini 3.8 生成中...";
       badge.className = "tts-badge loading";
 
       try {
         const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice, "en");
+        const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}`;
         await setCachedAudio(cacheKey, blob);
         badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
         badge.className = "tts-badge";
-        playBlob(blob);
-        return;
+        const played = await playBlob(blob);
+        if (played) return;
       } catch (err) {
         console.warn("Gemini TTS エラー, 同梱音声へフォールバック:", err);
       }
     }
 
-    // 3. 同梱のローカル高音質MP3（オフライン・0円・フォールバック）
+    // 4. 同梱のローカル高音質MP3（オフライン・0円・フォールバック）
     const audioKey = card.audioId || getCustomAudioId(card) || card.id;
     const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
 
     if (isBundled) {
       const playedLocal = await tryPlayLocalAudio(audioKey);
       if (playedLocal) {
-        badge.textContent = "✨ ネイティブ音声（同梱）";
+        badge.textContent = "✨ リアル口語ネイティブ（崩し・同梱）";
         badge.className = "tts-badge";
         return;
       }
     }
 
-    // 4. ブラウザ音声に最終フォールバック
-    badge.textContent = "ブラウザ音声";
+    // 5. ブラウザ音声に最終フォールバック
+    badge.textContent = "ブラウザ標準";
     badge.className = "tts-badge fallback";
     speakBrowser(card.en);
   }
@@ -1863,6 +1958,41 @@
     }
   });
 
+  function saveCurrentSettingsFromForm() {
+    state.settings = {
+      dailyGoal: Math.max(1, Math.min(100, parseInt(form.dailyGoal.value, 10) || 10)),
+      timerSec: Math.max(0, Math.min(30, parseInt(form.timerSec.value, 10) || 0)),
+      speechRate: Number(form.speechRate.value) || 1,
+      autoSpeak: form.autoSpeak.checked,
+      showHint: form.showHint.checked,
+      typingMode: form.typingMode.checked,
+      ttsEngine: form.ttsEngine.value,
+      geminiApiKey: form.geminiApiKey.value.trim(),
+      geminiModel: form.geminiModel.value,
+      geminiVoice: form.geminiVoice.value,
+    };
+    const h = state.history[todayKey()];
+    if (h) h.goal = state.settings.dailyGoal;
+    save();
+  }
+
+  keyInput.addEventListener("input", () => {
+    state.settings.geminiApiKey = keyInput.value.trim();
+    save();
+  });
+  form.geminiModel.addEventListener("change", () => {
+    state.settings.geminiModel = form.geminiModel.value;
+    save();
+  });
+  form.geminiVoice.addEventListener("change", () => {
+    state.settings.geminiVoice = form.geminiVoice.value;
+    save();
+  });
+  ttsSelect.addEventListener("change", () => {
+    state.settings.ttsEngine = ttsSelect.value;
+    save();
+  });
+
   // 一括キャッシュ
   batchCacheBtn?.addEventListener("click", async () => {
     const key = keyInput.value.trim();
@@ -1876,6 +2006,9 @@
       batchCacheBtn.textContent = "中止中...";
       return;
     }
+
+    // 入力値とGemini設定を即座に永続化
+    saveCurrentSettingsFromForm();
 
     const courseCards = CARDS;
     const model = form.geminiModel.value;
@@ -1947,6 +2080,7 @@
     } else {
       batchCacheProgress.textContent = "🎉 完了！オフラインでも超自然なGemini音声で学習できます。";
     }
+    saveCurrentSettingsFromForm();
     await updateCacheCount();
   });
 
@@ -1981,22 +2115,7 @@
   });
 
   dialog.addEventListener("close", () => {
-    if (dialog.returnValue !== "save") return;
-    state.settings = {
-      dailyGoal: Math.max(1, Math.min(100, parseInt(form.dailyGoal.value, 10) || 10)),
-      timerSec: Math.max(0, Math.min(30, parseInt(form.timerSec.value, 10) || 0)),
-      speechRate: Number(form.speechRate.value) || 1,
-      autoSpeak: form.autoSpeak.checked,
-      showHint: form.showHint.checked,
-      typingMode: form.typingMode.checked,
-      ttsEngine: form.ttsEngine.value,
-      geminiApiKey: form.geminiApiKey.value.trim(),
-      geminiModel: form.geminiModel.value,
-      geminiVoice: form.geminiVoice.value,
-    };
-    const h = state.history[todayKey()];
-    if (h) h.goal = state.settings.dailyGoal;
-    save();
+    saveCurrentSettingsFromForm();
     if (!views.home.hidden) renderHome();
     renderHeaderStreak();
   });
