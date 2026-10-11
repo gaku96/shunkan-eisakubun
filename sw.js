@@ -1,4 +1,4 @@
-const CACHE_NAME = "shunkan-eisakubun-v6";
+const CACHE_NAME = "shunkan-eisakubun-v7";
 const ASSETS = [
   "./",
   "./index.html",

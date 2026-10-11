@@ -143,6 +143,19 @@ progress.done::-moz-progress-bar { background: var(--good); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .btn.primary:hover { filter: brightness(1.08); }
 .btn.ghost { background: transparent; }
+.btn.primary.ghost,
+.btn.ghost.primary,
+.btn.report-btn {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.btn.primary.ghost:hover,
+.btn.ghost.primary:hover,
+.btn.report-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
 .btn.danger { color: var(--again); border-color: color-mix(in srgb, var(--again) 40%, transparent); }
 .btn.big { width: 100%; padding: 14px; font-size: 1.05rem; }
 .btn.small { padding: 6px 12px; font-size: .85rem; }
