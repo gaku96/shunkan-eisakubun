@@ -52,6 +52,19 @@
         <p class="hint">復習予定の例文 → まだ解いていない例文 の順に出題します。</p>
       </div>
 
+      <!-- AI自分専用例文カード -->
+      <div class="card ai-card">
+        <div class="ai-head">
+          <span class="ai-badge">✨ NEW</span>
+          <h2>🤖 自分専用の例文をAI生成</h2>
+        </div>
+        <p class="ai-desc">あなたの仕事や趣味に合わせて、30構文の実践例文をGeminiが自動作成！</p>
+        <div class="ai-actions">
+          <button type="button" class="btn primary" id="open-ai-modal">✨ テーマを決めて生成</button>
+          <button type="button" class="btn" id="start-custom" hidden>カスタム例文を練習 <span class="pill" id="custom-count">0</span></button>
+        </div>
+      </div>
+
       <div class="card">
         <h2>練習メニュー</h2>
         <div class="menu-grid">
@@ -228,6 +241,68 @@
         <button type="submit" class="btn primary" value="save">保存</button>
       </div>
     </form>
+  </dialog>
+
+  <!-- AI例文生成モーダル -->
+  <dialog id="ai-modal" closedby="any" aria-labelledby="ai-title">
+    <div class="ai-modal-content">
+      <div class="dialog-header">
+        <h2 id="ai-title">🤖 自分専用の例文をAI生成</h2>
+        <button type="button" class="icon-btn" id="close-ai-modal" aria-label="閉じる">✕</button>
+      </div>
+      <p class="dialog-intro">あなたの職業や趣味に合わせた、リアルで使いやすいオリジナル例文をGeminiが自動作成します。</p>
+
+      <div class="ai-presets">
+        <p class="presets-label">おすすめプリセット（タップで入力）:</p>
+        <div class="chip-group">
+          <button type="button" class="chip" data-preset="ITエンジニア・プログラミング">💻 ITエンジニア</button>
+          <button type="button" class="chip" data-preset="ビジネス・営業・職場">💼 ビジネス・営業</button>
+          <button type="button" class="chip" data-preset="海外旅行・一人旅・観光">✈️ 海外旅行</button>
+          <button type="button" class="chip" data-preset="カフェ巡り・日常会話">☕️ カフェ・日常</button>
+          <button type="button" class="chip" data-preset="筋トレ・フィットネス・健康">🏋️ 筋トレ・健康</button>
+        </div>
+      </div>
+
+      <label class="field-stacked">
+        <span>テーマ・職種・シチュエーション</span>
+        <input type="text" id="ai-theme-input" placeholder="例: Webフロントエンド開発者、アメリカ一人旅、子育て など">
+      </label>
+
+      <label class="field">
+        <span>出題範囲</span>
+        <select id="ai-scope-select">
+          <option value="all">全30構文（各1問・計30問）</option>
+          <option value="part1">Part① 断定を避ける構文（5問）</option>
+          <option value="part2">Part② 自分について語れる構文（5問）</option>
+          <option value="part3">Part③ 感情をリアルに伝える構文（5問）</option>
+          <option value="part4">Part④ 会話を広げる構文（5問）</option>
+          <option value="part5">Part⑤ 一歩差がつく構文（10問）</option>
+        </select>
+      </label>
+
+      <div id="ai-key-hint" class="ai-key-hint"></div>
+
+      <button type="button" class="btn primary big" id="ai-generate-btn">✨ 例文を生成する</button>
+
+      <!-- ローディング表示 -->
+      <div id="ai-loading" class="ai-loading" hidden>
+        <div class="spinner"></div>
+        <p id="ai-loading-text">Geminiが例文を作成中...</p>
+      </div>
+
+      <!-- 生成結果プレビュー -->
+      <div id="ai-preview" class="ai-preview" hidden>
+        <div class="preview-head">
+          <h3>生成された例文（<span id="ai-preview-count">0</span>問）</h3>
+          <span class="preview-theme-badge" id="ai-preview-theme"></span>
+        </div>
+        <div id="ai-preview-list" class="ai-preview-list"></div>
+        <div class="dialog-actions">
+          <button type="button" class="btn ghost" id="ai-cancel-btn">やり直す</button>
+          <button type="button" class="btn primary" id="ai-save-btn">✓ アプリに追加して練習する</button>
+        </div>
+      </div>
+    </div>
   </dialog>
 
   <script src="data.js"></script>

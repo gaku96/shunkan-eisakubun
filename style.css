@@ -339,6 +339,200 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
 .check input { accent-color: var(--accent); width: 18px; height: 18px; }
 .dialog-actions { display: flex; justify-content: space-between; margin-top: 20px; gap: 10px; }
 
+/* AI Generator Card & Dialog */
+.ai-card {
+  border: 1.5px solid var(--accent);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--accent-soft) 100%);
+}
+.ai-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.ai-head h2 { margin: 0; }
+.ai-badge {
+  font-size: .7rem;
+  font-weight: 700;
+  background: var(--accent);
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 999px;
+  letter-spacing: .02em;
+}
+.ai-desc {
+  font-size: .88rem;
+  color: var(--muted);
+  margin: 0 0 14px;
+  line-height: 1.45;
+}
+.ai-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* AI Dialog Elements */
+.ai-modal-content {
+  display: flex;
+  flex-direction: column;
+}
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.dialog-header h2 { margin: 0; }
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+.icon-btn:hover { background: var(--border); color: var(--text); }
+.dialog-intro {
+  font-size: .85rem;
+  color: var(--muted);
+  margin: 0 0 12px;
+  line-height: 1.4;
+}
+
+.ai-presets {
+  margin-bottom: 12px;
+}
+.presets-label {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+.chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: .8rem;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.chip.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.ai-key-hint {
+  font-size: .8rem;
+  line-height: 1.4;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.ai-key-hint.with-key {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: var(--good);
+}
+.ai-key-hint.no-key {
+  background: var(--accent-soft);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: var(--text);
+}
+.ai-key-hint strong {
+  color: var(--accent);
+}
+
+.ai-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 0;
+  text-align: center;
+}
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-preview {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.preview-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.preview-head h3 {
+  font-size: .95rem;
+  margin: 0;
+}
+.preview-theme-badge {
+  font-size: .75rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.ai-preview-list {
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+  margin-bottom: 14px;
+}
+.preview-item {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.preview-item-pattern {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+.preview-item-ja {
+  font-size: .88rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.preview-item-en {
+  font-size: .85rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition: none !important; }
 }
