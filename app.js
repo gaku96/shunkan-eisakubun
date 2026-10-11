@@ -214,6 +214,62 @@
     } catch { return false; }
   }
 
+  function blobToBase64(blob) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const res = reader.result;
+        const b64 = typeof res === "string" ? res.split(",")[1] || "" : "";
+        resolve(b64);
+      };
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function getAllCachedAudio() {
+    try {
+      const db = await getDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(DB_STORE, "readonly");
+        const store = tx.objectStore(DB_STORE);
+        const list = [];
+        const req = store.openCursor();
+        req.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (cursor) {
+            list.push({ key: String(cursor.key), blob: cursor.value });
+            cursor.continue();
+          } else {
+            resolve(list);
+          }
+        };
+        req.onerror = () => resolve([]);
+      });
+    } catch { return []; }
+  }
+
+  async function restoreAudioCacheItems(items) {
+    if (!Array.isArray(items) || items.length === 0) return 0;
+    try {
+      const db = await getDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(DB_STORE, "readwrite");
+        const store = tx.objectStore(DB_STORE);
+        let count = 0;
+        for (const item of items) {
+          if (item && item.key && item.data) {
+            const blob = base64ToBlob(item.data, item.mime || "audio/wav");
+            store.put(blob, item.key);
+            count++;
+          }
+        }
+        tx.oncomplete = () => resolve(count);
+        tx.onerror = () => resolve(count);
+      });
+    } catch { return 0; }
+  }
+
   // ---------- 日付ユーティリティ（ローカル時刻） ----------
   const pad = (n) => String(n).padStart(2, "0");
   const toKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -2396,6 +2452,123 @@
       window.location.replace(cleanUrl);
     });
   }
+
+  // ---------- 端末間同期・バックアップ（PC ⇄ iPhone） ----------
+  const exportSyncBtn = $("#export-sync-btn");
+  const importSyncBtn = $("#import-sync-btn");
+  const syncFileInput = $("#sync-file-input");
+  const syncStatus = $("#sync-status");
+
+  exportSyncBtn?.addEventListener("click", async () => {
+    try {
+      exportSyncBtn.disabled = true;
+      if (syncStatus) {
+        syncStatus.style.display = "block";
+        syncStatus.textContent = "書き出し中...";
+        syncStatus.className = "status-msg";
+      }
+
+      saveCurrentSettingsFromForm();
+      const cachedAudios = await getAllCachedAudio();
+      const audioList = [];
+      for (const item of cachedAudios) {
+        const b64 = await blobToBase64(item.blob);
+        audioList.push({
+          key: item.key,
+          mime: item.blob.type || "audio/wav",
+          data: b64
+        });
+      }
+
+      const backupData = {
+        version: 1,
+        appName: "shunkan-eisakubun",
+        exportedAt: new Date().toISOString(),
+        state: state,
+        audioCount: audioList.length,
+        audioCache: audioList
+      };
+
+      const jsonStr = JSON.stringify(backupData);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `shunkan-sync-${todayKey()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      if (syncStatus) {
+        syncStatus.textContent = `✓ 書き出し完了！(${audioList.length}件の音声を保存。このファイルをiPhoneにAirDropしてください)`;
+        syncStatus.className = "status-msg success";
+      }
+    } catch (err) {
+      console.error("Export sync error:", err);
+      if (syncStatus) {
+        syncStatus.textContent = `✕ 書き出しエラー: ${err.message}`;
+        syncStatus.className = "status-msg error";
+      }
+    } finally {
+      exportSyncBtn.disabled = false;
+    }
+  });
+
+  importSyncBtn?.addEventListener("click", () => {
+    syncFileInput?.click();
+  });
+
+  syncFileInput?.addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      if (syncStatus) {
+        syncStatus.style.display = "block";
+        syncStatus.textContent = "データを復元中...";
+        syncStatus.className = "status-msg";
+      }
+
+      const text = await file.text();
+      const backupData = JSON.parse(text);
+      if (!backupData || backupData.appName !== "shunkan-eisakubun") {
+        throw new Error("無効なバックアップファイルです。");
+      }
+
+      // 1. 設定・状態の復元
+      if (backupData.state) {
+        state = {
+          ...state,
+          ...backupData.state,
+          settings: { ...state.settings, ...backupData.state.settings }
+        };
+        save();
+      }
+
+      // 2. 音声キャッシュの復元
+      let restoredCount = 0;
+      if (Array.isArray(backupData.audioCache)) {
+        restoredCount = await restoreAudioCacheItems(backupData.audioCache);
+      }
+
+      await updateCacheCount();
+      if (syncStatus) {
+        syncStatus.textContent = `✓ 復元完了！APIキー、設定、音声キャッシュ（${restoredCount}件）を同期しました。`;
+        syncStatus.className = "status-msg success";
+      }
+      alert(`🎉 復元・同期が完了しました！\nAPIキー、設定、学習履歴、および音声キャッシュ（${restoredCount}件）をiPhoneに反映しました。`);
+      location.reload();
+    } catch (err) {
+      console.error("Import sync error:", err);
+      if (syncStatus) {
+        syncStatus.textContent = `✕ 復元エラー: ${err.message}`;
+        syncStatus.className = "status-msg error";
+      }
+      alert(`復元に失敗しました: ${err.message}`);
+    } finally {
+      syncFileInput.value = "";
+    }
+  });
 
   // ==========================================
   // 🤖 AI自分専用例文ジェネレーター

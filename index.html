@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間英作文 | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css?v=27">
+  <link rel="stylesheet" href="style.css?v=28">
 </head>
 <body>
   <header class="app-header">
@@ -603,6 +603,19 @@
         </div>
       </fieldset>
 
+      <div class="sync-section" style="margin: 16px 0; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;">
+        <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;">📱 端末間データ同期（PC ⇄ iPhone）</div>
+        <div style="color: var(--muted); font-size: 0.78rem; margin-bottom: 10px; line-height: 1.4;">
+          設定・APIキー・学習記録・生成済み音声を1ファイルに書き出し、AirDrop等でiPhoneに送って丸ごと復元・同期できます。
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn small" id="export-sync-btn">📤 データを書き出す (PC)</button>
+          <button type="button" class="btn small ghost" id="import-sync-btn">📥 データを復元 (iPhone)</button>
+          <input type="file" id="sync-file-input" accept=".json" hidden>
+        </div>
+        <div id="sync-status" class="status-msg" style="display:none; margin-top: 8px; font-size: 0.8rem;"></div>
+      </div>
+
       <div class="setting-update-row" style="margin: 16px 0; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
         <div>
           <div style="font-weight: 600; font-size: 0.9rem;">アプリの更新</div>
@@ -730,8 +743,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=27"></script>
-  <script src="app.js?v=27"></script>
+  <script src="data.js?v=28"></script>
+  <script src="app.js?v=28"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
