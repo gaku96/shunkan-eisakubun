@@ -336,7 +336,7 @@
       }
     });
     const convTabSub = $("#conv-tab-sub");
-    if (convTabSub) convTabSub.textContent = `型30選＋実戦フレーズ・計${CONV_CARDS.length}問`;
+    if (convTabSub) convTabSub.textContent = `実戦フレーズ・${CONV_CARDS.length}問`;
     const convListeningPill = $('#listening-course-bar .listening-course-pill[data-course="conversation"] span');
     if (convListeningPill) convListeningPill.textContent = `🗣️ 口語編 (${CONV_CARDS.length}問)`;
   }

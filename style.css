@@ -57,21 +57,26 @@ html, body {
 .app-header {
   position: sticky; top: 0; z-index: 10;
   display: flex; align-items: center; justify-content: space-between;
-  padding: max(12px, env(safe-area-inset-top)) 20px 12px;
+  padding: max(10px, env(safe-area-inset-top)) 16px 10px;
   background: color-mix(in srgb, var(--surface) 85%, transparent);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100vw;
 }
 .brand {
   all: unset;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 6px;
-  margin: -4px -6px;
+  gap: 8px;
+  padding: 2px 4px;
   border-radius: 12px;
+  min-width: 0;
+  flex-shrink: 1;
   transition: opacity .15s ease, transform .12s ease;
 }
 .brand:hover {
@@ -85,9 +90,9 @@ html, body {
   outline-offset: 3px;
 }
 .brand-icon-wrap {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -104,38 +109,49 @@ html, body {
   display: block;
 }
 .brand-title {
-  font-size: 1.05rem;
+  font-size: .96rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text);
-  line-height: 1;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .brand-course-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: .68rem;
+  gap: 3px;
+  font-size: .66rem;
   font-weight: 700;
   line-height: 1;
-  padding: 3px 8px;
+  padding: 2.5px 7px;
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent);
   border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
   letter-spacing: 0.02em;
   white-space: nowrap;
+  flex-shrink: 0;
   box-shadow: 0 1px 3px color-mix(in srgb, var(--accent) 12%, transparent);
   transition: all .2s ease;
 }
-.header-actions { display: flex; align-items: center; gap: 8px; }
+.header-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .streak-badge {
-  font-weight: 700; padding: 4px 12px; border-radius: 999px;
+  font-weight: 700; padding: 3px 9px; border-radius: 999px;
   background: color-mix(in srgb, var(--fire) 15%, transparent); color: var(--fire);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: .88rem;
+  line-height: 1;
+  flex-shrink: 0;
 }
 .streak-badge.inactive { filter: grayscale(1); opacity: .6; }
 .icon-btn {
-  border: none; background: transparent; font-size: 1.3rem; cursor: pointer;
-  border-radius: 8px; padding: 4px 8px;
+  border: none; background: transparent; font-size: 1.25rem; cursor: pointer;
+  border-radius: 8px; padding: 4px 6px; flex-shrink: 0;
 }
 .icon-btn:hover { background: var(--accent-soft); }
 
@@ -2083,18 +2099,58 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
 }
 
 @media (max-width: 480px) {
-  .course-tab-btn {
-    padding: 8px 8px;
+  .app-header {
+    padding: max(8px, env(safe-area-inset-top)) 10px 8px;
     gap: 6px;
   }
+  .brand {
+    gap: 6px;
+  }
+  .brand-icon-wrap {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+  }
+  .brand-title {
+    font-size: .84rem;
+    letter-spacing: -0.04em;
+  }
+  .brand-course-badge {
+    font-size: .62rem;
+    padding: 2px 5px;
+  }
+  .streak-badge {
+    font-size: .8rem;
+    padding: 2.5px 6px;
+    gap: 2px;
+  }
+  .icon-btn {
+    font-size: 1.15rem;
+    padding: 2px 4px;
+  }
+  .course-tab-btn {
+    padding: 6px 5px;
+    gap: 5px;
+  }
   .course-tab-icon {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
   }
   .course-tab-title {
-    font-size: .8rem;
+    font-size: .78rem;
+    letter-spacing: -0.02em;
   }
   .course-tab-sub {
-    font-size: .68rem;
+    font-size: .64rem;
+    letter-spacing: -0.02em;
+  }
+}
+
+@media (max-width: 370px) {
+  .brand-title {
+    font-size: .78rem;
+  }
+  .brand-course-badge {
+    display: none;
   }
 }
 
