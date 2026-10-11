@@ -533,6 +533,311 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
   font-style: italic;
 }
 
+/* 🏆 実績・バッジシステム */
+.card-head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.card-head-row h2 { margin: 0; }
+.card-subtext {
+  font-size: .82rem;
+  color: var(--muted);
+  margin: 0 0 14px;
+  line-height: 1.4;
+}
+.badge-total-pill {
+  font-size: .78rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+@media (max-width: 380px) {
+  .badge-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 10px 4px 8px;
+  border-radius: 14px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.badge-item:active {
+  transform: scale(0.95);
+}
+
+.badge-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 6px;
+  background: var(--surface);
+  position: relative;
+  transition: transform .2s ease;
+}
+.badge-item:hover .badge-icon-box {
+  transform: scale(1.1);
+}
+
+.badge-name {
+  font-size: .7rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 2.5em;
+}
+
+/* ロック状態 */
+.badge-item.locked {
+  opacity: .55;
+  filter: grayscale(0.85);
+}
+.badge-item.locked .badge-icon-box::after {
+  content: '🔒';
+  position: absolute;
+  bottom: -3px;
+  right: -5px;
+  font-size: .75rem;
+  filter: none;
+}
+
+/* 解除済みバッジのティア別スタイル */
+.badge-item.unlocked.tier-bronze {
+  border-color: #cd7f32;
+  box-shadow: 0 2px 8px rgba(205, 127, 50, 0.2);
+}
+.badge-item.unlocked.tier-silver {
+  border-color: #94a3b8;
+  box-shadow: 0 2px 8px rgba(148, 163, 184, 0.25);
+}
+.badge-item.unlocked.tier-gold {
+  border-color: #f59e0b;
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.3);
+  background: linear-gradient(180deg, var(--bg) 0%, rgba(245, 158, 11, 0.08) 100%);
+}
+.badge-item.unlocked.tier-diamond {
+  border-color: #38bdf8;
+  box-shadow: 0 2px 14px rgba(56, 189, 248, 0.35);
+  background: linear-gradient(180deg, var(--bg) 0%, rgba(56, 189, 248, 0.1) 100%);
+}
+
+/* 🏆 実績解除モーダル */
+.achievement-dialog {
+  text-align: center;
+  overflow: hidden;
+  position: relative;
+  border-radius: 24px;
+  padding: 32px 24px 28px;
+  background: linear-gradient(180deg, var(--surface) 0%, rgba(245, 158, 11, 0.12) 100%);
+  border: 2px solid #f59e0b;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 30px rgba(245, 158, 11, 0.3);
+  max-width: 380px;
+}
+.achievement-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+/* サンバースト（放射光） */
+.achievement-burst-ring {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.25) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulseGlow 2s infinite alternate ease-in-out;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes pulseGlow {
+  from { transform: translateX(-50%) scale(0.85); opacity: .5; }
+  to { transform: translateX(-50%) scale(1.15); opacity: 1; }
+}
+
+.achievement-icon-wrap {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fef08a 0%, #f59e0b 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.6);
+  margin-bottom: 16px;
+  animation: badgePop .6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes badgePop {
+  0% { transform: scale(0.2) rotate(-20deg); opacity: 0; }
+  60% { transform: scale(1.18) rotate(6deg); opacity: 1; }
+  80% { transform: scale(0.95) rotate(-3deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+.achievement-icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.achievement-unlocked-tag {
+  font-size: .75rem;
+  font-weight: 800;
+  color: #f59e0b;
+  letter-spacing: .08em;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.achievement-content h2 {
+  font-size: 1.35rem;
+  margin: 0 0 8px;
+  color: var(--text);
+}
+.achievement-content p {
+  font-size: .9rem;
+  color: var(--muted);
+  line-height: 1.45;
+  margin: 0 0 20px;
+  max-width: 280px;
+}
+.achievement-content button {
+  width: 100%;
+}
+
+/* ℹ️ バッジ詳細モーダル */
+.badge-detail-dialog {
+  max-width: 400px;
+  padding: 20px 22px;
+}
+.badge-detail-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 12px 0 16px;
+}
+.badge-detail-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+.badge-detail-info {
+  flex: 1;
+}
+.badge-tier-tag {
+  font-size: .68rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-bottom: 4px;
+  letter-spacing: .04em;
+}
+.badge-tier-tag.tier-bronze { background: rgba(205, 127, 50, 0.15); color: #cd7f32; }
+.badge-tier-tag.tier-silver { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
+.badge-tier-tag.tier-gold { background: rgba(245, 158, 11, 0.18); color: #f59e0b; }
+.badge-tier-tag.tier-diamond { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+
+.badge-detail-info h4 {
+  font-size: 1.05rem;
+  margin: 0 0 4px;
+}
+.badge-detail-info p {
+  font-size: .84rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.35;
+}
+
+.badge-detail-progress-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.badge-detail-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.badge-detail-bar {
+  height: 8px;
+  background: var(--surface);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.badge-detail-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  width: 0%;
+  transition: width .3s ease;
+}
+.badge-detail-fill.complete {
+  background: var(--good);
+}
+.badge-detail-status {
+  font-size: .82rem;
+  margin: 0;
+  color: var(--muted);
+  text-align: right;
+  font-weight: 600;
+}
+.badge-detail-status.unlocked {
+  color: var(--good);
+}
+
+/* 🎉 紙吹雪 Canvas */
+.confetti-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition: none !important; }
 }

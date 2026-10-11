@@ -83,6 +83,16 @@
         </div>
       </div>
 
+      <!-- 🏆 実績・バッジ -->
+      <div class="card badge-card">
+        <div class="card-head-row">
+          <h2>🏆 実績・バッジ</h2>
+          <span class="badge-total-pill" id="badge-unlocked-summary">0 / 16 獲得</span>
+        </div>
+        <p class="card-subtext">学習を継続してバッジを集めよう！タップで達成条件と進捗を確認できます。</p>
+        <div class="badge-grid" id="badge-grid"></div>
+      </div>
+
       <button type="button" class="btn ghost wide" data-nav="list">構文一覧を見る（30個）</button>
     </section>
 
@@ -304,6 +314,51 @@
       </div>
     </div>
   </dialog>
+
+  <!-- 実績解除お祝いモーダル -->
+  <dialog id="achievement-dialog" class="achievement-dialog" closedby="any" aria-labelledby="ach-title">
+    <div class="achievement-content">
+      <div class="achievement-burst-ring"></div>
+      <div class="achievement-icon-wrap" id="ach-icon-wrap">
+        <span class="achievement-icon" id="ach-icon">🏆</span>
+      </div>
+      <span class="achievement-unlocked-tag">✨ ACHIEVEMENT UNLOCKED! ✨</span>
+      <h2 id="ach-title">実績タイトル</h2>
+      <p id="ach-desc">実績の説明文</p>
+      <button type="button" class="btn primary big" id="ach-close-btn">やった！🔥</button>
+    </div>
+  </dialog>
+
+  <!-- バッジ詳細モーダル -->
+  <dialog id="badge-detail-dialog" class="badge-detail-dialog" closedby="any" aria-labelledby="badge-detail-title">
+    <div class="badge-detail-content">
+      <div class="dialog-header">
+        <h3 id="badge-detail-title">バッジ詳細</h3>
+        <button type="button" class="icon-btn" id="close-badge-detail" aria-label="閉じる">✕</button>
+      </div>
+      <div class="badge-detail-main">
+        <div class="badge-detail-icon-wrap" id="badge-detail-icon-wrap">
+          <span class="badge-detail-icon" id="badge-detail-icon">🏆</span>
+        </div>
+        <div class="badge-detail-info">
+          <span class="badge-tier-tag" id="badge-detail-tier">GOLD</span>
+          <h4 id="badge-detail-name">バッジ名</h4>
+          <p id="badge-detail-desc">獲得条件の説明</p>
+        </div>
+      </div>
+      <div class="badge-detail-progress-box">
+        <div class="badge-detail-progress-label">
+          <span>進捗状況</span>
+          <span id="badge-detail-progress-text">0 / 7</span>
+        </div>
+        <div class="badge-detail-bar"><div class="badge-detail-fill" id="badge-detail-fill"></div></div>
+        <p class="badge-detail-status" id="badge-detail-status">未達成 🔒</p>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 紙吹雪用 Canvas -->
+  <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
   <script src="data.js"></script>
   <script src="app.js"></script>

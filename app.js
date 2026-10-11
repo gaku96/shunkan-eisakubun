@@ -127,10 +127,11 @@
           cards: raw.cards || {},
           history: raw.history || {},
           customCards: Array.isArray(raw.customCards) ? raw.customCards : [],
+          achievements: raw.achievements || {},
         };
       }
     } catch (e) { /* 破損データは無視して初期化 */ }
-    return { settings: { ...DEFAULT_SETTINGS }, cards: {}, history: {}, customCards: [] };
+    return { settings: { ...DEFAULT_SETTINGS }, cards: {}, history: {}, customCards: [], achievements: {} };
   }
   let state = loadState();
   const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -234,6 +235,7 @@
       return b;
     }));
 
+    renderBadgeGrid();
     renderHeatmap();
     renderHeaderStreak();
   }
@@ -544,6 +546,25 @@
 
     const mode = session.mode;
     $("#result-again").onclick = () => startSession(mode);
+
+    // 🏆 実績アンロック判定
+    if (!state.achievements) state.achievements = {};
+    if (total >= 10 && r.again === 0 && r.hard === 0) {
+      state.achievements.perfect_round = { unlockedAt: new Date().toISOString() };
+    }
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 9) {
+      state.achievements.early_bird = { unlockedAt: new Date().toISOString() };
+    } else if (hour >= 22 || hour < 4) {
+      state.achievements.night_owl = { unlockedAt: new Date().toISOString() };
+    }
+    save();
+
+    if (rate === 100 && total >= 10) {
+      launchConfetti(2500);
+    }
+    checkAchievements(true);
+
     stopSession();
     showView("result");
   }
@@ -784,6 +805,363 @@
     }
   }
 
+  // ---------- 実績・バッジシステム ----------
+  const BADGES = [
+    // 継続・ストリーク
+    {
+      id: "streak_1",
+      tier: "bronze",
+      icon: "🌱",
+      name: "第一歩",
+      desc: "初めて今日の学習目標を達成する",
+      check: (ctx) => ctx.currentStreak >= 1 || ctx.bestStreak >= 1 || ctx.metToday,
+      progress: (ctx) => ({ current: Math.min((ctx.currentStreak || (ctx.metToday ? 1 : 0)), 1), target: 1, text: `${Math.min((ctx.currentStreak || (ctx.metToday ? 1 : 0)), 1)} / 1日` })
+    },
+    {
+      id: "streak_3",
+      tier: "silver",
+      icon: "🔥",
+      name: "三日坊主卒業",
+      desc: "3日間連続で学習目標を達成する",
+      check: (ctx) => ctx.currentStreak >= 3 || ctx.bestStreak >= 3,
+      progress: (ctx) => ({ current: Math.min(Math.max(ctx.currentStreak, ctx.bestStreak), 3), target: 3, text: `${Math.min(Math.max(ctx.currentStreak, ctx.bestStreak), 3)} / 3日` })
+    },
+    {
+      id: "streak_7",
+      tier: "gold",
+      icon: "⚡",
+      name: "習慣化マスター",
+      desc: "7日間連続で学習を継続する（1週間達成！）",
+      check: (ctx) => ctx.currentStreak >= 7 || ctx.bestStreak >= 7,
+      progress: (ctx) => ({ current: Math.min(Math.max(ctx.currentStreak, ctx.bestStreak), 7), target: 7, text: `${Math.min(Math.max(ctx.currentStreak, ctx.bestStreak), 7)} / 7日` })
+    },
+    {
+      id: "streak_30",
+      tier: "diamond",
+      icon: "👑",
+      name: "鉄の意志",
+      desc: "30日間連続で学習を継続する（1ヶ月達成！）",
+      check: (ctx) => ctx.currentStreak >= 30 || ctx.bestStreak >= 30,
+      progress: (ctx) => ({ current: Math.min(Math.max(ctx.currentStreak, ctx.bestStreak), 30), target: 30, text: `${Math.min(Math.max(ctx.currentStreak, ctx.bestStreak), 30)} / 30日` })
+    },
+
+    // 練習量
+    {
+      id: "count_10",
+      tier: "bronze",
+      icon: "🎯",
+      name: "ウォーミングアップ",
+      desc: "累計10問の瞬間英作文を解答する",
+      check: (ctx) => ctx.totalAnswered >= 10,
+      progress: (ctx) => ({ current: Math.min(ctx.totalAnswered, 10), target: 10, text: `${Math.min(ctx.totalAnswered, 10)} / 10問` })
+    },
+    {
+      id: "count_50",
+      tier: "silver",
+      icon: "🏃‍♂️",
+      name: "実践ランナー",
+      desc: "累計50問の瞬間英作文を解答する",
+      check: (ctx) => ctx.totalAnswered >= 50,
+      progress: (ctx) => ({ current: Math.min(ctx.totalAnswered, 50), target: 50, text: `${Math.min(ctx.totalAnswered, 50)} / 50問` })
+    },
+    {
+      id: "count_100",
+      tier: "gold",
+      icon: "⚔️",
+      name: "百問錬磨",
+      desc: "累計100問の瞬間英作文を解答する",
+      check: (ctx) => ctx.totalAnswered >= 100,
+      progress: (ctx) => ({ current: Math.min(ctx.totalAnswered, 100), target: 100, text: `${Math.min(ctx.totalAnswered, 100)} / 100問` })
+    },
+    {
+      id: "count_300",
+      tier: "diamond",
+      icon: "🏆",
+      name: "瞬間英作文マスター",
+      desc: "累計300問の瞬間英作文を解答する",
+      check: (ctx) => ctx.totalAnswered >= 300,
+      progress: (ctx) => ({ current: Math.min(ctx.totalAnswered, 300), target: 300, text: `${Math.min(ctx.totalAnswered, 300)} / 300問` })
+    },
+
+    // 習得度・定着
+    {
+      id: "master_1",
+      tier: "bronze",
+      icon: "💡",
+      name: "ひらめき",
+      desc: "初めて1つの例文をマスター（Level 3到達）する",
+      check: (ctx) => ctx.masteredCount >= 1,
+      progress: (ctx) => ({ current: Math.min(ctx.masteredCount, 1), target: 1, text: `${Math.min(ctx.masteredCount, 1)} / 1問` })
+    },
+    {
+      id: "master_10",
+      tier: "silver",
+      icon: "🌟",
+      name: "フレーズ名人",
+      desc: "10個の例文をマスター（Level 3到達）する",
+      check: (ctx) => ctx.masteredCount >= 10,
+      progress: (ctx) => ({ current: Math.min(ctx.masteredCount, 10), target: 10, text: `${Math.min(ctx.masteredCount, 10)} / 10問` })
+    },
+    {
+      id: "master_30",
+      tier: "gold",
+      icon: "💎",
+      name: "30構文コンプリート",
+      desc: "30個の例文をマスターする",
+      check: (ctx) => ctx.masteredCount >= 30,
+      progress: (ctx) => ({ current: Math.min(ctx.masteredCount, 30), target: 30, text: `${Math.min(ctx.masteredCount, 30)} / 30問` })
+    },
+    {
+      id: "all_master",
+      tier: "diamond",
+      icon: "🌌",
+      name: "全問制覇",
+      desc: "全120問の例文をマスターする",
+      check: (ctx) => ctx.masteredCount >= 120,
+      progress: (ctx) => ({ current: Math.min(ctx.masteredCount, 120), target: 120, text: `${Math.min(ctx.masteredCount, 120)} / 120問` })
+    },
+
+    // 特殊・チャレンジ
+    {
+      id: "ai_creator",
+      tier: "silver",
+      icon: "🤖",
+      name: "AIクリエイター",
+      desc: "自分専用のAI例文を生成してアプリに追加する",
+      check: (ctx) => ctx.customCount >= 1,
+      progress: (ctx) => ({ current: Math.min(ctx.customCount, 1), target: 1, text: `${Math.min(ctx.customCount, 1)} / 1問` })
+    },
+    {
+      id: "perfect_round",
+      tier: "gold",
+      icon: "🎯",
+      name: "パーフェクト",
+      desc: "1セッション（10問以上）で全問「言えた（◯）」を達成する",
+      check: (ctx) => !!ctx.hadPerfectRound,
+      progress: (ctx) => ({ current: ctx.hadPerfectRound ? 1 : 0, target: 1, text: ctx.hadPerfectRound ? "達成済" : "未達成" })
+    },
+    {
+      id: "early_bird",
+      tier: "silver",
+      icon: "🌅",
+      name: "朝活イングリッシュ",
+      desc: "朝（早朝5時〜9時）に学習セッションを完了する",
+      check: (ctx) => !!ctx.hadEarlyBird,
+      progress: (ctx) => ({ current: ctx.hadEarlyBird ? 1 : 0, target: 1, text: ctx.hadEarlyBird ? "達成済" : "未達成" })
+    },
+    {
+      id: "night_owl",
+      tier: "silver",
+      icon: "🌙",
+      name: "夜更かしの特訓",
+      desc: "夜遅く（22時〜翌4時）に学習セッションを完了する",
+      check: (ctx) => !!ctx.hadNightOwl,
+      progress: (ctx) => ({ current: ctx.hadNightOwl ? 1 : 0, target: 1, text: ctx.hadNightOwl ? "達成済" : "未達成" })
+    }
+  ];
+
+  function launchConfetti(durationMs = 3000) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const canvas = $("#confetti-canvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const width = canvas.width = window.innerWidth;
+    const height = canvas.height = window.innerHeight;
+
+    const colors = ["#f59e0b", "#3b82f6", "#10b981", "#ec4899", "#8b5cf6", "#f97316", "#eab308"];
+    const pieces = [];
+    const count = 90;
+
+    for (let i = 0; i < count; i++) {
+      pieces.push({
+        x: width * (0.15 + Math.random() * 0.7),
+        y: height * 0.35 + (Math.random() * 60 - 30),
+        vx: (Math.random() - 0.5) * 16,
+        vy: -Math.random() * 12 - 4,
+        size: Math.random() * 8 + 6,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        rSpeed: (Math.random() - 0.5) * 12,
+        opacity: 1,
+        shape: Math.random() > 0.35 ? "rect" : "circle"
+      });
+    }
+
+    const startTime = performance.now();
+
+    function frame(now) {
+      const elapsed = now - startTime;
+      ctx.clearRect(0, 0, width, height);
+
+      let alive = 0;
+      for (const p of pieces) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.35;
+        p.vx *= 0.98;
+        p.rotation += p.rSpeed;
+
+        if (elapsed > durationMs - 1000) {
+          p.opacity = Math.max(0, (durationMs - elapsed) / 1000);
+        }
+
+        if (p.y < height && p.opacity > 0) {
+          alive++;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rotation * Math.PI) / 180);
+          ctx.globalAlpha = p.opacity;
+          ctx.fillStyle = p.color;
+
+          if (p.shape === "rect") {
+            ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+          } else {
+            ctx.beginPath();
+            ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+      }
+
+      if (alive > 0 && elapsed < durationMs) {
+        requestAnimationFrame(frame);
+      } else {
+        ctx.clearRect(0, 0, width, height);
+      }
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  const achievementQueue = [];
+  let isShowingAchievement = false;
+
+  function getAchievementContext() {
+    let total = 0;
+    for (const d of Object.values(state.history || {})) total += (d.answered || 0);
+
+    const mastered = CARDS.filter((c) => cardState(c.id).level >= MASTERED_LEVEL).length;
+    const now = new Date();
+    const hour = now.getHours();
+
+    return {
+      currentStreak: currentStreak(),
+      bestStreak: bestStreak(),
+      metToday: dayMet(todayKey()),
+      totalAnswered: total,
+      masteredCount: mastered,
+      customCount: (state.customCards || []).length,
+      hour: hour,
+      hadEarlyBird: state.achievements?.early_bird || false,
+      hadNightOwl: state.achievements?.night_owl || false,
+      hadPerfectRound: state.achievements?.perfect_round || false,
+    };
+  }
+
+  function checkAchievements(notify = true) {
+    if (!state.achievements) state.achievements = {};
+    const ctx = getAchievementContext();
+    const newlyUnlocked = [];
+
+    for (const b of BADGES) {
+      if (!state.achievements[b.id]) {
+        if (b.check(ctx)) {
+          state.achievements[b.id] = { unlockedAt: new Date().toISOString() };
+          newlyUnlocked.push(b);
+        }
+      }
+    }
+
+    if (newlyUnlocked.length > 0) {
+      save();
+      renderBadgeGrid();
+      if (notify) {
+        achievementQueue.push(...newlyUnlocked);
+        showNextAchievementModal();
+      }
+    }
+  }
+
+  function showNextAchievementModal() {
+    if (isShowingAchievement || achievementQueue.length === 0) return;
+    isShowingAchievement = true;
+
+    const b = achievementQueue.shift();
+    const modal = $("#achievement-dialog");
+    $("#ach-icon").textContent = b.icon;
+    $("#ach-title").textContent = b.name;
+    $("#ach-desc").textContent = b.desc;
+
+    if (navigator.vibrate) {
+      try { navigator.vibrate([100, 50, 100]); } catch {}
+    }
+
+    launchConfetti(3500);
+    modal.showModal();
+
+    $("#ach-close-btn").onclick = () => {
+      modal.close();
+      isShowingAchievement = false;
+      if (achievementQueue.length > 0) {
+        setTimeout(showNextAchievementModal, 300);
+      }
+    };
+  }
+
+  function renderBadgeGrid() {
+    const grid = $("#badge-grid");
+    if (!grid) return;
+    const unlockedCount = Object.keys(state.achievements || {}).length;
+    $("#badge-unlocked-summary").textContent = `${unlockedCount} / ${BADGES.length} 獲得`;
+
+    grid.replaceChildren(...BADGES.map((b) => {
+      const isUnlocked = !!(state.achievements && state.achievements[b.id]);
+      const item = document.createElement("div");
+      item.className = `badge-item ${isUnlocked ? 'unlocked' : 'locked'} tier-${b.tier}`;
+      item.innerHTML = `
+        <div class="badge-icon-box">${b.icon}</div>
+        <span class="badge-name">${b.name}</span>
+      `;
+      item.addEventListener("click", () => openBadgeDetailModal(b));
+      return item;
+    }));
+  }
+
+  function openBadgeDetailModal(b) {
+    const dialog = $("#badge-detail-dialog");
+    const isUnlocked = !!(state.achievements && state.achievements[b.id]);
+    const ctx = getAchievementContext();
+    const prog = b.progress(ctx);
+
+    $("#badge-detail-icon").textContent = b.icon;
+    const tierTag = $("#badge-detail-tier");
+    tierTag.textContent = b.tier.toUpperCase();
+    tierTag.className = `badge-tier-tag tier-${b.tier}`;
+
+    $("#badge-detail-name").textContent = b.name;
+    $("#badge-detail-desc").textContent = b.desc;
+    $("#badge-detail-progress-text").textContent = prog.text;
+
+    const fill = $("#badge-detail-fill");
+    const pct = Math.min(100, Math.round((prog.current / prog.target) * 100));
+    fill.style.width = `${pct}%`;
+    fill.classList.toggle("complete", isUnlocked || pct >= 100);
+
+    const statusEl = $("#badge-detail-status");
+    if (isUnlocked) {
+      const dateStr = new Date(state.achievements[b.id].unlockedAt).toLocaleDateString("ja-JP");
+      statusEl.textContent = `✓ 獲得済み (${dateStr})`;
+      statusEl.className = "badge-detail-status unlocked";
+    } else {
+      statusEl.textContent = `未達成 🔒（達成度: ${pct}%）`;
+      statusEl.className = "badge-detail-status";
+    }
+
+    dialog.showModal();
+    $("#close-badge-detail").onclick = () => dialog.close();
+  }
+
   // ---------- イベント ----------
   $("#start-daily").addEventListener("click", () => startSession({ type: "daily" }));
   $("#start-weak").addEventListener("click", () => startSession({ type: "weak" }));
@@ -920,8 +1298,8 @@
   });
 
   $("#reset-data").addEventListener("click", () => {
-    if (!confirm("学習記録とストリーク、作成したカスタム例文をすべて初期化します。よろしいですか？")) return;
-    state = { settings: state.settings, cards: {}, history: {}, customCards: [] };
+    if (!confirm("学習記録とストリーク、作成したカスタム例文、獲得バッジをすべて初期化します。よろしいですか？")) return;
+    state = { settings: state.settings, cards: {}, history: {}, customCards: [], achievements: {} };
     save();
     dialog.close();
     stopSession();
@@ -1329,6 +1707,7 @@ ${targetPatterns}
 
     save();
     aiModal.close();
+    checkAchievements(true);
     renderHome();
 
     // ユーザーに練習をすぐ促す
@@ -1338,8 +1717,12 @@ ${targetPatterns}
   });
 
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && !views.home.hidden) renderHome();
+    if (document.visibilityState === "visible" && !views.home.hidden) {
+      checkAchievements(false);
+      renderHome();
+    }
   });
 
+  checkAchievements(false);
   showView("home");
 })();
