@@ -1722,7 +1722,7 @@
       tier: "bronze",
       icon: "🎯",
       name: "ウォーミングアップ",
-      desc: "累計10問の瞬間英作文を解答する",
+      desc: "累計10問の瞬間パターンプラクティスを解答する",
       check: (ctx) => ctx.totalAnswered >= 10,
       progress: (ctx) => ({ current: Math.min(ctx.totalAnswered, 10), target: 10, text: `${Math.min(ctx.totalAnswered, 10)} / 10問` })
     },
@@ -1731,7 +1731,7 @@
       tier: "silver",
       icon: "🏃‍♂️",
       name: "実践ランナー",
-      desc: "累計50問の瞬間英作文を解答する",
+      desc: "累計50問の瞬間パターンプラクティスを解答する",
       check: (ctx) => ctx.totalAnswered >= 50,
       progress: (ctx) => ({ current: Math.min(ctx.totalAnswered, 50), target: 50, text: `${Math.min(ctx.totalAnswered, 50)} / 50問` })
     },
@@ -1740,7 +1740,7 @@
       tier: "gold",
       icon: "⚔️",
       name: "百問錬磨",
-      desc: "累計100問の瞬間英作文を解答する",
+      desc: "累計100問の瞬間パターンプラクティスを解答する",
       check: (ctx) => ctx.totalAnswered >= 100,
       progress: (ctx) => ({ current: Math.min(ctx.totalAnswered, 100), target: 100, text: `${Math.min(ctx.totalAnswered, 100)} / 100問` })
     },
@@ -1748,8 +1748,8 @@
       id: "count_300",
       tier: "diamond",
       icon: "🏆",
-      name: "瞬間英作文マスター",
-      desc: "累計300問の瞬間英作文を解答する",
+      name: "パターンプラクティスマスター",
+      desc: "累計300問の瞬間パターンプラクティスを解答する",
       check: (ctx) => ctx.totalAnswered >= 300,
       progress: (ctx) => ({ current: Math.min(ctx.totalAnswered, 300), target: 300, text: `${Math.min(ctx.totalAnswered, 300)} / 300問` })
     },
@@ -2824,7 +2824,7 @@
       return `${id}: ${p.en} (${p.ja})`;
     }).join("\n");
 
-    const prompt = `あなたはプロの英語ネイティブ講師です。以下のテーマに合わせて、指定された英語構文を使った瞬間英作文の練習用オリジナル例文を作成してください。
+    const prompt = `あなたはプロの英語ネイティブ講師です。以下のテーマに合わせて、指定された英語構文を使った瞬間パターンプラクティスの練習用オリジナル例文を作成してください。
 
 【テーマ・シチュエーション】
 ${theme}
@@ -3265,7 +3265,7 @@ ${targetPatterns}
       navigator.mediaSession.metadata = new MediaMetadata({
         title: card.ja,
         artist: stepSub || card.en,
-        album: `瞬間英作文 - ${card.pattern.en}`,
+        album: `瞬間パターンプラクティス - ${card.pattern.en}`,
         artwork: [
           { src: "icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "icon-512.png", sizes: "512x512", type: "image/png" }
