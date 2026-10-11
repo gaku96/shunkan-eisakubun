@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターンプラクティス | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css?v=33">
+  <link rel="stylesheet" href="style.css?v=34">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -374,6 +374,19 @@
       <progress id="session-progress" max="10" value="0" aria-label="セッションの進捗"></progress>
 
       <article class="flashcard" id="flashcard">
+        <!-- スワイプ判定スタンプ (Tinder / Anki風) -->
+        <div class="swipe-badge swipe-badge-good" id="swipe-badge-good">
+          <svg class="ui-icon" aria-hidden="true"><use href="#icon-check"></use></svg>
+          <span>言えた！</span>
+        </div>
+        <div class="swipe-badge swipe-badge-again" id="swipe-badge-again">
+          <svg class="ui-icon" aria-hidden="true"><use href="#icon-close"></use></svg>
+          <span>言えなかった</span>
+        </div>
+        <div class="swipe-badge swipe-badge-hard" id="swipe-badge-hard">
+          <span>△ あやしい</span>
+        </div>
+
         <p class="pattern-chip" id="card-pattern"></p>
         <p class="prompt-ja" id="card-ja"></p>
 
@@ -393,7 +406,18 @@
           </div>
           <p class="answer-note" id="card-note"></p>
         </div>
+
+        <div class="card-tap-cue" id="card-tap-cue">
+          <span>👆 タップして答えを確認</span>
+        </div>
       </article>
+
+      <!-- スワイプ操作ガイド -->
+      <div class="swipe-guide-strip" id="swipe-guide-strip">
+        <span class="guide-item again"><span class="guide-arrow">←</span> ✕ 言えなかった</span>
+        <span class="guide-item hard" id="guide-hard-item">↑ △ あやしい</span>
+        <span class="guide-item good">◯ 言えた <span class="guide-arrow">→</span></span>
+      </div>
 
       <div class="actions" id="reveal-actions">
         <button type="button" class="btn primary big" id="reveal-btn">答えを見る <kbd>Space</kbd></button>
@@ -925,8 +949,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=33"></script>
-  <script src="app.js?v=33"></script>
+  <script src="data.js?v=34"></script>
+  <script src="app.js?v=34"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

@@ -38,6 +38,16 @@
     return iconName;
   }
 
+  function triggerHaptic(type = "light") {
+    if (!navigator.vibrate) return;
+    try {
+      if (type === "light") navigator.vibrate(10);
+      else if (type === "medium") navigator.vibrate(20);
+      else if (type === "success") navigator.vibrate([12, 35, 18]);
+      else if (type === "warning") navigator.vibrate([18, 40, 18]);
+    } catch {}
+  }
+
   // Leitner式の復習間隔（日）。レベルが上がるほど間隔が空く。
   const INTERVALS = [0, 1, 2, 4, 7, 15, 30];
   const MASTERED_LEVEL = 3;
@@ -980,6 +990,23 @@
     const s = state.settings;
     session.revealed = false;
 
+    const fc = $("#flashcard");
+    if (fc) {
+      fc.classList.remove("revealed");
+      fc.style.transition = "none";
+      fc.style.transform = "";
+      fc.style.opacity = "";
+      fc.classList.remove("card-enter");
+      void fc.offsetWidth;
+      fc.classList.add("card-enter");
+      const gb = $("#swipe-badge-good");
+      const ab = $("#swipe-badge-again");
+      const hb = $("#swipe-badge-hard");
+      if (gb) gb.style.opacity = "0";
+      if (ab) ab.style.opacity = "0";
+      if (hb) hb.style.opacity = "0";
+    }
+
     $("#practice-counter").textContent = `${session.index + 1} / ${session.queue.length}`;
     const sp = $("#session-progress");
     sp.max = session.queue.length;
@@ -1031,6 +1058,8 @@
     session.revealed = true;
     clearTimeout(timerId);
     $("#timer-bar").classList.remove("running");
+    const fc = $("#flashcard");
+    if (fc) fc.classList.add("revealed");
 
     const card = session.queue[session.index];
     if (state.settings.typingMode) {
@@ -2085,17 +2114,186 @@
     $("#close-badge-detail").onclick = () => dialog.close();
   }
 
+  // ---------- スワイプ操作（Tinder / Anki風 カードめくり＆採点） ----------
+  function initSwipeCard() {
+    const card = $("#flashcard");
+    if (!card) return;
+
+    const goodBadge = $("#swipe-badge-good");
+    const againBadge = $("#swipe-badge-again");
+    const hardBadge = $("#swipe-badge-hard");
+
+    let isPointerDown = false;
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    let hasMoved = false;
+    let buzzedThreshold = null;
+
+    function resetBadges() {
+      if (goodBadge) goodBadge.style.opacity = "0";
+      if (againBadge) againBadge.style.opacity = "0";
+      if (hardBadge) hardBadge.style.opacity = "0";
+    }
+
+    function resetCardPosition(animate = true) {
+      resetBadges();
+      if (!animate) {
+        card.style.transition = "none";
+        card.style.transform = "";
+        card.style.opacity = "";
+        return;
+      }
+      card.style.transition = "transform 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.25), opacity 0.2s ease";
+      card.style.transform = "translate3d(0, 0, 0) rotate(0deg)";
+      card.style.opacity = "1";
+    }
+
+    card.addEventListener("pointerdown", (e) => {
+      if (e.target.closest("button, input, textarea, a, kbd, label")) return;
+      if (!session) return;
+
+      isPointerDown = true;
+      hasMoved = false;
+      buzzedThreshold = null;
+      startX = e.clientX;
+      startY = e.clientY;
+      startTime = Date.now();
+
+      try { card.setPointerCapture(e.pointerId); } catch {}
+      card.style.touchAction = "none";
+      card.style.transition = "none";
+      card.classList.remove("card-enter");
+    });
+
+    card.addEventListener("pointermove", (e) => {
+      if (!isPointerDown) return;
+
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist > 6) {
+        hasMoved = true;
+        card.classList.add("swiping");
+      }
+
+      if (session && session.revealed) {
+        const rot = Math.min(Math.max(dx * 0.07, -16), 16);
+        card.style.transform = `translate3d(${dx}px, ${dy}px, 0) rotate(${rot}deg)`;
+
+        if (dx > 15 && Math.abs(dx) >= Math.abs(dy) * 0.7) {
+          const progress = Math.min(1, (dx - 15) / 60);
+          if (goodBadge) goodBadge.style.opacity = String(progress);
+          if (againBadge) againBadge.style.opacity = "0";
+          if (hardBadge) hardBadge.style.opacity = "0";
+          if (progress >= 1 && buzzedThreshold !== "good") {
+            buzzedThreshold = "good";
+            triggerHaptic("light");
+          }
+        } else if (dx < -15 && Math.abs(dx) >= Math.abs(dy) * 0.7) {
+          const progress = Math.min(1, (-dx - 15) / 60);
+          if (againBadge) againBadge.style.opacity = String(progress);
+          if (goodBadge) goodBadge.style.opacity = "0";
+          if (hardBadge) hardBadge.style.opacity = "0";
+          if (progress >= 1 && buzzedThreshold !== "again") {
+            buzzedThreshold = "again";
+            triggerHaptic("light");
+          }
+        } else if (dy < -20 && Math.abs(dy) > Math.abs(dx)) {
+          const progress = Math.min(1, (-dy - 20) / 55);
+          if (hardBadge) hardBadge.style.opacity = String(progress);
+          if (goodBadge) goodBadge.style.opacity = "0";
+          if (againBadge) againBadge.style.opacity = "0";
+          if (progress >= 1 && buzzedThreshold !== "hard") {
+            buzzedThreshold = "hard";
+            triggerHaptic("light");
+          }
+        } else {
+          resetBadges();
+          buzzedThreshold = null;
+        }
+      } else {
+        card.style.transform = `translate3d(${dx * 0.22}px, ${dy * 0.22}px, 0) rotate(${dx * 0.02}deg)`;
+      }
+    });
+
+    const handlePointerEnd = (e) => {
+      if (!isPointerDown) return;
+      isPointerDown = false;
+      card.classList.remove("swiping");
+      card.style.touchAction = "pan-y";
+      try { card.releasePointerCapture(e.pointerId); } catch {}
+
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const dt = Date.now() - startTime;
+      const dist = Math.hypot(dx, dy);
+
+      if (!hasMoved || (dist < 10 && dt < 350)) {
+        if (!session.revealed) {
+          triggerHaptic("light");
+          reveal();
+        }
+        resetCardPosition(true);
+        return;
+      }
+
+      if (!session.revealed) {
+        if (dy < -35 || Math.abs(dx) > 40) {
+          triggerHaptic("light");
+          reveal();
+        }
+        resetCardPosition(true);
+        return;
+      }
+
+      const isFlick = dt < 240;
+      const triggerRight = dx > 70 || (isFlick && dx > 35);
+      const triggerLeft = dx < -70 || (isFlick && dx < -35);
+      const triggerUp = (dy < -65 || (isFlick && dy < -35)) && Math.abs(dy) > Math.abs(dx) * 0.7;
+
+      if (triggerRight) {
+        card.style.transition = "transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease";
+        card.style.transform = `translate3d(120vw, ${dy}px, 0) rotate(22deg)`;
+        card.style.opacity = "0";
+        triggerHaptic("success");
+        setTimeout(() => grade("good"), 180);
+      } else if (triggerLeft) {
+        card.style.transition = "transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease";
+        card.style.transform = `translate3d(-120vw, ${dy}px, 0) rotate(-22deg)`;
+        card.style.opacity = "0";
+        triggerHaptic("warning");
+        setTimeout(() => grade("again"), 180);
+      } else if (triggerUp) {
+        card.style.transition = "transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease";
+        card.style.transform = `translate3d(${dx}px, -120vh, 0) rotate(0deg)`;
+        card.style.opacity = "0";
+        triggerHaptic("medium");
+        setTimeout(() => grade("hard"), 180);
+      } else {
+        resetCardPosition(true);
+      }
+    };
+
+    card.addEventListener("pointerup", handlePointerEnd);
+    card.addEventListener("pointercancel", handlePointerEnd);
+  }
+
   // ---------- イベント ----------
   $("#start-daily").addEventListener("click", () => startSession({ type: "daily" }));
   $("#start-weak").addEventListener("click", () => startSession({ type: "weak" }));
   $("#start-random").addEventListener("click", () => startSession({ type: "random" }));
   $("#start-custom").addEventListener("click", () => startSession({ type: "custom" }));
-  $("#reveal-btn").addEventListener("click", reveal);
+  $("#reveal-btn").addEventListener("click", () => { triggerHaptic("light"); reveal(); });
   $("#speak-btn").addEventListener("click", () => session && speakCard(session.queue[session.index]));
   $("#quit-practice").addEventListener("click", () => { stopSession(); showView("home"); });
   $("#grade-actions").addEventListener("click", (e) => {
     const b = e.target.closest("[data-grade]");
-    if (b) grade(b.dataset.grade);
+    if (b) {
+      triggerHaptic("light");
+      grade(b.dataset.grade);
+    }
   });
   $("#type-form").addEventListener("submit", (e) => { e.preventDefault(); reveal(); });
 
@@ -3611,5 +3809,6 @@ ${targetPatterns}
   updateBrandSub();
   updateCourseSwitchUI();
   checkAchievements(false);
+  initSwipeCard();
   showView("home");
 })();

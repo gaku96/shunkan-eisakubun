@@ -703,10 +703,138 @@ progress.done::-moz-progress-bar { background: var(--good); }
 .practice-title { margin: 0; font-size: 1rem; }
 
 .flashcard {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
-  padding: 28px 24px; min-height: 300px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; gap: 14px;
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 24px;
+  min-height: 310px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  will-change: transform, opacity;
+}
+.flashcard:active {
+  cursor: grabbing;
+}
+.flashcard.swiping {
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
+  transition: none !important;
+}
+.flashcard.card-enter {
+  animation: cardEnter 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes cardEnter {
+  0% {
+    opacity: 0.35;
+    transform: scale(0.93) translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Tinder / Anki Swipe Stamp Badges */
+.swipe-badge {
+  position: absolute;
+  top: 16px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  pointer-events: none;
+  border: 2.5px solid currentColor;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.08s ease;
+}
+.swipe-badge .ui-icon {
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: middle;
+}
+.swipe-badge-good {
+  right: 16px;
+  color: #16a34a;
+  background: color-mix(in srgb, #16a34a 18%, var(--surface));
+  transform: rotate(12deg);
+}
+.swipe-badge-again {
+  left: 16px;
+  color: #dc2626;
+  background: color-mix(in srgb, #dc2626 18%, var(--surface));
+  transform: rotate(-12deg);
+}
+.swipe-badge-hard {
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #d97706;
+  background: color-mix(in srgb, #d97706 18%, var(--surface));
+}
+
+/* Tap Cue (before reveal) */
+.card-tap-cue {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 50%, transparent);
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.flashcard.revealed .card-tap-cue {
+  display: none;
+}
+
+/* Swipe Guide Strip */
+.swipe-guide-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 75%, transparent);
+  border: 1px dashed var(--border);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-top: -6px;
+  user-select: none;
+}
+.swipe-guide-strip .guide-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: opacity 0.15s ease;
+}
+.swipe-guide-strip .guide-item.again { color: var(--again); }
+.swipe-guide-strip .guide-item.good { color: var(--good); }
+.swipe-guide-strip .guide-item.hard { color: var(--hard); }
+.guide-arrow {
+  font-size: 0.88rem;
+  font-weight: 800;
 }
 .pattern-chip {
   margin: 0; font-size: .8rem; font-weight: 700; color: var(--accent);
