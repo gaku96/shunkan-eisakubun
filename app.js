@@ -1477,6 +1477,18 @@
     });
   }
 
+  let lastTtsError = "";
+  $("#tts-source")?.addEventListener("click", () => {
+    if (lastTtsError) {
+      alert(`【Gemini API エラー詳細】\n${lastTtsError}\n\n💡 解決のヒント:\n① 「請求階層: Tier 1・前払い」の場合、古いAPIキーが無料枠のまま固定されるGoogleの仕様があります。AI Studioでキーを一度新規作成して差し替えてみてください。\n② 前払いクレジット残高が残っているかご確認ください。`);
+    }
+  });
+  $("#listening-tts-source")?.addEventListener("click", () => {
+    if (lastTtsError) {
+      alert(`【Gemini API エラー詳細】\n${lastTtsError}\n\n💡 解決のヒント:\n① 「請求階層: Tier 1・前払い」の場合、古いAPIキーが無料枠のまま固定されるGoogleの仕様があります。AI Studioでキーを一度新規作成して差し替えてみてください。\n② 前払いクレジット残高が残っているかご確認ください。`);
+    }
+  });
+
   // カード専用の再生（キャッシュ → Gemini API → ローカル同梱音声 → ブラウザ音声）
   async function speakCard(card) {
     const s = state.settings;
@@ -1500,6 +1512,7 @@
       const voiceLabel = parts[2] || s.geminiVoice || "Gemini 3.8";
       badge.textContent = `✨ Gemini 3.8 (${voiceLabel}・${accentInfo.flag} ${accentInfo.name})`;
       badge.className = "tts-badge";
+      badge.style.cursor = "default";
       const played = await playBlob(cachedItem.blob);
       if (played) return;
     }
@@ -1509,6 +1522,7 @@
     if (s.ttsEngine !== "browser" && s.geminiApiKey) {
       badge.textContent = `✨ Gemini 3.8 (${accentInfo.flag} ${accentInfo.name}生成中...)`;
       badge.className = "tts-badge loading";
+      badge.style.cursor = "default";
 
       try {
         const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice, "en", effectiveAccent);
@@ -1516,13 +1530,21 @@
         await setCachedAudio(cacheKey, blob);
         badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice}・${accentInfo.flag} ${accentInfo.name})`;
         badge.className = "tts-badge";
+        badge.style.cursor = "default";
+        lastTtsError = "";
         const played = await playBlob(blob);
         if (played) return;
       } catch (err) {
         console.warn("Gemini TTS エラー, 同梱音声へフォールバック:", err);
         const msg = String(err.message || err);
-        const isQuota = msg.includes("429") || msg.includes("quota") || msg.includes("ResourceExhausted");
-        geminiFailReason = isQuota ? "API制限(429)" : "APIエラー";
+        lastTtsError = msg;
+        if (msg.includes("free_tier_requests") || msg.includes("limit: 10")) {
+          geminiFailReason = "無料枠扱い(キー再作成で解消)";
+        } else if (msg.includes("429") || msg.includes("quota") || msg.includes("ResourceExhausted")) {
+          geminiFailReason = "API制限/残高(429)";
+        } else {
+          geminiFailReason = "APIエラー";
+        }
       }
     } else if (s.ttsEngine === "gemini" && !s.geminiApiKey) {
       geminiFailReason = "APIキー未設定";
@@ -1536,11 +1558,14 @@
       const playedLocal = await tryPlayLocalAudio(audioKey);
       if (playedLocal) {
         if (geminiFailReason) {
-          badge.textContent = `⚠️ ${geminiFailReason} → 同梱音声で再生`;
+          badge.textContent = `⚠️ ${geminiFailReason} → 同梱音声 (タップで詳細)`;
           badge.className = "tts-badge fallback";
+          badge.title = lastTtsError || geminiFailReason;
+          badge.style.cursor = "pointer";
         } else {
           badge.textContent = "✨ リアル口語ネイティブ（崩し・同梱）";
           badge.className = "tts-badge";
+          badge.style.cursor = "default";
         }
         return;
       }
@@ -1548,9 +1573,12 @@
 
     // 5. ブラウザ音声に最終フォールバック
     if (geminiFailReason) {
-      badge.textContent = `⚠️ ${geminiFailReason} → ブラウザ音声`;
+      badge.textContent = `⚠️ ${geminiFailReason} → ブラウザ音声 (タップで詳細)`;
+      badge.title = lastTtsError || geminiFailReason;
+      badge.style.cursor = "pointer";
     } else {
       badge.textContent = "ブラウザ標準";
+      badge.style.cursor = "default";
     }
     badge.className = "tts-badge fallback";
     speakBrowser(card.en);
@@ -2034,8 +2062,10 @@
       testStatus.textContent = `✓ ${accentInfo.flag} ${accentInfo.label}再生成功！`;
       testStatus.className = "status-msg success";
     } catch (e) {
-      if (e.message.includes("Quota exceeded") || e.message.includes("quota") || e.message.includes("limit: 10")) {
-        testStatus.textContent = "✕ Google無料枠上限（1日10件）に達しました。約11時間後にリセットされるか、同梱の高品質音声（0円・無制限）をご利用ください。";
+      if (e.message.includes("free_tier_requests") || e.message.includes("limit: 10")) {
+        testStatus.textContent = `✕ Google無料枠上限（1日10件）扱いになっています。課金連携済みの場合はAI StudioでAPIキーを新しく「再作成」して差し替えると即座に反映されます。`;
+      } else if (e.message.includes("Quota exceeded") || e.message.includes("429") || e.message.includes("ResourceExhausted")) {
+        testStatus.textContent = `✕ API制限(429): ${e.message}（前払い残高や新しいAPIキーの作成をお試しください）`;
       } else {
         testStatus.textContent = `✕ エラー: ${e.message}`;
       }
