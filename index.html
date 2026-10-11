@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間英作文 | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
   <header class="app-header">
@@ -53,55 +53,108 @@
         <p class="hint">復習予定の例文 → まだ解いていない例文 の順に出題します。</p>
       </div>
 
-      <!-- AI自分専用例文カード -->
-      <div class="card ai-card">
-        <div class="ai-head">
-          <span class="ai-badge">✨ NEW</span>
-          <h2>🤖 自分専用の例文をAI生成</h2>
-        </div>
-        <p class="ai-desc">あなたの仕事や趣味に合わせて、30構文の実践例文をGeminiが自動作成！</p>
-        <div class="ai-actions">
-          <button type="button" class="btn primary" id="open-ai-modal">✨ テーマを決めて生成</button>
-          <button type="button" class="btn" id="start-custom" hidden>カスタム例文を練習 <span class="pill" id="custom-count">0</span></button>
-        </div>
-      </div>
-
-      <!-- 🎧 ハンズフリー耳トレカード -->
-      <div class="card listening-hero-card">
-        <div class="card-head-row">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span class="ai-badge" style="background: rgba(249, 115, 22, 0.12); color: var(--fire); border-color: rgba(249, 115, 22, 0.3);">🎧 NEW</span>
-            <h2 style="margin:0;">聞き流し・耳トレ</h2>
-          </div>
-          <button type="button" class="btn small primary" id="open-listening-btn">▶︎ 再生する</button>
-        </div>
-        <p class="card-subtext" style="margin: 6px 0 10px; font-size: 0.88rem; color: var(--muted);">画面を見ずに通勤・散歩・家事中に耳だけで瞬間英作文！日本語 → 思考ポーズ → ネイティブ英語を自動再生します。</p>
-        <div class="listening-card-pills">
-          <span class="tag-pill">📻 バックグラウンド再生</span>
-          <span class="tag-pill">🎧 イヤホン操作対応</span>
-          <span class="tag-pill">🔀 シャッフル/ループ</span>
-        </div>
-      </div>
-
-      <div class="card">
+      <!-- ⚡️ クイック練習メニュー (2x2 Grid + Part Accordion) -->
+      <div class="card home-menu-card">
         <div class="card-head-row">
           <h2>練習メニュー</h2>
-          <button type="button" class="btn small report-btn" data-nav="report">📊 弱点分析</button>
+          <span class="home-menu-subtitle">目的別・集中トレーニング</span>
         </div>
-        <div class="menu-grid">
-          <button type="button" class="btn" id="start-weak">苦手な例文を復習 <span class="pill" id="weak-count">0</span></button>
-          <button type="button" class="btn" id="start-random">全範囲からランダム</button>
+
+        <div class="home-quick-grid">
+          <!-- 🎧 耳トレ -->
+          <button type="button" class="quick-action-tile highlight" id="open-listening-btn">
+            <div class="quick-tile-icon-wrap listening">
+              <span class="quick-tile-icon">🎧</span>
+            </div>
+            <div class="quick-tile-body">
+              <div class="quick-tile-title-row">
+                <span class="quick-tile-title">耳トレ・聞き流し</span>
+                <span class="quick-tile-badge">NEW</span>
+              </div>
+              <p class="quick-tile-desc">ハンズフリー自動再生</p>
+            </div>
+          </button>
+
+          <!-- ⚡️ 苦手復習 -->
+          <button type="button" class="quick-action-tile" id="start-weak">
+            <div class="quick-tile-icon-wrap weak">
+              <span class="quick-tile-icon">⚡️</span>
+            </div>
+            <div class="quick-tile-body">
+              <div class="quick-tile-title-row">
+                <span class="quick-tile-title">苦手な例文</span>
+                <span class="pill" id="weak-count">0</span>
+              </div>
+              <p class="quick-tile-desc">ミスした例文を集中特訓</p>
+            </div>
+          </button>
+
+          <!-- 🎲 ランダム -->
+          <button type="button" class="quick-action-tile" id="start-random">
+            <div class="quick-tile-icon-wrap random">
+              <span class="quick-tile-icon">🎲</span>
+            </div>
+            <div class="quick-tile-body">
+              <div class="quick-tile-title-row">
+                <span class="quick-tile-title">全範囲ランダム</span>
+              </div>
+              <p class="quick-tile-desc">実力チェック10問</p>
+            </div>
+          </button>
+
+          <!-- 🤖 AI例文生成 -->
+          <button type="button" class="quick-action-tile" id="open-ai-modal">
+            <div class="quick-tile-icon-wrap ai">
+              <span class="quick-tile-icon">🤖</span>
+            </div>
+            <div class="quick-tile-body">
+              <div class="quick-tile-title-row">
+                <span class="quick-tile-title">AI専用例文</span>
+                <span class="quick-tile-badge ai">AI</span>
+              </div>
+              <p class="quick-tile-desc">仕事や趣味に合わせて作成</p>
+            </div>
+          </button>
         </div>
-        <button type="button" class="btn report-btn" id="menu-start-listening" style="margin-top: 10px; width: 100%;">🎧 耳トレ・聞き流しを再生する</button>
-        <h3>パート別</h3>
-        <div class="menu-grid" id="part-buttons"></div>
+
+        <!-- カスタム例文がある場合のボタン -->
+        <button type="button" class="btn wide" id="start-custom" hidden style="margin-top: 4px;">
+          ✨ 保存したAIカスタム例文を練習 <span class="pill" id="custom-count">0</span>
+        </button>
+
+        <!-- パート別アコーディオン -->
+        <details class="part-accordion">
+          <summary class="part-accordion-summary">
+            <span class="part-acc-left">
+              <span class="part-acc-icon">📚</span>
+              <span>パート別に練習（Part 1〜5）</span>
+            </span>
+            <span class="part-acc-arrow">▾</span>
+          </summary>
+          <div class="part-accordion-content">
+            <div class="menu-grid" id="part-buttons"></div>
+          </div>
+        </details>
       </div>
 
-      <div class="card">
-        <h2>学習カレンダー</h2>
-        <div class="heatmap" id="heatmap" role="img" aria-label="過去の学習記録"></div>
-        <div class="heatmap-legend" aria-hidden="true">
-          <span>少</span><i data-l="0"></i><i data-l="1"></i><i data-l="2"></i><i data-l="3"></i><i data-l="4"></i><span>多</span>
+      <!-- 🗓️ 月間学習カレンダー -->
+      <div class="card calendar-card">
+        <div class="calendar-head">
+          <div class="calendar-month-selector">
+            <button type="button" class="icon-btn-sub" id="cal-prev" aria-label="前月">‹</button>
+            <h2 class="calendar-title" id="cal-month-title">2026年 10月</h2>
+            <button type="button" class="icon-btn-sub" id="cal-next" aria-label="次月">›</button>
+          </div>
+          <span class="calendar-stat-pill" id="cal-month-stat">今月 0日達成</span>
+        </div>
+        <div class="calendar-weekdays" aria-hidden="true">
+          <span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span><span>日</span>
+        </div>
+        <div class="calendar-grid" id="calendar-grid" role="grid" aria-label="月間学習カレンダー"></div>
+        <div class="calendar-footer" id="cal-footer">
+          <span class="calendar-legend-item"><i class="cal-dot completed"></i> 目標達成 (✓)</span>
+          <span class="calendar-legend-item"><i class="cal-dot partial"></i> 学習あり</span>
+          <span class="calendar-footer-text" id="cal-footer-text">日付をタップすると詳細を表示</span>
         </div>
       </div>
 
@@ -114,9 +167,6 @@
         <p class="card-subtext">学習を継続してバッジを集めよう！タップで達成条件と進捗を確認できます。</p>
         <div class="badge-grid" id="badge-grid"></div>
       </div>
-
-      <button type="button" class="btn report-btn wide" data-nav="report" style="margin-bottom: 8px; font-size: .95rem; padding: 12px 16px;">📊 苦手構文の弱点分析レポートを見る</button>
-      <button type="button" class="btn ghost wide" data-nav="list">構文一覧を見る（30個）</button>
     </section>
 
     <!-- 練習 -->
@@ -367,6 +417,26 @@
     </section>
   </main>
 
+  <!-- 📱 ボトムナビゲーションバー（アプリ風固定タブ） -->
+  <nav class="bottom-nav" id="bottom-nav" aria-label="メインナビゲーション">
+    <button type="button" class="nav-tab active" data-nav="home" aria-label="ホーム">
+      <span class="nav-tab-icon">🏠</span>
+      <span class="nav-tab-label">ホーム</span>
+    </button>
+    <button type="button" class="nav-tab" data-nav="listening" aria-label="耳トレ">
+      <span class="nav-tab-icon">🎧</span>
+      <span class="nav-tab-label">耳トレ</span>
+    </button>
+    <button type="button" class="nav-tab" data-nav="list" aria-label="構文一覧">
+      <span class="nav-tab-icon">📚</span>
+      <span class="nav-tab-label">構文一覧</span>
+    </button>
+    <button type="button" class="nav-tab" data-nav="report" aria-label="弱点分析">
+      <span class="nav-tab-icon">📊</span>
+      <span class="nav-tab-label">弱点分析</span>
+    </button>
+  </nav>
+
   <!-- 設定 -->
   <dialog id="settings-dialog" closedby="any" aria-labelledby="settings-title">
     <form method="dialog" id="settings-form">
@@ -574,8 +644,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=10"></script>
-  <script src="app.js?v=10"></script>
+  <script src="data.js?v=11"></script>
+  <script src="app.js?v=11"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

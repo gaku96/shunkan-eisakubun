@@ -178,6 +178,16 @@
       stopListening();
     }
     for (const [k, el] of Object.entries(views)) if (el) el.hidden = k !== name;
+
+    const bNav = $("#bottom-nav");
+    if (bNav) {
+      bNav.hidden = (name === "practice");
+      const tabs = bNav.querySelectorAll(".nav-tab");
+      tabs.forEach((tab) => {
+        tab.classList.toggle("active", tab.dataset.nav === name);
+      });
+    }
+
     if (name === "home") renderHome();
     if (name === "list") renderList();
     if (name === "report") renderReport();
@@ -245,34 +255,127 @@
     }));
 
     renderBadgeGrid();
-    renderHeatmap();
+    renderCalendar();
     renderHeaderStreak();
   }
 
-  function renderHeatmap() {
-    const WEEKS = 18;
-    const today = new Date();
-    const start = new Date(today);
-    start.setDate(today.getDate() - today.getDay() - (WEEKS - 1) * 7); // 日曜はじまり
-    const goal = state.settings.dailyGoal;
+  // ---------- 学習カレンダー（月間カレンダー） ----------
+  let calCurrentDate = new Date();
+  let calSelectedKey = null;
+
+  function renderCalendar() {
+    const year = calCurrentDate.getFullYear();
+    const month = calCurrentDate.getMonth(); // 0-indexed
+    const titleEl = $("#cal-month-title");
+    if (titleEl) {
+      titleEl.textContent = `${year}年 ${month + 1}月`;
+    }
+
     const tKey = todayKey();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDay = new Date(year, month, 1);
+    // 月曜始まり (0: 月, 1: 火, ..., 6: 日)
+    const firstDayOfWeek = (firstDay.getDay() + 6) % 7;
+    const prevMonthDays = new Date(year, month, 0).getDate();
+
+    let completedCount = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const k = `${year}-${pad(month + 1)}-${pad(d)}`;
+      if (dayMet(k)) completedCount++;
+    }
+    const statEl = $("#cal-month-stat");
+    if (statEl) {
+      statEl.textContent = `今月 ${completedCount}日達成`;
+    }
+
+    const grid = $("#calendar-grid");
+    if (!grid) return;
+
     const cells = [];
-    for (let i = 0; i < WEEKS * 7; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      const k = toKey(d);
-      const n = state.history[k]?.answered || 0;
-      const g = state.history[k]?.goal || goal;
-      const level = n === 0 ? 0 : n < g / 2 ? 1 : n < g ? 2 : n < g * 2 ? 3 : 4;
-      const cell = document.createElement("i");
-      cell.dataset.l = level;
-      if (k === tKey) cell.classList.add("today");
-      if (k > tKey) cell.classList.add("future");
-      cell.title = `${k}: ${n}問`;
+
+    // 前月の日付埋め
+    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+      const dayNum = prevMonthDays - i;
+      const cell = document.createElement("div");
+      cell.className = "cal-day other-month";
+      cell.setAttribute("aria-hidden", "true");
+      cell.innerHTML = `<span class="cal-day-num">${dayNum}</span>`;
       cells.push(cell);
     }
-    $("#heatmap").replaceChildren(...cells);
+
+    // 当月の日付
+    for (let d = 1; d <= daysInMonth; d++) {
+      const k = `${year}-${pad(month + 1)}-${pad(d)}`;
+      const h = state.history[k];
+      const ans = h?.answered || 0;
+      const met = dayMet(k);
+      const isToday = k === tKey;
+      const isFuture = k > tKey;
+
+      const cell = document.createElement("button");
+      cell.type = "button";
+      cell.className = "cal-day";
+      cell.setAttribute("role", "gridcell");
+      cell.dataset.date = k;
+
+      if (isToday) cell.classList.add("today");
+      if (isFuture) cell.classList.add("future");
+      if (met) {
+        cell.classList.add("status-completed");
+      } else if (ans > 0) {
+        cell.classList.add("status-partial");
+      }
+      if (calSelectedKey === k) {
+        cell.classList.add("selected");
+      }
+
+      cell.innerHTML = `<span class="cal-day-num">${d}</span>`;
+      cell.setAttribute("aria-label", `${month + 1}月${d}日: ${ans}問解答${met ? " (目標達成)" : ""}`);
+
+      cell.addEventListener("click", () => {
+        calSelectedKey = k;
+        grid.querySelectorAll(".cal-day").forEach((c) => c.classList.remove("selected"));
+        cell.classList.add("selected");
+
+        const footerText = $("#cal-footer-text");
+        if (footerText) {
+          if (isFuture) {
+            footerText.textContent = `${month + 1}月${d}日: まだ学習していません`;
+          } else {
+            const statusLabel = met ? " (目標達成！ 🎉)" : ans > 0 ? " (あと少し！)" : " (学習記録なし)";
+            footerText.textContent = `${month + 1}月${d}日: ${ans}問解答${statusLabel}`;
+          }
+        }
+      });
+
+      cells.push(cell);
+    }
+
+    // 翌月の日付埋め（7の倍数になるまで）
+    const totalRendered = cells.length;
+    const remaining = (7 - (totalRendered % 7)) % 7;
+    for (let d = 1; d <= remaining; d++) {
+      const cell = document.createElement("div");
+      cell.className = "cal-day other-month";
+      cell.setAttribute("aria-hidden", "true");
+      cell.innerHTML = `<span class="cal-day-num">${d}</span>`;
+      cells.push(cell);
+    }
+
+    grid.replaceChildren(...cells);
   }
+  const renderHeatmap = renderCalendar;
+
+  $("#cal-prev")?.addEventListener("click", () => {
+    calCurrentDate.setMonth(calCurrentDate.getMonth() - 1);
+    calSelectedKey = null;
+    renderCalendar();
+  });
+  $("#cal-next")?.addEventListener("click", () => {
+    calCurrentDate.setMonth(calCurrentDate.getMonth() + 1);
+    calSelectedKey = null;
+    renderCalendar();
+  });
 
   // ---------- 構文一覧 ----------
   function renderList() {
