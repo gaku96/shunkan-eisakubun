@@ -23,13 +23,21 @@
   };
 
   // ---------- データ ----------
-  const CARDS = [];
+  const CONV_CARDS = [];
   for (const p of window.PATTERNS) {
     p.examples.forEach((ex, i) => {
-      CARDS.push({ id: `${p.id}-${i}`, pattern: p, ja: ex.ja, en: ex.en });
+      CONV_CARDS.push({ id: `${p.id}-${i}`, course: "conversation", pattern: p, ja: ex.ja, en: ex.en });
     });
   }
-  const CARD_BY_ID = Object.fromEntries(CARDS.map((c) => [c.id, c]));
+  const GRIT_CARDS = [];
+  for (const p of (window.GRIT_PATTERNS || [])) {
+    p.examples.forEach((ex, i) => {
+      GRIT_CARDS.push({ id: `grit-${p.id}-${i}`, course: "grit", pattern: p, ja: ex.ja, en: ex.en, tag: ex.tag });
+    });
+  }
+  const ALL_CARDS = [...CONV_CARDS, ...GRIT_CARDS];
+  const CARD_BY_ID = Object.fromEntries(ALL_CARDS.map((c) => [c.id, c]));
+  const CARDS = [];
 
   // ---------- プリセット音声マッピング ----------
   const PRESET_PREFIX_MAP = {
@@ -123,6 +131,7 @@
       const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (raw && typeof raw === "object") {
         return {
+          activeCourse: (raw.activeCourse === "grit" ? "grit" : "conversation"),
           settings: { ...DEFAULT_SETTINGS, ...raw.settings },
           cards: raw.cards || {},
           history: raw.history || {},
@@ -132,10 +141,61 @@
         };
       }
     } catch (e) { /* 破損データは無視して初期化 */ }
-    return { settings: { ...DEFAULT_SETTINGS }, cards: {}, history: {}, customCards: [], achievements: {}, listeningCount: 0 };
+    return { activeCourse: "conversation", settings: { ...DEFAULT_SETTINGS }, cards: {}, history: {}, customCards: [], achievements: {}, listeningCount: 0 };
   }
   let state = loadState();
   const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+  const getActiveCourse = () => state.activeCourse || "conversation";
+  const getActiveParts = () => (getActiveCourse() === "grit" ? (window.GRIT_PARTS || []) : window.PARTS);
+  const getActivePatterns = () => (getActiveCourse() === "grit" ? (window.GRIT_PATTERNS || []) : window.PATTERNS);
+
+  function syncActiveCourseCards() {
+    CARDS.length = 0;
+    if (getActiveCourse() === "grit") {
+      CARDS.push(...GRIT_CARDS);
+    } else {
+      CARDS.push(...CONV_CARDS);
+    }
+  }
+  syncActiveCourseCards();
+
+  function updateBrandSub() {
+    const brandSub = $("#brand-sub");
+    if (brandSub) {
+      brandSub.textContent = getActiveCourse() === "grit" ? "TED・GRIT知的思考編" : "英会話の型30";
+    }
+  }
+
+  function updateCourseSwitchUI() {
+    const course = getActiveCourse();
+    $$(".course-tab-btn, .listening-course-pill").forEach((btn) => {
+      const active = btn.dataset.course === course;
+      btn.classList.toggle("active", active);
+      if (btn.hasAttribute("aria-selected")) {
+        btn.setAttribute("aria-selected", active ? "true" : "false");
+      }
+    });
+  }
+
+  function switchCourse(courseName) {
+    if (state.activeCourse === courseName) return;
+    state.activeCourse = courseName;
+    save();
+    syncActiveCourseCards();
+    updateBrandSub();
+    updateCourseSwitchUI();
+    stopSession();
+    if (listening && listening.active) {
+      loadListeningQueue(listening.range || "all");
+      renderListeningView();
+    }
+    renderHome();
+    renderList();
+    if (views.report && !views.report.hidden) {
+      renderReport();
+    }
+  }
 
   const cardState = (id) =>
     state.cards[id] || { level: 0, due: null, seen: 0, good: 0, wrong: 0 };
@@ -243,7 +303,7 @@
     }
 
     const partBox = $("#part-buttons");
-    partBox.replaceChildren(...window.PARTS.map((part) => {
+    partBox.replaceChildren(...getActiveParts().map((part) => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "btn part-btn";
@@ -257,6 +317,8 @@
     renderBadgeGrid();
     renderCalendar();
     renderHeaderStreak();
+    updateBrandSub();
+    updateCourseSwitchUI();
   }
 
   // ---------- 学習カレンダー（月間カレンダー） ----------
@@ -380,14 +442,15 @@
   // ---------- 構文一覧 ----------
   function renderList() {
     const box = $("#pattern-list");
-    box.replaceChildren(...window.PARTS.map((part) => {
+    const isGrit = getActiveCourse() === "grit";
+    box.replaceChildren(...getActiveParts().map((part) => {
       const block = document.createElement("section");
       block.className = "part-block";
       const h = document.createElement("h2");
       h.textContent = part.name;
       block.append(h);
-      for (const p of window.PATTERNS.filter((x) => x.part === part.id)) {
-        const ids = p.examples.map((_, i) => `${p.id}-${i}`);
+      for (const p of getActivePatterns().filter((x) => x.part === part.id)) {
+        const ids = p.examples.map((_, i) => (isGrit ? `grit-${p.id}-${i}` : `${p.id}-${i}`));
         const m = ids.filter((id) => cardState(id).level >= MASTERED_LEVEL).length;
         const d = document.createElement("details");
         d.className = "pattern-item";
@@ -408,7 +471,15 @@
         d.querySelector(".note").textContent = p.note;
         d.querySelector("ul").replaceChildren(...p.examples.map((ex) => {
           const li = document.createElement("li");
-          li.textContent = ex.en;
+          if (ex.tag) {
+            const tagSpan = document.createElement("span");
+            tagSpan.style.cssText = "font-size:.72rem; font-weight:700; color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, transparent); padding:2px 7px; border-radius:5px; margin-right:6px; display:inline-block;";
+            tagSpan.textContent = ex.tag;
+            li.append(tagSpan);
+          }
+          const enSpan = document.createElement("span");
+          enSpan.textContent = ex.en;
+          li.append(enSpan);
           const s = document.createElement("span");
           s.textContent = ex.ja;
           li.append(s);
@@ -420,13 +491,15 @@
       }
       return block;
     }));
+    updateCourseSwitchUI();
   }
 
   // ---------- 弱点分析レポート ----------
   function computePatternStats() {
     const stats = [];
-    for (const p of window.PATTERNS) {
-      const cardIds = p.examples.map((_, i) => `${p.id}-${i}`);
+    const isGrit = getActiveCourse() === "grit";
+    for (const p of getActivePatterns()) {
+      const cardIds = p.examples.map((_, i) => (isGrit ? `grit-${p.id}-${i}` : `${p.id}-${i}`));
       let seen = 0;
       let wrong = 0;
       let good = 0;
@@ -440,7 +513,7 @@
         if (cs.level >= MASTERED_LEVEL) mastered++;
       }
 
-      const customMatches = (state.customCards || []).filter((c) => c.patternId === p.id);
+      const customMatches = !isGrit ? (state.customCards || []).filter((c) => c.patternId === p.id) : [];
       for (const cc of customMatches) {
         const cs = cardState(cc.id);
         seen += (cs.seen || 0);
@@ -502,7 +575,7 @@
       coachEl.innerHTML = "🌟 <strong>パーフェクトな状態です！</strong> 目立った弱点構文はなく、全構文で安定した英語発話ができています。設定から制限時間を短くして、瞬発力をさらに磨きましょう！";
     } else {
       const worst = sortedWeak[0];
-      const worstPartObj = window.PARTS.find((pt) => pt.id === worst.pattern.part);
+      const worstPartObj = getActiveParts().find((pt) => pt.id === worst.pattern.part);
       coachEl.innerHTML = `⚠️ 現在最もミスが出やすいのは <strong>${worstPartObj ? worstPartObj.name : ''}</strong> の <strong>「${worst.pattern.en}」</strong>（ミス ${worst.wrong}回）です。<br>「${worst.pattern.note || ''}」を意識して、下の特訓ボタンからピンポイントで復習しましょう！`;
     }
 
@@ -548,7 +621,7 @@
 
     // Part別習得状況
     const partBox = $("#rep-part-list");
-    partBox.replaceChildren(...window.PARTS.map((part) => {
+    partBox.replaceChildren(...getActiveParts().map((part) => {
       const partPats = patternStats.filter((ps) => ps.pattern.part === part.id);
       let seen = 0, wrong = 0, good = 0, mastered = 0, totalCards = 0;
       for (const ps of partPats) {
@@ -658,12 +731,12 @@
         return { title: `カスタム例文（${customList.length}問）`, queue: shuffle(customList) };
       }
       case "part": {
-        const part = window.PARTS.find((p) => p.id === mode.part);
-        return { title: part.name, queue: shuffle(CARDS.filter((c) => c.pattern.part === mode.part)) };
+        const part = getActiveParts().find((p) => p.id === mode.part);
+        return { title: part ? part.name : "パート練習", queue: shuffle(CARDS.filter((c) => c.pattern.part === mode.part)) };
       }
       case "pattern": {
-        const p = window.PATTERNS.find((x) => x.id === mode.pattern);
-        return { title: p.en, queue: shuffle(CARDS.filter((c) => c.pattern.id === mode.pattern)) };
+        const p = getActivePatterns().find((x) => x.id === mode.pattern);
+        return { title: p ? `型${p.id}: ${p.en}` : "構文練習", queue: shuffle(CARDS.filter((c) => c.pattern.id === mode.pattern)) };
       }
       case "weak_drill": {
         const targetIds = new Set(mode.patternIds || []);
@@ -717,13 +790,13 @@
     sp.value = session.index;
 
     $("#card-pattern").textContent = s.showHint
-      ? (card.isCustom ? `[${card.theme || "AI"}] ${card.pattern.en}` : card.pattern.en)
+      ? (card.isCustom ? `[${card.theme || "AI"}] ${card.pattern.en}` : (card.tag ? `[${card.tag}] ${card.pattern.en}` : card.pattern.en))
       : "";
     $("#card-ja").textContent = card.ja;
     $("#card-en").textContent = card.en;
     $("#card-note").textContent = card.isCustom
       ? `✨ AIカスタム（${card.theme || "オリジナル"}）| ${card.pattern.en}：${card.pattern.ja}`
-      : `${card.pattern.en}：${card.pattern.ja}`;
+      : (card.tag ? `🎓 TED・GRIT [${card.tag}] | ${card.pattern.en}：${card.pattern.ja}` : `${card.pattern.en}：${card.pattern.ja}`);
     $("#answer").hidden = true;
     $("#reveal-actions").hidden = false;
     $("#grade-actions").hidden = true;
@@ -2343,11 +2416,16 @@ ${targetPatterns}
     listening.active = true;
     const customCount = (state.customCards || []).length;
     const customPill = $("#filter-pill-custom");
-    if (customPill) customPill.hidden = customCount === 0;
+    if (customPill) customPill.hidden = customCount === 0 || getActiveCourse() === "grit";
 
     const weakCount = weakCards().length;
     const weakPill = $("#listening-weak-count");
     if (weakPill) weakPill.textContent = weakCount;
+
+    const allPill = $('#listening-filter-bar .filter-pill[data-range="all"]');
+    if (allPill) allPill.textContent = `全範囲 (${CARDS.length})`;
+
+    updateCourseSwitchUI();
 
     if (!listening.queue.length) {
       loadListeningQueue(listening.range);
@@ -2399,7 +2477,10 @@ ${targetPatterns}
   function renderListeningCard(card, showAnswer = false) {
     if (!card) return;
     const chip = $("#listening-pattern-chip");
-    if (chip) chip.textContent = `Part ${card.pattern.part} / 型${card.pattern.id}: ${card.pattern.en}`;
+    if (chip) {
+      const tagText = card.tag ? ` [${card.tag}]` : "";
+      chip.textContent = `Part ${card.pattern.part} / 型${card.pattern.id}: ${card.pattern.en}${tagText}`;
+    }
     const promptJa = $("#listening-prompt-ja");
     if (promptJa) promptJa.textContent = card.ja;
     const enEl = $("#listening-answer-en");
@@ -2747,6 +2828,20 @@ ${targetPatterns}
     }
   });
 
+  // コース切り替えイベント
+  $("#home-course-switch")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".course-tab-btn");
+    if (btn && btn.dataset.course) switchCourse(btn.dataset.course);
+  });
+  $("#list-course-switch")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".course-tab-btn");
+    if (btn && btn.dataset.course) switchCourse(btn.dataset.course);
+  });
+  $("#listening-course-bar")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".listening-course-pill");
+    if (btn && btn.dataset.course) switchCourse(btn.dataset.course);
+  });
+
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && !views.home.hidden) {
       checkAchievements(false);
@@ -2754,6 +2849,8 @@ ${targetPatterns}
     }
   });
 
+  updateBrandSub();
+  updateCourseSwitchUI();
   checkAchievements(false);
   showView("home");
 })();
