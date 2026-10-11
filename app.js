@@ -16,7 +16,7 @@
     autoSpeak: true,
     showHint: true,
     typingMode: false,
-    ttsEngine: "gemini", // "gemini" or "browser"
+    ttsEngine: "bundled", // "bundled", "gemini", or "browser"
     geminiApiKey: "",
     geminiModel: "gemini-3.8-flash-tts",
     geminiVoice: "Kore", // Kore, Puck, Aoede, Fenrir, Charon
@@ -1888,8 +1888,9 @@
 
   function updateTtsFieldsVisibility() {
     const isGemini = ttsSelect.value === "gemini";
+    const isBrowser = ttsSelect.value === "browser";
     geminiSub.hidden = !isGemini;
-    browserSub.hidden = isGemini;
+    browserSub.hidden = !isBrowser;
   }
   ttsSelect.addEventListener("change", updateTtsFieldsVisibility);
 
@@ -1924,7 +1925,11 @@
       testStatus.textContent = "✓ 英語再生成功！";
       testStatus.className = "status-msg success";
     } catch (e) {
-      testStatus.textContent = `✕ エラー: ${e.message}`;
+      if (e.message.includes("Quota exceeded") || e.message.includes("quota") || e.message.includes("limit: 10")) {
+        testStatus.textContent = "✕ Google無料枠上限（1日10件）に達しました。約11時間後にリセットされるか、同梱の高品質音声（0円・無制限）をご利用ください。";
+      } else {
+        testStatus.textContent = `✕ エラー: ${e.message}`;
+      }
       testStatus.className = "status-msg error";
     } finally {
       testTtsBtn.disabled = false;
@@ -1951,7 +1956,11 @@
       testStatus.textContent = "✓ 日本語再生成功！";
       testStatus.className = "status-msg success";
     } catch (e) {
-      testStatus.textContent = `✕ エラー: ${e.message}`;
+      if (e.message.includes("Quota exceeded") || e.message.includes("quota") || e.message.includes("limit: 10")) {
+        testStatus.textContent = "✕ Google無料枠上限（1日10件）に達しました。約11時間後にリセットされるか、同梱の高品質音声（0円・無制限）をご利用ください。";
+      } else {
+        testStatus.textContent = `✕ エラー: ${e.message}`;
+      }
       testStatus.className = "status-msg error";
     } finally {
       testTtsJaBtn.disabled = false;
@@ -2044,6 +2053,11 @@
           await new Promise((r) => setTimeout(r, 4000));
         } catch (e) {
           console.warn("Batch cache EN error:", e);
+          if (e.message.includes("Quota exceeded") || e.message.includes("quota") || e.message.includes("limit: 10")) {
+            batchCacheProgress.textContent = `⚠️ Google無料枠上限（1日10件）に到達したため中断しました（${processedCount}件保存済み）。未保存の問題は自動で同梱の高音質音声（Brian/Nanami）で再生されます。`;
+            batchCacheAborted = true;
+            break;
+          }
           if (e.message.includes("429") || e.message.includes("RESOURCE_EXHAUSTED")) {
             batchCacheProgress.textContent = `⚠️ レート制限到達のため一時待機中（15秒）...`;
             await new Promise((r) => setTimeout(r, 15000));
@@ -2065,6 +2079,11 @@
           await new Promise((r) => setTimeout(r, 4000));
         } catch (e) {
           console.warn("Batch cache JA error:", e);
+          if (e.message.includes("Quota exceeded") || e.message.includes("quota") || e.message.includes("limit: 10")) {
+            batchCacheProgress.textContent = `⚠️ Google無料枠上限（1日10件）に到達したため中断しました（${processedCount}件保存済み）。未保存の問題は自動で同梱の高音質音声（Brian/Nanami）で再生されます。`;
+            batchCacheAborted = true;
+            break;
+          }
           if (e.message.includes("429") || e.message.includes("RESOURCE_EXHAUSTED")) {
             batchCacheProgress.textContent = `⚠️ レート制限到達のため一時待機中（15秒）...`;
             await new Promise((r) => setTimeout(r, 15000));

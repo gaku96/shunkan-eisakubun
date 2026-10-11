@@ -11,7 +11,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間英作文 | 英会話の型30</title>
-  <link rel="stylesheet" href="style.css?v=17">
+  <link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
   <header class="app-header">
@@ -522,8 +522,9 @@
         <label class="field">
           <span>音声エンジン</span>
           <select name="ttsEngine" id="tts-engine-select">
-            <option value="gemini">Gemini 3.8 TTS（超自然・推奨）</option>
-            <option value="browser">ブラウザ標準（Web Speech）</option>
+            <option value="bundled">✨ 同梱ネイティブ音声（Brian & Nanami・0円・無制限・推奨）</option>
+            <option value="gemini">✨ Gemini 3.8 TTS（Google AI・無料枠は1日10件上限あり）</option>
+            <option value="browser">ブラウザ標準音声（Web Speech API）</option>
           </select>
         </label>
 
@@ -567,7 +568,7 @@
               <span style="font-size: .84rem; font-weight: 700;">⚡️ Gemini一括キャッシュ</span>
               <button type="button" class="btn small primary" id="batch-cache-btn">一括生成を開始</button>
             </div>
-            <p style="font-size: .74rem; color: var(--muted); margin: 4px 0 0;">現在選択中コースの音声を無料枠レート制限（安全インターバル）を守りながら自動生成・保存します。中断も可能です。</p>
+            <p style="font-size: .74rem; color: var(--muted); margin: 4px 0 0;">※Google AI Studio無料枠のTTSモデルは1日10件の上限があります。上限到達時は自動で同梱の自然な音声（Brian/Nanami）で再生されます。</p>
             <div id="batch-cache-progress" hidden style="margin-top: 8px; font-size: .8rem; color: var(--accent); font-weight:600;"></div>
           </div>
         </div>
@@ -703,8 +704,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=17"></script>
-  <script src="app.js?v=17"></script>
+  <script src="data.js?v=18"></script>
+  <script src="app.js?v=18"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
