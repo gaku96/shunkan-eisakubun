@@ -168,11 +168,13 @@
   const views = {
     home: $("#view-home"), practice: $("#view-practice"),
     result: $("#view-result"), list: $("#view-list"),
+    report: $("#view-report"),
   };
   function showView(name) {
-    for (const [k, el] of Object.entries(views)) el.hidden = k !== name;
+    for (const [k, el] of Object.entries(views)) if (el) el.hidden = k !== name;
     if (name === "home") renderHome();
     if (name === "list") renderList();
+    if (name === "report") renderReport();
     window.scrollTo({ top: 0 });
   }
   document.addEventListener("click", (e) => {
@@ -310,7 +312,194 @@
     }));
   }
 
-  // ---------- 出題セット ----------
+  // ---------- 弱点分析レポート ----------
+  function computePatternStats() {
+    const stats = [];
+    for (const p of window.PATTERNS) {
+      const cardIds = p.examples.map((_, i) => `${p.id}-${i}`);
+      let seen = 0;
+      let wrong = 0;
+      let good = 0;
+      let mastered = 0;
+
+      for (const cid of cardIds) {
+        const cs = cardState(cid);
+        seen += (cs.seen || 0);
+        wrong += (cs.wrong || 0);
+        good += (cs.good || 0);
+        if (cs.level >= MASTERED_LEVEL) mastered++;
+      }
+
+      const customMatches = (state.customCards || []).filter((c) => c.patternId === p.id);
+      for (const cc of customMatches) {
+        const cs = cardState(cc.id);
+        seen += (cs.seen || 0);
+        wrong += (cs.wrong || 0);
+        good += (cs.good || 0);
+        if (cs.level >= MASTERED_LEVEL) mastered++;
+      }
+
+      const totalAttempts = good + wrong;
+      const acc = totalAttempts > 0 ? Math.round((good / totalAttempts) * 100) : (seen > 0 ? 100 : null);
+      const isWeak = wrong > 0 || (seen > 0 && acc !== null && acc < 70);
+      const weakScore = wrong * 12 + (acc !== null ? (100 - acc) : 0);
+
+      stats.push({
+        pattern: p,
+        seen,
+        wrong,
+        good,
+        mastered,
+        totalCards: cardIds.length + customMatches.length,
+        accuracy: acc,
+        isWeak,
+        weakScore,
+      });
+    }
+    return stats;
+  }
+
+  function renderReport() {
+    const patternStats = computePatternStats();
+    let totalAttempts = 0;
+    let totalGood = 0;
+    let totalWrong = 0;
+    let masteredPatterns = 0;
+    let weakCount = 0;
+
+    for (const ps of patternStats) {
+      totalGood += ps.good;
+      totalWrong += ps.wrong;
+      totalAttempts += (ps.good + ps.wrong);
+      if (ps.mastered >= 2) masteredPatterns++;
+      if (ps.isWeak) weakCount++;
+    }
+
+    const overallAcc = totalAttempts > 0 ? Math.round((totalGood / totalAttempts) * 100) : null;
+    $("#rep-accuracy").textContent = overallAcc !== null ? `${overallAcc}%` : "--%";
+    $("#rep-mastered").innerHTML = `${masteredPatterns}<small>/30</small>`;
+    $("#rep-weak-count").textContent = weakCount;
+    const totalAnsweredAll = Object.values(state.history || {}).reduce((a, b) => a + (b.answered || 0), 0);
+    $("#rep-total-answered").textContent = totalAnsweredAll;
+
+    // AI/コーチのアドバイス生成
+    const coachEl = $("#rep-coach-text");
+    const sortedWeak = [...patternStats].filter((p) => p.isWeak || p.wrong > 0).sort((a, b) => b.weakScore - a.weakScore);
+
+    if (totalAnsweredAll < 5) {
+      coachEl.innerHTML = "🌱 まだ解答データが少なめです。まずは今日の練習メニューから10〜20問解いて、あなたの英語の強み・弱点を分析しましょう！";
+    } else if (sortedWeak.length === 0) {
+      coachEl.innerHTML = "🌟 <strong>パーフェクトな状態です！</strong> 目立った弱点構文はなく、全構文で安定した英語発話ができています。設定から制限時間を短くして、瞬発力をさらに磨きましょう！";
+    } else {
+      const worst = sortedWeak[0];
+      const worstPartObj = window.PARTS.find((pt) => pt.id === worst.pattern.part);
+      coachEl.innerHTML = `⚠️ 現在最もミスが出やすいのは <strong>${worstPartObj ? worstPartObj.name : ''}</strong> の <strong>「${worst.pattern.en}」</strong>（ミス ${worst.wrong}回）です。<br>「${worst.pattern.note || ''}」を意識して、下の特訓ボタンからピンポイントで復習しましょう！`;
+    }
+
+    // 弱点ランキング
+    const rankingBox = $("#rep-ranking-list");
+    if (sortedWeak.length === 0) {
+      rankingBox.innerHTML = `
+        <div class="empty-state" style="padding: 24px; text-align: center; color: var(--good);">
+          <p style="font-size: 1.5rem; margin-bottom: 6px;">🎉</p>
+          <strong>現在要注意な苦手構文はありません！</strong>
+          <p style="font-size: .85rem; color: var(--muted); margin-top: 4px;">全構文で高い正答率を維持しています。</p>
+        </div>
+      `;
+    } else {
+      const topWeak = sortedWeak.slice(0, 5);
+      rankingBox.replaceChildren(...topWeak.map((ps, idx) => {
+        const item = document.createElement("div");
+        item.className = `ranking-item ${idx === 0 ? 'worst-1' : ''}`;
+        const rankClass = idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : 'rank-other';
+        const rankText = idx < 3 ? `ワースト ${idx + 1}位` : `${idx + 1}位`;
+        const accText = ps.accuracy !== null ? `正答率 ${ps.accuracy}%` : `未正解`;
+        const accClass = ps.accuracy !== null && ps.accuracy >= 70 ? 'good' : (ps.accuracy !== null && ps.accuracy >= 50 ? 'moderate' : '');
+
+        item.innerHTML = `
+          <div class="ranking-item-header">
+            <span class="ranking-rank-pill ${rankClass}">${rankText}</span>
+            <span class="ranking-rate-badge ${accClass}">${accText}</span>
+          </div>
+          <h3 class="ranking-title">#${ps.pattern.id} ${ps.pattern.en}</h3>
+          <p class="ranking-ja">${ps.pattern.ja}</p>
+          <div class="ranking-bar"><div class="ranking-bar-fill ${accClass}" style="width: ${ps.accuracy !== null ? ps.accuracy : 0}%"></div></div>
+          <div class="ranking-item-footer">
+            <span class="ranking-mistake-count">✕ ミス ${ps.wrong}回 / 解答 ${ps.seen}回</span>
+            <button type="button" class="btn small primary">この構文を練習</button>
+          </div>
+        `;
+        item.querySelector("button").addEventListener("click", () => {
+          startSession({ type: "pattern", pattern: ps.pattern.id });
+        });
+        return item;
+      }));
+    }
+
+    // Part別習得状況
+    const partBox = $("#rep-part-list");
+    partBox.replaceChildren(...window.PARTS.map((part) => {
+      const partPats = patternStats.filter((ps) => ps.pattern.part === part.id);
+      let seen = 0, wrong = 0, good = 0, mastered = 0, totalCards = 0;
+      for (const ps of partPats) {
+        seen += ps.seen;
+        wrong += ps.wrong;
+        good += ps.good;
+        mastered += ps.mastered;
+        totalCards += ps.totalCards;
+      }
+      const attempts = good + wrong;
+      const acc = attempts > 0 ? Math.round((good / attempts) * 100) : (seen > 0 ? 100 : null);
+      const masteryRate = totalCards > 0 ? Math.round((mastered / totalCards) * 100) : 0;
+
+      const item = document.createElement("div");
+      item.className = "part-rep-item";
+      item.innerHTML = `
+        <div class="part-rep-head">
+          <span class="part-rep-title">${part.name}</span>
+          <span class="part-rep-acc">${acc !== null ? `正答率 ${acc}%` : `未着手`}</span>
+        </div>
+        <div class="part-rep-bar"><div class="part-rep-bar-fill" style="width: ${masteryRate}%"></div></div>
+        <div class="part-rep-footer">
+          <span class="part-rep-sub">習得: ${mastered}/${totalCards}問 (${masteryRate}%)</span>
+          <button type="button" class="btn small ghost">練習する</button>
+        </div>
+      `;
+      item.querySelector("button").addEventListener("click", () => {
+        startSession({ type: "part", part: part.id });
+      });
+      return item;
+    }));
+
+    // 全30構文マトリックス
+    const matrixBox = $("#rep-all-matrix");
+    matrixBox.replaceChildren(...patternStats.map((ps) => {
+      const item = document.createElement("div");
+      item.className = "matrix-item";
+      const accColor = ps.accuracy === null ? 'var(--muted)' : ps.accuracy >= 75 ? 'var(--good)' : (ps.accuracy >= 50 ? '#f59e0b' : 'var(--again)');
+      item.innerHTML = `
+        <div>
+          <span class="matrix-pnum">#${ps.pattern.id}</span>
+          <span class="matrix-acc" style="color: ${accColor}">${ps.accuracy !== null ? `${ps.accuracy}%` : '-'}</span>
+        </div>
+        <span class="matrix-ja">${ps.pattern.en}</span>
+      `;
+      item.title = `${ps.pattern.en} (${ps.pattern.ja}) - 正答率: ${ps.accuracy !== null ? ps.accuracy + '%' : '未解答'}`;
+      item.addEventListener("click", () => {
+        startSession({ type: "pattern", pattern: ps.pattern.id });
+      });
+      return item;
+    }));
+
+    // 弱点集中特訓ボタン
+    const drillBtn = $("#start-weak-drill");
+    if (drillBtn) {
+      drillBtn.onclick = () => {
+        const targetWeak = sortedWeak.length > 0 ? sortedWeak.slice(0, 5).map((p) => p.pattern.id) : [1, 2, 3];
+        startSession({ type: "weak_drill", patternIds: targetWeak });
+      };
+    }
+  }
   const shuffle = (arr) => {
     const a = [...arr];
     for (let i = a.length - 1; i > 0; i--) {
@@ -365,6 +554,18 @@
       case "pattern": {
         const p = window.PATTERNS.find((x) => x.id === mode.pattern);
         return { title: p.en, queue: shuffle(CARDS.filter((c) => c.pattern.id === mode.pattern)) };
+      }
+      case "weak_drill": {
+        const targetIds = new Set(mode.patternIds || []);
+        let pool = CARDS.filter((c) => targetIds.has(c.pattern.id));
+        if (!pool.length) pool = weakCards();
+        if (!pool.length) pool = CARDS;
+        const sorted = shuffle(pool).sort((a, b) => {
+          const sa = cardState(a.id);
+          const sb = cardState(b.id);
+          return (sb.wrong - sa.wrong) || (sa.level - sb.level);
+        });
+        return { title: "⚡️ 弱点集中特訓", queue: sorted.slice(0, 10) };
       }
     }
   }

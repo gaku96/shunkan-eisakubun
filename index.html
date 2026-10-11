@@ -66,7 +66,10 @@
       </div>
 
       <div class="card">
-        <h2>練習メニュー</h2>
+        <div class="card-head-row">
+          <h2>練習メニュー</h2>
+          <button type="button" class="btn small ghost" data-nav="report">📊 弱点分析</button>
+        </div>
         <div class="menu-grid">
           <button type="button" class="btn" id="start-weak">苦手な例文を復習 <span class="pill" id="weak-count">0</span></button>
           <button type="button" class="btn" id="start-random">全範囲からランダム</button>
@@ -93,6 +96,7 @@
         <div class="badge-grid" id="badge-grid"></div>
       </div>
 
+      <button type="button" class="btn primary ghost wide" data-nav="report" style="margin-bottom: 8px;">📊 苦手構文の弱点分析レポートを見る</button>
       <button type="button" class="btn ghost wide" data-nav="list">構文一覧を見る（30個）</button>
     </section>
 
@@ -146,6 +150,7 @@
         <p id="result-streak" class="result-streak"></p>
         <div class="menu-grid">
           <button type="button" class="btn primary" id="result-again">もう1セット</button>
+          <button type="button" class="btn" data-nav="report">📊 弱点分析</button>
           <button type="button" class="btn" data-nav="home">ホームへ</button>
         </div>
       </div>
@@ -159,6 +164,76 @@
         <span></span>
       </div>
       <div id="pattern-list"></div>
+    </section>
+
+    <!-- 弱点分析レポート -->
+    <section id="view-report" class="view" hidden aria-labelledby="report-title">
+      <div class="practice-top">
+        <button type="button" class="btn ghost small" data-nav="home">← 戻る</button>
+        <h1 id="report-title" class="practice-title">📊 弱点分析レポート</h1>
+        <span></span>
+      </div>
+
+      <!-- 総合サマリーカード -->
+      <div class="card report-overview-card">
+        <div class="report-overview-grid">
+          <div class="report-metric">
+            <span class="report-metric-num" id="rep-accuracy">--%</span>
+            <span class="report-metric-label">総合正答率</span>
+          </div>
+          <div class="report-metric">
+            <span class="report-metric-num" id="rep-mastered">0<small>/30</small></span>
+            <span class="report-metric-label">定着構文</span>
+          </div>
+          <div class="report-metric">
+            <span class="report-metric-num alert" id="rep-weak-count">0</span>
+            <span class="report-metric-label">要注意構文</span>
+          </div>
+          <div class="report-metric">
+            <span class="report-metric-num" id="rep-total-answered">0</span>
+            <span class="report-metric-label">総解答数</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- コーチのアドバイスカード -->
+      <div class="card report-coach-card">
+        <div class="coach-head">
+          <span class="coach-avatar">💡</span>
+          <h3>AI弱点診断・学習アドバイス</h3>
+        </div>
+        <p class="coach-message" id="rep-coach-text">データを分析しています...</p>
+      </div>
+
+      <!-- 弱点集中特訓CTA -->
+      <div class="card report-cta-card">
+        <button type="button" class="btn primary big wide" id="start-weak-drill">⚡️ 苦手な構文をまとめて特訓する（10問）</button>
+      </div>
+
+      <!-- ⚠️ 苦手構文ランキング -->
+      <div class="card">
+        <div class="card-head-row">
+          <h2>⚠️ 苦手構文ランキング</h2>
+          <small class="text-muted">ミス率の高い順</small>
+        </div>
+        <p class="card-subtext">特に復習が必要な構文です。ボタンからその構文をピンポイントで練習できます。</p>
+        <div class="weak-ranking-list" id="rep-ranking-list"></div>
+      </div>
+
+      <!-- 📈 Part別習得バランス -->
+      <div class="card">
+        <h2>📈 パート別（Part 1〜5）の習得状況</h2>
+        <p class="card-subtext">各パートの定着度と正答率のバランスです。</p>
+        <div class="part-report-list" id="rep-part-list"></div>
+      </div>
+
+      <!-- 全構文の成績一覧（折りたたみ/展開） -->
+      <div class="card">
+        <details class="all-patterns-details">
+          <summary><strong>全30構文の成績一覧を見る（タップで展開）</strong></summary>
+          <div class="all-patterns-matrix" id="rep-all-matrix"></div>
+        </details>
+      </div>
     </section>
   </main>
 
