@@ -553,13 +553,22 @@
               <option value="Charon">Charon（深みのある男性）</option>
             </select>
           </label>
-          <div class="test-row">
-            <button type="button" class="btn small" id="test-tts-btn">🔊 声をテスト</button>
+          <div class="test-row" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <button type="button" class="btn small" id="test-tts-btn">🔊 英語をテスト</button>
+            <button type="button" class="btn small" id="test-tts-ja-btn">🇯🇵 日本語をテスト</button>
             <span id="test-tts-status" class="status-msg"></span>
           </div>
-          <div class="cache-row">
+          <div class="cache-row" style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
             <span id="cache-count">キャッシュ: 0件</span>
             <button type="button" class="btn small ghost" id="clear-cache-btn">消去</button>
+          </div>
+          <div class="batch-cache-box" style="margin-top: 12px; padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px dashed var(--accent);">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+              <span style="font-size: .84rem; font-weight: 700;">⚡️ Gemini一括キャッシュ</span>
+              <button type="button" class="btn small primary" id="batch-cache-btn">一括生成を開始</button>
+            </div>
+            <p style="font-size: .74rem; color: var(--muted); margin: 4px 0 0;">現在選択中コースの音声を無料枠レート制限（安全インターバル）を守りながら自動生成・保存します。中断も可能です。</p>
+            <div id="batch-cache-progress" hidden style="margin-top: 8px; font-size: .8rem; color: var(--accent); font-weight:600;"></div>
           </div>
         </div>
 
@@ -694,8 +703,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=15"></script>
-  <script src="app.js?v=15"></script>
+  <script src="data.js?v=16"></script>
+  <script src="app.js?v=16"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

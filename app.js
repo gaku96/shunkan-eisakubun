@@ -995,8 +995,12 @@
   }
 
   // ---------- Gemini 3.8 TTS API呼び出し ----------
-  async function generateGeminiSpeech(text, apiKey, model = "gemini-3.8-flash-tts", voice = "Kore") {
+  async function generateGeminiSpeech(text, apiKey, model = "gemini-3.8-flash-tts", voice = "Kore", lang = "en") {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const stylePrompt = lang === "ja"
+      ? "natural, clear, polite and warm Japanese narration by a native speaker with authentic standard Tokyo intonation"
+      : "natural, authentic, conversational native American English with authentic linking and connected speech";
+
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1008,7 +1012,7 @@
               {
                 text: text,
                 speechMetadata: {
-                  style: "natural, friendly, conversational native American English"
+                  style: stylePrompt
                 }
               }
             ]
@@ -1102,39 +1106,42 @@
       text = card.ja;
     } else {
       text = String(cardOrText || "");
-      card = CARDS.find((c) => c.ja === text) || null;
+      card = ALL_CARDS.find((c) => c.ja === text) || null;
     }
 
+    const s = state.settings;
     const badge = $("#listening-ja-source");
     const audioKey = card ? (card.audioId || getCustomAudioId(card) || card.id) : null;
-    if (audioKey) {
-      if (badge) badge.textContent = "✨ 自然な日本語音声";
-      const ok = await playAudioUrlPromise(`audio/${audioKey}_ja.mp3`, rate);
-      if (ok) return true;
-    }
 
-    // Fallback: Gemini TTS (if configured)
-    const s = state.settings;
-    if (s.ttsEngine !== "browser" && s.geminiApiKey) {
-      const cacheKey = `ja_${audioKey || text}_${s.geminiModel}`;
+    // 1. Gemini TTS 設定時は最優先
+    if (s.ttsEngine === "gemini" && s.geminiApiKey) {
+      const cacheKey = `ja_${audioKey || text}_${s.geminiModel}_${s.geminiVoice}`;
       const cached = await getCachedAudio(cacheKey);
       if (cached) {
-        if (badge) badge.textContent = "✨ Gemini 日本語";
+        if (badge) badge.textContent = `✨ Gemini 3.8 日本語 (${s.geminiVoice})`;
         const ok = await playBlobPromise(cached, rate);
         if (ok) return true;
       }
       try {
-        if (badge) badge.textContent = "✨ Gemini 生成中...";
-        const blob = await generateGeminiSpeech(text, s.geminiApiKey, s.geminiModel, "Aoede");
+        if (badge) badge.textContent = "✨ Gemini 3.8 生成中...";
+        const blob = await generateGeminiSpeech(text, s.geminiApiKey, s.geminiModel, s.geminiVoice, "ja");
         await setCachedAudio(cacheKey, blob);
-        if (badge) badge.textContent = "✨ Gemini 日本語";
+        if (badge) badge.textContent = `✨ Gemini 3.8 日本語 (${s.geminiVoice})`;
         const ok = await playBlobPromise(blob, rate);
         if (ok) return true;
       } catch (e) {
-        console.warn("Gemini Ja TTS fallback error:", e);
+        console.warn("Gemini Ja TTS fallback to bundled audio:", e);
       }
     }
 
+    // 2. 同梱のローカル高音質日本語音声（Nanami）
+    if (audioKey) {
+      if (badge) badge.textContent = "✨ 自然な日本語音声（同梱）";
+      const ok = await playAudioUrlPromise(`audio/${audioKey}_ja.mp3`, rate);
+      if (ok) return true;
+    }
+
+    // 3. ブラウザ音声フォールバック
     if (badge) badge.textContent = "ブラウザ音声";
     return speakJapaneseBrowserPromise(text, rate);
   }
@@ -1231,15 +1238,9 @@
     const s = state.settings;
     const badge = $("#listening-tts-source");
     const audioKey = card.audioId || getCustomAudioId(card) || card.id;
-    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
 
-    if (isBundled) {
-      if (badge) badge.textContent = "✨ リアル口語ネイティブ（崩し・リンキング）";
-      const ok = await playAudioUrlPromise(`audio/${audioKey}.mp3`, rate);
-      if (ok) return;
-    }
-
-    if (s.ttsEngine !== "browser") {
+    // 1. Gemini TTS 設定時は最優先で生成・キャッシュ再生
+    if (s.ttsEngine === "gemini" && s.geminiApiKey) {
       const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}`;
       const cached = await getCachedAudio(cacheKey);
       if (cached) {
@@ -1247,20 +1248,27 @@
         const ok = await playBlobPromise(cached, rate);
         if (ok) return;
       }
-      if (s.geminiApiKey) {
-        try {
-          if (badge) badge.textContent = "✨ Gemini 生成中...";
-          const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice);
-          await setCachedAudio(cacheKey, blob);
-          if (badge) badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
-          const ok = await playBlobPromise(blob, rate);
-          if (ok) return;
-        } catch (err) {
-          console.warn("Gemini listening speech error:", err);
-        }
+      try {
+        if (badge) badge.textContent = "✨ Gemini 3.8 生成中...";
+        const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice, "en");
+        await setCachedAudio(cacheKey, blob);
+        if (badge) badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
+        const ok = await playBlobPromise(blob, rate);
+        if (ok) return;
+      } catch (err) {
+        console.warn("Gemini English TTS error, fallback to bundled audio:", err);
       }
     }
 
+    // 2. 同梱のリアル口語ネイティブ音声（Brian）
+    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
+    if (isBundled) {
+      if (badge) badge.textContent = "✨ リアル口語ネイティブ（崩し・同梱）";
+      const ok = await playAudioUrlPromise(`audio/${audioKey}.mp3`, rate);
+      if (ok) return;
+    }
+
+    // 3. ブラウザ標準音声
     if (badge) badge.textContent = "ブラウザ音声";
     await speakBrowserPromise(card.en, rate);
   }
@@ -1309,20 +1317,7 @@
     const s = state.settings;
     const badge = $("#tts-source");
 
-    // 1. 同梱のローカル高音質MP3（ベース120問 ＋ プリセット150問 = 計270問）を優先再生（完全無料・0円）
-    const audioKey = card.audioId || getCustomAudioId(card) || card.id;
-    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
-
-    if (isBundled) {
-      const playedLocal = await tryPlayLocalAudio(audioKey);
-      if (playedLocal) {
-        badge.textContent = "✨ ネイティブ音声（0円・オフライン）";
-        badge.className = "tts-badge";
-        return;
-      }
-    }
-
-    // 2. ブラウザ標準設定の場合
+    // 1. ブラウザ標準設定の場合
     if (s.ttsEngine === "browser") {
       badge.textContent = "ブラウザ標準";
       badge.className = "tts-badge fallback";
@@ -1330,41 +1325,50 @@
       return;
     }
 
-    // 3. Gemini 3.8 TTS 設定の場合
-    const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}`;
-    const cached = await getCachedAudio(cacheKey);
+    // 2. Gemini 3.8 TTS 設定の場合
+    if (s.ttsEngine === "gemini" && s.geminiApiKey) {
+      const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}`;
+      const cached = await getCachedAudio(cacheKey);
 
-    if (cached) {
-      badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
-      badge.className = "tts-badge";
-      playBlob(cached);
-      return;
+      if (cached) {
+        badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
+        badge.className = "tts-badge";
+        playBlob(cached);
+        return;
+      }
+
+      badge.textContent = "✨ Gemini 3.8 生成中...";
+      badge.className = "tts-badge loading";
+
+      try {
+        const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice, "en");
+        await setCachedAudio(cacheKey, blob);
+        badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
+        badge.className = "tts-badge";
+        playBlob(blob);
+        return;
+      } catch (err) {
+        console.warn("Gemini TTS エラー, 同梱音声へフォールバック:", err);
+      }
     }
 
-    // APIキーがない場合はブラウザ音声にフォールバックし、案内を表示
-    if (!s.geminiApiKey) {
-      badge.textContent = "ブラウザ音声（⚙️でAPIキーを設定）";
-      badge.className = "tts-badge fallback";
-      speakBrowser(card.en);
-      return;
+    // 3. 同梱のローカル高音質MP3（オフライン・0円・フォールバック）
+    const audioKey = card.audioId || getCustomAudioId(card) || card.id;
+    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
+
+    if (isBundled) {
+      const playedLocal = await tryPlayLocalAudio(audioKey);
+      if (playedLocal) {
+        badge.textContent = "✨ ネイティブ音声（同梱）";
+        badge.className = "tts-badge";
+        return;
+      }
     }
 
-    // APIから新規生成
-    badge.textContent = "✨ Gemini 3.8 生成中...";
-    badge.className = "tts-badge loading";
-
-    try {
-      const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice);
-      await setCachedAudio(cacheKey, blob);
-      badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice})`;
-      badge.className = "tts-badge";
-      playBlob(blob);
-    } catch (err) {
-      console.warn("Gemini TTS エラー:", err);
-      badge.textContent = "ブラウザ音声（Geminiエラー）";
-      badge.className = "tts-badge fallback";
-      speakBrowser(card.en);
-    }
+    // 4. ブラウザ音声に最終フォールバック
+    badge.textContent = "ブラウザ音声";
+    badge.className = "tts-badge fallback";
+    speakBrowser(card.en);
   }
 
   // ---------- 実績・バッジシステム ----------
@@ -1800,6 +1804,11 @@
     toggleKeyBtn.textContent = isPw ? "隠す" : "表示";
   });
 
+  const testTtsJaBtn = $("#test-tts-ja-btn");
+  const batchCacheBtn = $("#batch-cache-btn");
+  const batchCacheProgress = $("#batch-cache-progress");
+  let batchCacheAborted = false;
+
   testTtsBtn.addEventListener("click", async () => {
     const key = keyInput.value.trim();
     if (!key) {
@@ -1808,16 +1817,16 @@
       keyInput.focus();
       return;
     }
-    testStatus.textContent = "生成中...";
+    testStatus.textContent = "🇺🇸 英語生成中...";
     testStatus.className = "status-msg";
     testTtsBtn.disabled = true;
     try {
       const model = form.geminiModel.value;
       const voice = form.geminiVoice.value;
       const sample = "I'd say eighty percent of the time I'm working from home.";
-      const blob = await generateGeminiSpeech(sample, key, model, voice);
+      const blob = await generateGeminiSpeech(sample, key, model, voice, "en");
       playBlob(blob);
-      testStatus.textContent = "✓ 再生成功！";
+      testStatus.textContent = "✓ 英語再生成功！";
       testStatus.className = "status-msg success";
     } catch (e) {
       testStatus.textContent = `✕ エラー: ${e.message}`;
@@ -1825,6 +1834,120 @@
     } finally {
       testTtsBtn.disabled = false;
     }
+  });
+
+  testTtsJaBtn?.addEventListener("click", async () => {
+    const key = keyInput.value.trim();
+    if (!key) {
+      testStatus.textContent = "APIキーを入力してください";
+      testStatus.className = "status-msg error";
+      keyInput.focus();
+      return;
+    }
+    testStatus.textContent = "🇯🇵 日本語生成中...";
+    testStatus.className = "status-msg";
+    testTtsJaBtn.disabled = true;
+    try {
+      const model = form.geminiModel.value;
+      const voice = form.geminiVoice.value;
+      const sample = "私の直感では、大半の人は在宅勤務を好むと思います。";
+      const blob = await generateGeminiSpeech(sample, key, model, voice, "ja");
+      playBlob(blob);
+      testStatus.textContent = "✓ 日本語再生成功！";
+      testStatus.className = "status-msg success";
+    } catch (e) {
+      testStatus.textContent = `✕ エラー: ${e.message}`;
+      testStatus.className = "status-msg error";
+    } finally {
+      testTtsJaBtn.disabled = false;
+    }
+  });
+
+  // 一括キャッシュ
+  batchCacheBtn?.addEventListener("click", async () => {
+    const key = keyInput.value.trim();
+    if (!key) {
+      alert("先にGemini APIキーを入力してください。");
+      keyInput.focus();
+      return;
+    }
+    if (batchCacheBtn.dataset.running === "true") {
+      batchCacheAborted = true;
+      batchCacheBtn.textContent = "中止中...";
+      return;
+    }
+
+    const courseCards = CARDS;
+    const model = form.geminiModel.value;
+    const voice = form.geminiVoice.value;
+    const courseTitle = getActiveCourse() === "grit" ? "TED・GRIT編" : "口語編";
+
+    if (!confirm(`【${courseTitle}（全${courseCards.length}問）】の英語・日本語音声をGemini 3.8で順次キャッシュしますか？\n\n※無料枠（15 RPM）に配慮し安全なインターバルを挟みながら自動保存します。いつでも中断可能です。`)) {
+      return;
+    }
+
+    batchCacheAborted = false;
+    batchCacheBtn.dataset.running = "true";
+    batchCacheBtn.textContent = "✕ 生成を中止";
+    batchCacheProgress.hidden = false;
+
+    let processedCount = 0;
+    const totalItems = courseCards.length;
+
+    for (let i = 0; i < totalItems; i++) {
+      if (batchCacheAborted) break;
+      const card = courseCards[i];
+      batchCacheProgress.textContent = `${i + 1} / ${totalItems}問 処理中... (${card.pattern.en.slice(0, 15)}...)`;
+
+      // 英語キャッシュ確認
+      const enCacheKey = `${card.id}_${model}_${voice}`;
+      const enCached = await getCachedAudio(enCacheKey);
+      if (!enCached) {
+        try {
+          const blob = await generateGeminiSpeech(card.en, key, model, voice, "en");
+          await setCachedAudio(enCacheKey, blob);
+          processedCount++;
+          await updateCacheCount();
+          await new Promise((r) => setTimeout(r, 4000));
+        } catch (e) {
+          console.warn("Batch cache EN error:", e);
+          if (e.message.includes("429") || e.message.includes("RESOURCE_EXHAUSTED")) {
+            batchCacheProgress.textContent = `⚠️ レート制限到達のため一時待機中（15秒）...`;
+            await new Promise((r) => setTimeout(r, 15000));
+          }
+        }
+      }
+
+      if (batchCacheAborted) break;
+
+      // 日本語キャッシュ確認
+      const jaCacheKey = `ja_${card.id}_${model}_${voice}`;
+      const jaCached = await getCachedAudio(jaCacheKey);
+      if (!jaCached) {
+        try {
+          const blob = await generateGeminiSpeech(card.ja, key, model, voice, "ja");
+          await setCachedAudio(jaCacheKey, blob);
+          processedCount++;
+          await updateCacheCount();
+          await new Promise((r) => setTimeout(r, 4000));
+        } catch (e) {
+          console.warn("Batch cache JA error:", e);
+          if (e.message.includes("429") || e.message.includes("RESOURCE_EXHAUSTED")) {
+            batchCacheProgress.textContent = `⚠️ レート制限到達のため一時待機中（15秒）...`;
+            await new Promise((r) => setTimeout(r, 15000));
+          }
+        }
+      }
+    }
+
+    batchCacheBtn.dataset.running = "false";
+    batchCacheBtn.textContent = "一括生成を開始";
+    if (batchCacheAborted) {
+      batchCacheProgress.textContent = "⏹ 中止しました。保存済みのキャッシュはそのまま利用できます。";
+    } else {
+      batchCacheProgress.textContent = "🎉 完了！オフラインでも超自然なGemini音声で学習できます。";
+    }
+    await updateCacheCount();
   });
 
   async function updateCacheCount() {
