@@ -43,10 +43,10 @@ def pcm_to_wav(pcm_data: bytes, sample_rate: int = 24000, num_channels: int = 1,
     return bytes(header) + pcm_data
 
 ACCENT_STYLE_PROMPTS = {
-    "us": "natural, authentic, conversational native American English with authentic linking, American rhoticity, and connected speech",
-    "uk": "natural, authentic British English with characteristic Received Pronunciation (RP), non-rhotic intonation, and standard British phonetics",
-    "in": "natural, fluent international business Indian English with authentic native Indian English rhythm, melodic intonation, and distinctive phonetics",
-    "au": "natural, authentic conversational Australian English with characteristic Australian vowel shifts, intonation, and friendly warmth"
+    "us": "natural, authentic native General American English with distinct American rhoticity, flap 't', and smooth conversational American connected speech",
+    "uk": "authentic, distinctly British English with crisp Received Pronunciation (RP), clear non-rhotic pronunciation, sharp consonants, and characteristic refined British intonation",
+    "in": "deep, strong, and unmistakably authentic native Indian English accent. Prominent Indian phonetics: distinct retroflex 't' and 'd' consonants with curled tongue, dental stops, syllable-timed cadence, characteristic melodic musical pitch inflection, light tapped 'r', crisp unaspirated consonants, rich and natural Indian subcontinent speaker pronunciation",
+    "au": "authentic, distinctly Australian English with broad Aussie vowels and diphthongs, characteristic vocal warmth, and friendly rising intonation at phrase endings"
 }
 
 def get_effective_accent(card_id: str, setting_accent: str = "us") -> str:

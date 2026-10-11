@@ -68,10 +68,10 @@
     au: { flag: "🇦🇺", name: "豪語", label: "オーストラリア英語" },
   };
   const ACCENT_STYLE_PROMPTS = {
-    us: "natural, authentic, conversational native American English with authentic linking, American rhoticity, and connected speech",
-    uk: "natural, authentic British English with characteristic Received Pronunciation (RP), non-rhotic intonation, and standard British phonetics",
-    in: "natural, fluent international business Indian English with authentic native Indian English rhythm, melodic intonation, and distinctive phonetics",
-    au: "natural, authentic conversational Australian English with characteristic Australian vowel shifts, intonation, and friendly warmth",
+    us: "natural, authentic native General American English with distinct American rhoticity, flap 't', and smooth conversational American connected speech",
+    uk: "authentic, distinctly British English with crisp Received Pronunciation (RP), clear non-rhotic pronunciation, sharp consonants, and characteristic refined British intonation",
+    in: "deep, strong, and unmistakably authentic native Indian English accent. Prominent Indian phonetics: distinct retroflex 't' and 'd' consonants with curled tongue, dental stops, syllable-timed cadence, characteristic melodic musical pitch inflection, light tapped 'r', crisp unaspirated consonants, rich and natural Indian subcontinent speaker pronunciation",
+    au: "authentic, distinctly Australian English with broad Aussie vowels and diphthongs, characteristic vocal warmth, and friendly rising intonation at phrase endings",
   };
 
   function getEffectiveAccent(cardOrId, settingAccent = "us") {
@@ -146,7 +146,12 @@
         req.onsuccess = (e) => {
           const cursor = e.target.result;
           if (!cursor) {
-            resolve(fallbackCandidate);
+            // 指定アクセントがありUS以外の場合は旧米語キャッシュにフォールバックさせず、新規生成を促す
+            if (preferredAccent && preferredAccent !== "us") {
+              resolve(null);
+            } else {
+              resolve(fallbackCandidate);
+            }
             return;
           }
           const k = String(cursor.key);
@@ -162,7 +167,9 @@
                 resolve({ blob: cursor.value, key: k });
                 return;
               }
-              if (!fallbackCandidate) {
+              // preferredAccentが米語または未指定の場合のみ、他アクセント接尾辞（_uk, _in, _au）を持たない旧キャッシュを候補とする
+              const hasNonUsAccent = ["uk", "in", "au"].some((a) => k.endsWith(`_${a}`));
+              if ((!preferredAccent || preferredAccent === "us") && !hasNonUsAccent && !fallbackCandidate) {
                 fallbackCandidate = { blob: cursor.value, key: k };
               }
             }
@@ -2904,6 +2911,12 @@ ${targetPatterns}
     }
     const promptJa = $("#listening-prompt-ja");
     if (promptJa) promptJa.textContent = card.ja;
+    const enLabel = $("#listening-en-label");
+    if (enLabel) {
+      const effectiveAccent = getEffectiveAccent(card, state.settings.geminiAccent || "us");
+      const accentInfo = ACCENT_LABELS[effectiveAccent] || ACCENT_LABELS.us;
+      enLabel.textContent = `${accentInfo.flag} 英語 (${accentInfo.name})`;
+    }
     const enEl = $("#listening-answer-en");
     if (enEl) {
       enEl.textContent = card.en;
@@ -3022,14 +3035,17 @@ ${targetPatterns}
       resetPhaseBar();
       if (listening.runId !== currentRunId || !listening.playing) return;
 
-      setListeningStep("en", "🇺🇸 英語の解答", "en");
+      const effectiveAccent = getEffectiveAccent(card, state.settings.geminiAccent || "us");
+      const accentInfo = ACCENT_LABELS[effectiveAccent] || ACCENT_LABELS.us;
+
+      setListeningStep("en", `${accentInfo.flag} 英語の解答 (${accentInfo.name})`, "en");
       const enEl = $("#listening-answer-en");
       if (enEl) {
         enEl.classList.remove("blurred");
         enEl.classList.add("revealed");
       }
       updateSoundwave(true);
-      updateMediaSession(card, "🇺🇸 英語", card.en);
+      updateMediaSession(card, `${accentInfo.flag} 英語 (${accentInfo.name})`, card.en);
 
       await playEnglishCardPromise(card, listening.speed);
       updateSoundwave(false);
@@ -3038,7 +3054,7 @@ ${targetPatterns}
       if (listening.enRepeats === 2) {
         try { await cancellableSleep(600); } catch (e) { return; }
         if (listening.runId !== currentRunId || !listening.playing) return;
-        setListeningStep("en", "🔁 もう一度英語を聞く", "en");
+        setListeningStep("en", `🔁 もう一度聞く (${accentInfo.flag} ${accentInfo.name})`, "en");
         updateSoundwave(true);
         await playEnglishCardPromise(card, listening.speed);
         updateSoundwave(false);
