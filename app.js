@@ -346,6 +346,7 @@
           streakShields: typeof raw.streakShields === "number" ? raw.streakShields : 1, // 初期ギフト1個
           shieldUsedDates: Array.isArray(raw.shieldUsedDates) ? raw.shieldUsedDates : [],
           shieldAwardedMilestones: Array.isArray(raw.shieldAwardedMilestones) ? raw.shieldAwardedMilestones : [],
+          hasSeenGuide: Boolean(raw.hasSeenGuide),
         };
       }
     } catch (e) { /* 破損データは無視して初期化 */ }
@@ -360,6 +361,7 @@
       streakShields: 1,
       shieldUsedDates: [],
       shieldAwardedMilestones: [],
+      hasSeenGuide: false,
     };
   }
   let state = loadState();
@@ -4346,12 +4348,159 @@ ${targetPatterns}
     $("#legal-dialog")?.close();
   });
 
+  // 🔰 はじめてガイド（オンボーディングPOP）制御
+  let currentOnboardingStep = 0;
+  const TOTAL_ONBOARDING_STEPS = 4;
+
+  function renderOnboardingStep() {
+    const slides = $$(".onboarding-slide");
+    slides.forEach((s, idx) => {
+      s.classList.toggle("active", idx === currentOnboardingStep);
+    });
+
+    const dots = $$(".onboarding-dot");
+    dots.forEach((d, idx) => {
+      d.classList.toggle("active", idx === currentOnboardingStep);
+    });
+
+    const prevBtn = $("#onboarding-prev-btn");
+    const nextBtn = $("#onboarding-next-btn");
+    const startBtn = $("#onboarding-start-btn");
+
+    if (prevBtn) prevBtn.style.display = currentOnboardingStep > 0 ? "inline-flex" : "none";
+    if (currentOnboardingStep === TOTAL_ONBOARDING_STEPS - 1) {
+      if (nextBtn) nextBtn.style.display = "none";
+      if (startBtn) startBtn.style.display = "inline-flex";
+    } else {
+      if (nextBtn) nextBtn.style.display = "inline-flex";
+      if (startBtn) startBtn.style.display = "none";
+    }
+  }
+
+  function openOnboardingGuide(step = 0) {
+    currentOnboardingStep = Math.max(0, Math.min(TOTAL_ONBOARDING_STEPS - 1, step));
+    renderOnboardingStep();
+    const dialog = $("#onboarding-dialog");
+    if (dialog && !dialog.open) {
+      dialog.showModal();
+    }
+  }
+
+  function closeOnboardingGuide(markSeen = true) {
+    const dialog = $("#onboarding-dialog");
+    if (dialog && dialog.open) {
+      dialog.close();
+    }
+    if (markSeen && !state.hasSeenGuide) {
+      state.hasSeenGuide = true;
+      save();
+      // ガイド終了後にPWAバナー判定
+      setTimeout(checkPwaInstallBanner, 1500);
+    }
+  }
+
+  function checkFirstVisitGuide() {
+    if (!state.hasSeenGuide) {
+      setTimeout(() => {
+        openOnboardingGuide(0);
+      }, 500);
+    }
+  }
+
+  $("#open-guide-btn")?.addEventListener("click", () => {
+    openOnboardingGuide(0);
+  });
+
+  $("#settings-open-guide-btn")?.addEventListener("click", () => {
+    const settingsDialog = $("#settings-dialog");
+    if (settingsDialog && settingsDialog.open) settingsDialog.close();
+    openOnboardingGuide(0);
+  });
+
+  $("#close-onboarding")?.addEventListener("click", () => {
+    closeOnboardingGuide(true);
+  });
+
+  $("#onboarding-skip-btn")?.addEventListener("click", () => {
+    closeOnboardingGuide(true);
+  });
+
+  $("#onboarding-start-btn")?.addEventListener("click", () => {
+    closeOnboardingGuide(true);
+  });
+
+  $("#onboarding-next-btn")?.addEventListener("click", () => {
+    if (currentOnboardingStep < TOTAL_ONBOARDING_STEPS - 1) {
+      currentOnboardingStep++;
+      renderOnboardingStep();
+    }
+  });
+
+  $("#onboarding-prev-btn")?.addEventListener("click", () => {
+    if (currentOnboardingStep > 0) {
+      currentOnboardingStep--;
+      renderOnboardingStep();
+    }
+  });
+
+  $$(".onboarding-dot").forEach((dot) => {
+    dot.addEventListener("click", () => {
+      const step = Number(dot.dataset.step || 0);
+      currentOnboardingStep = step;
+      renderOnboardingStep();
+    });
+  });
+
+  // モーダル背景クリックで閉じる
+  const obDialog = $("#onboarding-dialog");
+  if (obDialog) {
+    obDialog.addEventListener("click", (e) => {
+      const rect = obDialog.getBoundingClientRect();
+      if (
+        e.clientX < rect.left ||
+        e.clientX > rect.right ||
+        e.clientY < rect.top ||
+        e.clientY > rect.bottom
+      ) {
+        closeOnboardingGuide(true);
+      }
+    });
+  }
+
+  // スライダー上のタッチスワイプ（スマホ対応）
+  const obSlider = $("#onboarding-slider");
+  if (obSlider) {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    obSlider.addEventListener("touchstart", (e) => {
+      if (!e.touches[0]) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    obSlider.addEventListener("touchend", (e) => {
+      if (!e.changedTouches[0]) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        if (dx < 0 && currentOnboardingStep < TOTAL_ONBOARDING_STEPS - 1) {
+          currentOnboardingStep++;
+          renderOnboardingStep();
+        } else if (dx > 0 && currentOnboardingStep > 0) {
+          currentOnboardingStep--;
+          renderOnboardingStep();
+        }
+      }
+    }, { passive: true });
+  }
+
   // 📲 PWAインストール案内バナー & 手順モーダル
   function checkPwaInstallBanner() {
     const isStandalone = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
     if (isStandalone) return;
     const dismissed = localStorage.getItem("pwa-banner-dismissed");
     if (dismissed) return;
+    if (!state.hasSeenGuide) return; // ガイド未読時は重なりを避ける
 
     const banner = $("#pwa-install-banner");
     if (banner) {
@@ -4662,4 +4811,5 @@ ${tone}
   checkPwaInstallBanner();
   initSwipeCard();
   showView("home");
+  checkFirstVisitGuide();
 })();
