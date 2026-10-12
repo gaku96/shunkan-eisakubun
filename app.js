@@ -2134,18 +2134,16 @@
     if (currentAudio) {
       try {
         currentAudio.pause();
-        currentAudio.currentTime = 0;
         currentAudio.ontimeupdate = null;
         currentAudio.onended = null;
         currentAudio.onerror = null;
         currentAudio.onplay = null;
+        currentAudio.removeAttribute("src");
+        currentAudio.load();
       } catch (e) {}
       currentAudio = null;
     }
-    if (activeComposedUrl) {
-      try { URL.revokeObjectURL(activeComposedUrl); } catch (e) {}
-      activeComposedUrl = null;
-    }
+    activeComposedUrl = null;
     if ("speechSynthesis" in window) speechSynthesis.cancel();
   }
 
