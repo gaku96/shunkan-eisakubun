@@ -2,6 +2,7 @@
 .env
 .env.*
 *.wav
-*_temp_*
+audio/*_temp_*
+*.temp.*
 __pycache__/
 node_modules/
