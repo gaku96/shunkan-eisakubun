@@ -1190,10 +1190,11 @@ progress.done::-moz-progress-bar { background: var(--good); }
 dialog {
   border: none;
   border-radius: 20px;
-  padding: 22px 20px;
-  width: min(500px, calc(100vw - 24px));
-  max-width: 500px;
+  padding: 20px 16px;
+  width: min(480px, calc(100vw - 20px));
+  max-width: calc(100vw - 20px) !important;
   max-height: 88vh;
+  margin: auto;
   overflow-y: auto;
   overflow-x: hidden !important;
   overscroll-behavior: contain;
@@ -1202,6 +1203,14 @@ dialog {
   background: var(--surface);
   color: var(--text);
   box-sizing: border-box;
+}
+@media (max-width: 480px) {
+  dialog {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    padding: 16px 12px !important;
+    border-radius: 16px !important;
+  }
 }
 dialog[open] {
   animation: modalPopIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1219,12 +1228,29 @@ dialog[open] {
 dialog::backdrop { background: rgb(0 0 0 / .45); backdrop-filter: blur(2px); }
 dialog h2 { margin-top: 0; margin-bottom: 12px; }
 
+#settings-dialog {
+  width: min(480px, calc(100vw - 20px));
+  max-width: calc(100vw - 20px) !important;
+}
+#settings-dialog * {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+#settings-form {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden;
+}
+
 .settings-group {
   border: 1px solid var(--border); border-radius: 12px;
-  padding: 12px 14px; margin-bottom: 14px;
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
+  padding: 12px 10px; margin-bottom: 14px;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
   overflow-x: hidden;
 }
 .settings-group legend {
@@ -1235,18 +1261,45 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
   background: var(--accent-soft);
   border-left: 4px solid var(--good);
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   margin-bottom: 12px;
-  font-size: .85rem;
-  box-sizing: border-box;
-  width: 100%;
-  overflow-wrap: break-word;
+  font-size: .84rem;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
 }
+.audio-status-banner span,
 .audio-status-banner small {
   display: block;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  max-width: 100%;
+}
+.audio-status-banner small {
   color: var(--muted);
-  margin-top: 2px;
-  line-height: 1.4;
+  margin-top: 4px;
+  line-height: 1.45;
+}
+
+.bulk-download-section {
+  margin: 10px 0 12px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden;
+}
+.bulk-download-section span,
+.bulk-download-section small {
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
 }
 
 .field {
@@ -1256,42 +1309,80 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
   gap: 10px;
   margin-bottom: 12px;
   flex-wrap: wrap;
-  box-sizing: border-box;
-  width: 100%;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
 }
-.field span { flex: 1 1 auto; min-width: 110px; }
+.field span { flex: 1 1 auto; min-width: 0; word-break: break-word; }
 .field select, .field input[type="number"], .field input[type="text"] {
   font: inherit; font-size: .9rem; padding: 6px 10px; border-radius: 8px;
   border: 1px solid var(--border); background: var(--bg); color: var(--text);
-  box-sizing: border-box;
+  box-sizing: border-box !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
 }
-.field select { max-width: 100%; flex: 1 1 180px; }
+.field select {
+  width: 100%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
 .field input[type="number"] { width: 80px; }
 .field input[type="range"] { width: 140px; accent-color: var(--accent); }
 
+/* Stacked select fields for settings */
+.field:has(select),
+.field-select {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+}
+.field:has(select) span,
+.field-select span {
+  width: 100% !important;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.field:has(select) select,
+.field-select select {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  padding: 8px 10px !important;
+  font-size: .88rem !important;
+}
+
 .field-stacked {
   display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;
+  width: 100% !important; max-width: 100% !important; min-width: 0 !important; box-sizing: border-box !important;
 }
 .field-stacked span { font-size: .9rem; font-weight: 600; }
-.input-with-action { display: flex; gap: 8px; }
+.input-with-action { display: flex; gap: 8px; width: 100%; }
 .input-with-action input {
-  flex: 1; font: inherit; font-size: .9rem; padding: 6px 10px; border-radius: 8px;
+  flex: 1; min-width: 0; font: inherit; font-size: .9rem; padding: 6px 10px; border-radius: 8px;
   border: 1px solid var(--border); background: var(--bg); color: var(--text);
+  box-sizing: border-box;
 }
 .input-with-action input:focus { outline: 2px solid var(--accent); }
-.field-hint { font-size: .75rem; color: var(--muted); line-height: 1.4; }
+.field-hint { font-size: .75rem; color: var(--muted); line-height: 1.4; word-break: break-word; }
 
 .test-row, .cache-row {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  margin-top: 10px; font-size: .85rem;
+  margin-top: 10px; font-size: .85rem; flex-wrap: wrap; width: 100%;
 }
-.status-msg { font-size: .8rem; color: var(--muted); }
+.status-msg { font-size: .8rem; color: var(--muted); word-break: break-word; }
 .status-msg.error { color: var(--again); }
 .status-msg.success { color: var(--good); }
 
-.check { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; font-size: .95rem; }
-.check input { accent-color: var(--accent); width: 18px; height: 18px; }
-.dialog-actions { display: flex; justify-content: space-between; margin-top: 20px; gap: 10px; }
+.check {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 10px; font-size: .92rem;
+  width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
+  line-height: 1.4; word-break: break-word;
+}
+.check input { accent-color: var(--accent); width: 18px; height: 18px; flex-shrink: 0; }
+.dialog-actions { display: flex; justify-content: space-between; margin-top: 20px; gap: 10px; flex-wrap: wrap; width: 100%; }
 
 /* AI Generator Card & Dialog */
 .ai-card {
@@ -2631,6 +2722,32 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
 .btn-toggle.active {
   background: var(--accent);
   color: #fff;
+}
+#speech-speed-presets {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 6px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  border: none !important;
+  background: transparent !important;
+  box-sizing: border-box !important;
+}
+#speech-speed-presets .btn-toggle {
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  padding: 8px 4px !important;
+  font-size: .8rem !important;
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  text-align: center !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+#speech-speed-presets .btn-toggle.active {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
 }
 @media (max-width: 480px) {
   .l-setting-group {

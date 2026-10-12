@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=64">
+  <link rel="stylesheet" href="style.css?v=65">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -953,23 +953,21 @@
           <small>追加費用0円・APIキー不要・オフラインで高音質な日本語ナレーター＆ネイティブ英語音声がそのまま再生されます。</small>
           <small style="opacity: 0.9; display:block; margin-top:4px;">※ iPhoneで音が出ない場合: 本体のマナーモード（消音スイッチ）をOFFにしてください。</small>
         </div>
-        <div class="bulk-download-section" style="margin: 10px 0 12px; padding: 10px 12px; background: color-mix(in srgb, var(--accent) 7%, var(--surface)); border: 1px solid var(--border); border-radius: 10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
-            <div style="flex:1; min-width:180px;">
-              <span style="font-weight:600; font-size:0.84rem; display:inline-flex; align-items:center; gap:4px;"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-download"></use></svg> 全音声の一括保存（完全オフライン化）</span>
-              <small style="color:var(--muted); font-size:0.75rem; display:block; margin-top:2px;">地下鉄や機内など圏外でも全音声（約18MB）が途切れません。</small>
-            </div>
-            <button type="button" class="btn small primary-ghost" id="bulk-download-btn" style="white-space:nowrap;">一括保存 (18MB)</button>
+        <div class="bulk-download-section">
+          <div>
+            <span style="font-weight:600; font-size:0.84rem; display:flex; align-items:center; gap:4px;"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-download"></use></svg> 全音声の一括保存（完全オフライン化）</span>
+            <small style="color:var(--muted); font-size:0.75rem; display:block; margin-top:2px;">地下鉄や機内など圏外でも全音声（約18MB）が途切れません。</small>
           </div>
+          <button type="button" class="btn small primary-ghost" id="bulk-download-btn" style="width:100%; margin-top:8px; text-align:center;">一括保存 (18MB)</button>
           <div id="bulk-download-box" hidden style="margin-top: 8px;">
-            <progress id="bulk-download-progress" max="100" value="0" style="margin: 4px 0; height: 6px;"></progress>
+            <progress id="bulk-download-progress" max="100" value="0" style="margin: 4px 0; height: 6px; width:100%;"></progress>
             <div id="bulk-download-status" style="font-size: 0.76rem; color: var(--accent); font-weight:600;">準備中...</div>
           </div>
         </div>
         <label class="check">
           <input type="checkbox" name="autoSpeak"> 答えを表示したら自動で読み上げる
         </label>
-        <label class="field">
+        <label class="field field-select">
           <span>音声エンジン</span>
           <select name="ttsEngine" id="tts-engine-select">
             <option value="bundled" selected>✨ 同梱ネイティブ音声（Brian & Nanami・0円・無制限）</option>
@@ -987,14 +985,14 @@
             </div>
             <small class="field-hint">Google AI Studioで取得したキー。端末のブラウザ内にのみ保存されます。</small>
           </label>
-          <label class="field">
+          <label class="field field-select">
             <span>モデル</span>
             <select name="geminiModel">
               <option value="gemini-3.8-flash-tts">Gemini 3.8 Flash TTS（高音質）</option>
               <option value="gemini-3.8-flash-lite-tts">Gemini 3.8 Flash-Lite TTS（高速）</option>
             </select>
           </label>
-          <label class="field">
+          <label class="field field-select">
             <span>ボイス</span>
             <select name="geminiVoice">
               <option value="Kore">Kore（自然な女性）</option>
@@ -1004,7 +1002,7 @@
               <option value="Charon">Charon（深みのある男性）</option>
             </select>
           </label>
-          <label class="field">
+          <label class="field field-select">
             <span>英語アクセント</span>
             <select name="geminiAccent" id="gemini-accent">
               <option value="us">🇺🇸 アメリカ英語 (US)</option>
@@ -1024,19 +1022,19 @@
             <button type="button" class="btn small ghost" id="clear-cache-btn">消去</button>
           </div>
           <div class="batch-cache-box" style="margin-top: 12px; padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px dashed var(--accent);">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
               <span style="font-size: .84rem; font-weight: 700; display:inline-flex; align-items:center; gap:4px;"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-bolt"></use></svg> Gemini一括キャッシュ</span>
-              <button type="button" class="btn small primary" id="batch-cache-btn">全357問 一括生成を開始</button>
+              <button type="button" class="btn small primary" id="batch-cache-btn" style="width:100%; margin-top:6px;">全357問 一括生成を開始</button>
             </div>
-            <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+            <div style="display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap;">
               <span style="font-size: .78rem; color: var(--muted); white-space:nowrap;">生成範囲:</span>
-              <select id="batch-cache-scope" style="font-size: .8rem; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--fg); flex: 1;">
+              <select id="batch-cache-scope" style="font-size: .8rem; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--fg); flex: 1; min-width:0; max-width:100%;">
                 <option value="all">全357問（口語編＋GRIT編 / 計714ファイル）</option>
                 <option value="conv">口語編のみ（267問 / 計534ファイル）</option>
                 <option value="grit">GRIT編のみ（90問 / 計180ファイル）</option>
               </select>
             </div>
-            <p style="font-size: .74rem; color: var(--muted); margin: 6px 0 0;">※従量課金APIキーで選択範囲の音声を自動生成・端末保存（所要時間は1問あたり数秒）。生成中は画面スリープを防止します。</p>
+            <p style="font-size: .74rem; color: var(--muted); margin: 6px 0 0; word-break: break-word;">※従量課金APIキーで選択範囲の音声を自動生成・端末保存（所要時間は1問あたり数秒）。生成中は画面スリープを防止します。</p>
             <div id="batch-cache-progress" hidden style="margin-top: 8px; font-size: .8rem; color: var(--accent); font-weight:600;"></div>
           </div>
         </div>
@@ -1070,23 +1068,23 @@
           Safariで学習していたデータは「引き継ぎコード」で一瞬で復元・移行できます。
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
-          <button type="button" class="btn small primary" id="copy-transfer-code-btn">
+          <button type="button" class="btn small primary" id="copy-transfer-code-btn" style="flex:1 1 140px; justify-content:center;">
             <svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-share"></use></svg> 引き継ぎコードをコピー
           </button>
-          <button type="button" class="btn small ghost" id="paste-transfer-code-btn">
+          <button type="button" class="btn small ghost" id="paste-transfer-code-btn" style="flex:1 1 120px; justify-content:center;">
             <svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-download"></use></svg> コードから復元
           </button>
         </div>
         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-          <button type="button" class="btn small ghost" id="export-sync-btn" style="font-size:0.75rem; padding: 4px 8px;">ファイル書き出し</button>
-          <button type="button" class="btn small ghost" id="import-sync-btn" style="font-size:0.75rem; padding: 4px 8px;">ファイルから復元</button>
+          <button type="button" class="btn small ghost" id="export-sync-btn" style="flex:1 1 110px; font-size:0.75rem; padding: 6px 8px; justify-content:center;">ファイル書き出し</button>
+          <button type="button" class="btn small ghost" id="import-sync-btn" style="flex:1 1 110px; font-size:0.75rem; padding: 6px 8px; justify-content:center;">ファイルから復元</button>
           <input type="file" id="sync-file-input" accept=".json" hidden>
         </div>
         <div id="sync-status" class="status-msg" style="display:none; margin-top: 8px; font-size: 0.8rem;"></div>
       </div>
 
-      <div class="setting-update-row" style="margin: 16px 0; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-        <div>
+      <div class="setting-update-row" style="margin: 16px 0; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+        <div style="flex: 1 1 150px; min-width: 0;">
           <div style="font-weight: 600; font-size: 0.9rem;">アプリの更新</div>
           <div style="color: var(--muted); font-size: 0.78rem;">キャッシュを更新して最新版を取得</div>
         </div>
@@ -1095,13 +1093,13 @@
 
       <div class="settings-legal-row" style="margin: 14px 0 16px; display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap;">
         <button type="button" class="btn small primary-ghost" id="settings-open-guide-btn" style="width: 100%; margin-bottom: 4px;"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-help"></use></svg> 🔰 アプリの使い方ガイドを見る</button>
-        <button type="button" class="btn small ghost" id="open-legal-dialog" style="flex:1; min-width:140px;">📜 利用規約・クレジット</button>
-        <a href="https://forms.gle/E91SbH5qniQ9x6eE8" target="_blank" rel="noopener noreferrer" class="btn small ghost" style="flex:1; min-width:140px; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">💬 お問い合わせ・ご要望</a>
+        <button type="button" class="btn small ghost" id="open-legal-dialog" style="flex:1 1 130px; justify-content:center; text-align:center;">📜 利用規約・クレジット</button>
+        <a href="https://forms.gle/E91SbH5qniQ9x6eE8" target="_blank" rel="noopener noreferrer" class="btn small ghost" style="flex:1 1 130px; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; text-align:center;">💬 お問い合わせ・ご要望</a>
       </div>
 
-      <div class="dialog-actions settings-actions" style="display:flex; gap:10px; margin-top:20px;">
-        <button type="button" class="btn ghost big" id="cancel-settings-btn" style="flex:1;">キャンセル</button>
-        <button type="submit" class="btn primary big" value="save" style="flex:2;">設定を保存する</button>
+      <div class="dialog-actions settings-actions" style="display:flex; gap:10px; margin-top:20px; flex-wrap:wrap;">
+        <button type="button" class="btn ghost big" id="cancel-settings-btn" style="flex:1 1 100px;">キャンセル</button>
+        <button type="submit" class="btn primary big" value="save" style="flex:2 1 160px;">設定を保存する</button>
       </div>
     </form>
   </dialog>
@@ -1396,8 +1394,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=64"></script>
-  <script src="app.js?v=64"></script>
+  <script src="data.js?v=65"></script>
+  <script src="app.js?v=65"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
