@@ -415,17 +415,6 @@
     backupStateToIDB(state).catch(() => {});
   };
 
-  // 🔒 iOS Safari ITP / Android 自動削除対策（IndexedDBバックアップからの自動復旧＆永続化要請）
-  loadStateBackupFromIDB().then((backup) => {
-    if (backup && Object.keys(state.cards).length === 0 && Object.keys(backup.cards || {}).length > 0) {
-      console.log("Restored state from IndexedDB backup!");
-      state = { ...state, ...backup };
-      save();
-      if (!views.home.hidden) renderHome();
-      renderHeaderStreak();
-    }
-  }).catch(() => {});
-
   if (navigator.storage && navigator.storage.persist) {
     navigator.storage.persist().then((persisted) => {
       if (persisted) console.log("Storage persistence enabled.");
@@ -3136,7 +3125,7 @@
   }
 
   // ---------- イベント ----------
-  $("#start-daily").addEventListener("click", () => startSession({ type: "daily" }));
+  $("#start-daily")?.addEventListener("click", () => startSession({ type: "daily" }));
   $("#start-favorites-btn")?.addEventListener("click", () => startSession({ type: "favorites" }));
   $("#card-fav-btn")?.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -3169,20 +3158,20 @@
     });
   });
   $("#start-rally-btn")?.addEventListener("click", () => startSession({ type: "rally" }));
-  $("#start-weak").addEventListener("click", () => startSession({ type: "weak" }));
-  $("#start-random").addEventListener("click", () => startSession({ type: "random" }));
-  $("#start-custom").addEventListener("click", () => startSession({ type: "custom" }));
-  $("#reveal-btn").addEventListener("click", () => { triggerHaptic("light"); reveal(); });
-  $("#speak-btn").addEventListener("click", () => session && speakCard(session.queue[session.index]));
-  $("#quit-practice").addEventListener("click", () => { stopSession(); showView("home"); });
-  $("#grade-actions").addEventListener("click", (e) => {
+  $("#start-weak")?.addEventListener("click", () => startSession({ type: "weak" }));
+  $("#start-random")?.addEventListener("click", () => startSession({ type: "random" }));
+  $("#start-custom")?.addEventListener("click", () => startSession({ type: "custom" }));
+  $("#reveal-btn")?.addEventListener("click", () => { triggerHaptic("light"); reveal(); });
+  $("#speak-btn")?.addEventListener("click", () => session && speakCard(session.queue[session.index]));
+  $("#quit-practice")?.addEventListener("click", () => { stopSession(); showView("home"); });
+  $("#grade-actions")?.addEventListener("click", (e) => {
     const b = e.target.closest("[data-grade]");
     if (b) {
       triggerHaptic("light");
       grade(b.dataset.grade);
     }
   });
-  $("#type-form").addEventListener("submit", (e) => { e.preventDefault(); reveal(); });
+  $("#type-form")?.addEventListener("submit", (e) => { e.preventDefault(); reveal(); });
 
   document.addEventListener("keydown", (e) => {
     if (!session || views.practice.hidden || $("#settings-dialog").open) return;
@@ -3559,7 +3548,7 @@
     await updateCacheCount();
   });
 
-  $("#open-settings").addEventListener("click", async () => {
+  $("#open-settings")?.addEventListener("click", async () => {
     const s = state.settings;
     form.dailyGoal.value = s.dailyGoal;
     form.timerSec.value = s.timerSec;
@@ -3581,13 +3570,13 @@
     dialog.showModal();
   });
 
-  dialog.addEventListener("close", () => {
+  dialog?.addEventListener("close", () => {
     saveCurrentSettingsFromForm();
     if (!views.home.hidden) renderHome();
     renderHeaderStreak();
   });
 
-  $("#reset-data").addEventListener("click", () => {
+  $("#reset-data")?.addEventListener("click", () => {
     if (!confirm("学習記録とストリーク、作成したカスタム例文、獲得バッジをすべて初期化します。よろしいですか？")) return;
     state = {
       activeCourse: "conversation",
@@ -5274,6 +5263,21 @@ ${targetPatterns}
   if (rallyCountEl && window.RALLY_PRESETS) {
     rallyCountEl.textContent = window.RALLY_PRESETS.length;
   }
+
+  // 🔒 iOS Safari ITP / Android 自動削除対策（IndexedDBバックアップからの自動復旧＆永続化要請）
+  loadStateBackupFromIDB().then((backup) => {
+    if (backup && Object.keys(state.cards || {}).length === 0 && Object.keys(backup.cards || {}).length > 0) {
+      console.log("Restored state from IndexedDB backup!");
+      state = { ...state, ...backup };
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+      if (typeof views !== "undefined" && views.home && !views.home.hidden && typeof renderHome === "function") {
+        renderHome();
+      }
+      if (typeof renderHeaderStreak === "function") {
+        renderHeaderStreak();
+      }
+    }
+  }).catch(() => {});
 
   updateBrandSub();
   updateCourseSwitchUI();
