@@ -3441,6 +3441,61 @@
     });
   }
 
+  // ==========================================
+  // 🤖 Gemini テキスト生成（gemini-3.8-flash + フォールバック）
+  // ==========================================
+  async function requestGeminiContent(prompt, apiKey) {
+    const candidateModels = ["gemini-3.8-flash", "gemini-1.5-flash", "gemini-2.0-flash"];
+    let lastError = null;
+
+    for (const model of candidateModels) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.7,
+            },
+          }),
+        });
+
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          const msg = errJson.error?.message || `HTTP ${res.status}`;
+          if (msg.includes("is no longer available") || msg.includes("not found") || msg.includes("NotFound") || res.status === 404) {
+            console.warn(`Model ${model} unavailable (${msg}), trying next model...`);
+            lastError = new Error(msg);
+            continue;
+          }
+          throw new Error(msg);
+        }
+
+        const data = await res.json();
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) throw new Error("Geminiからデータを受信できませんでした。");
+
+        let parsed;
+        try {
+          parsed = JSON.parse(rawText);
+        } catch {
+          throw new Error("Geminiの応答を解析できませんでした。");
+        }
+        return parsed;
+      } catch (err) {
+        lastError = err;
+        if (err.message.includes("is no longer available") || err.message.includes("not found")) {
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw lastError || new Error("Gemini APIのリクエストに失敗しました。");
+  }
+
   async function generateSentencesWithGemini(theme, targetIds, apiKey) {
     const targetPatterns = targetIds.map((id) => {
       const p = window.PATTERNS.find((x) => x.id === id);
@@ -3469,35 +3524,7 @@ ${targetPatterns}
   }
 ]`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.7,
-        },
-      }),
-    });
-
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      const msg = errJson.error?.message || `HTTP ${res.status}`;
-      throw new Error(msg);
-    }
-
-    const data = await res.json();
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawText) throw new Error("Geminiからデータを受信できませんでした。");
-
-    let parsed;
-    try {
-      parsed = JSON.parse(rawText);
-    } catch {
-      throw new Error("Geminiの応答を解析できませんでした。");
-    }
+    const parsed = await requestGeminiContent(prompt, apiKey);
 
     if (!Array.isArray(parsed) || parsed.length === 0) {
       throw new Error("例文の形式が不正です。");
@@ -3535,7 +3562,7 @@ ${targetPatterns}
     const hasKey = !!state.settings.geminiApiKey;
     if (hasKey) {
       aiKeyHint.className = "ai-key-hint with-key";
-      aiKeyHint.innerHTML = "✨ <strong>Gemini 2.5 Flash 連携中</strong>：あなたのテーマに合わせ、完全オリジナルの実践例文をリアルタイム自動生成します。";
+      aiKeyHint.innerHTML = "✨ <strong>Gemini 3.8 Flash 連携中</strong>：あなたのテーマに合わせ、完全オリジナルの実践例文をリアルタイム自動生成します。";
     } else {
       aiKeyHint.className = "ai-key-hint no-key";
       aiKeyHint.innerHTML = "💡 <strong>0円・APIキー不要モード</strong>：上のプリセットから即座に生成できます。<br><small>完全オリジナルな自由テーマを無制限に生成したい場合は、⚙️設定で無料のGemini APIキーを登録できます。</small>";
@@ -4361,7 +4388,7 @@ ${targetPatterns}
     const hasKey = !!state.settings.geminiApiKey;
     if (hasKey) {
       rallyKeyHint.className = "ai-key-hint with-key";
-      rallyKeyHint.innerHTML = "✨ <strong>Gemini 2.5 Flash 連携中</strong>：指定したシチュエーションに合わせ、臨場感あふれる即答対話ラリーをリアルタイム生成します。";
+      rallyKeyHint.innerHTML = "✨ <strong>Gemini 3.8 Flash 連携中</strong>：指定したシチュエーションに合わせ、臨場感あふれる即答対話ラリーをリアルタイム生成します。";
     } else {
       rallyKeyHint.className = "ai-key-hint no-key";
       rallyKeyHint.innerHTML = "💡 <strong>0円・APIキー不要モード</strong>：おすすめシチュエーションから即座にラリーをセットアップできます。<br><small>オリジナルの場面を自由生成したい場合は、⚙️設定でGemini APIキーを登録できます。</small>";
@@ -4435,35 +4462,7 @@ ${tone}
   }
 ]`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.7,
-        },
-      }),
-    });
-
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      const msg = errJson.error?.message || `HTTP ${res.status}`;
-      throw new Error(msg);
-    }
-
-    const data = await res.json();
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawText) throw new Error("Geminiからデータを受信できませんでした。");
-
-    let parsed;
-    try {
-      parsed = JSON.parse(rawText);
-    } catch {
-      throw new Error("Geminiの応答を解析できませんでした。");
-    }
+    const parsed = await requestGeminiContent(prompt, apiKey);
 
     if (!Array.isArray(parsed) || parsed.length === 0) {
       throw new Error("ラリーデータの形式が不正です。");
