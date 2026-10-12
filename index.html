@@ -7,20 +7,20 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="瞬間パターントレーニング">
-  <meta name="description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターントレーニング。スワイプ操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
+  <meta name="description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターントレーニング。快適操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
   <meta property="og:title" content="瞬間パターントレーニング | 実戦英会話・口語70構文">
-  <meta property="og:description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターントレーニング。スワイプ操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
+  <meta property="og:description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターントレーニング。快適操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
   <meta property="og:type" content="website">
   <meta property="og:image" content="icon-512.png">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="瞬間パターントレーニング | 実戦英会話・口語70構文">
-  <meta name="twitter:description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターントレーニング。スワイプ操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
+  <meta name="twitter:description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターントレーニング。快適操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: data:; connect-src 'self' https://generativelanguage.googleapis.com;">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=63">
+  <link rel="stylesheet" href="style.css?v=64">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -608,11 +608,11 @@
       <div class="course-switch-container compact" id="list-course-switch" role="tablist" aria-label="コース切り替え">
         <button type="button" class="course-tab-btn active" data-course="conversation" role="tab" aria-selected="true">
           <span class="course-tab-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-speech"></use></svg></span>
-          <span class="course-tab-title">口語編 (型30)</span>
+          <span class="course-tab-title">口語編 (70構文)</span>
         </button>
         <button type="button" class="course-tab-btn" data-course="grit" role="tab" aria-selected="false">
           <span class="course-tab-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-grad-cap"></use></svg></span>
-          <span class="course-tab-title">TED・GRIT編 (30)</span>
+          <span class="course-tab-title">TED・GRIT編 (30構文)</span>
         </button>
       </div>
 
@@ -752,6 +752,14 @@
 
       <!-- セクション 3: 🤖 AI自作・ラリー -->
       <div id="mypage-section-custom" class="mypage-section" hidden>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="btn small primary" id="open-ai-modal">
+            <svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-robot"></use></svg> AIでオリジナル例文を生成
+          </button>
+          <button type="button" class="btn small ghost" id="start-custom" style="display:none;">
+            <svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-bolt"></use></svg> 自作カードで特訓
+          </button>
+        </div>
         <div id="mypage-custom-list" class="fav-list-container"></div>
       </div>
     </section>
@@ -936,9 +944,6 @@
         <label class="check">
           <input type="checkbox" name="typingMode"> タイピングで回答する
         </label>
-        <label class="check">
-          <input type="checkbox" name="swipeEnabled"> カードを左右スワイプして採点する（OFF推奨: 画面スクロール優先）
-        </label>
       </fieldset>
 
       <fieldset class="settings-group">
@@ -1042,11 +1047,11 @@
             <span id="speech-rate-val" style="font-weight:700; color:var(--accent); font-size:0.95rem;">1.15x</span>
           </div>
           <input type="range" name="speechRate" id="speech-rate-input" min="0.7" max="1.5" step="0.05" value="1.15" style="width:100%; accent-color:var(--accent); cursor:pointer;">
-          <div class="btn-toggle-group" id="speech-speed-presets" style="display:flex; width:100%; margin-top:10px;">
-            <button type="button" class="btn-toggle" data-speed="1.0" style="flex:1; text-align:center;">1.0x (ゆったり)</button>
-            <button type="button" class="btn-toggle" data-speed="1.1" style="flex:1; text-align:center;">1.1x (口語)</button>
-            <button type="button" class="btn-toggle active" data-speed="1.15" style="flex:1; text-align:center;">1.15x (ネイティブ推奨)</button>
-            <button type="button" class="btn-toggle" data-speed="1.25" style="flex:1; text-align:center;">1.25x (実戦)</button>
+          <div class="btn-toggle-group" id="speech-speed-presets" style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 6px; width:100%; margin-top:10px;">
+            <button type="button" class="btn-toggle" data-speed="1.0" style="text-align:center;">1.0x (ゆったり)</button>
+            <button type="button" class="btn-toggle" data-speed="1.1" style="text-align:center;">1.1x (口語)</button>
+            <button type="button" class="btn-toggle active" data-speed="1.15" style="text-align:center;">1.15x (標準)</button>
+            <button type="button" class="btn-toggle" data-speed="1.25" style="text-align:center;">1.25x (実戦)</button>
           </div>
           <small style="color:var(--muted); font-size:0.75rem; display:block; margin-top:8px; line-height:1.4;">
             ※Gemini音声・同梱音声・ブラウザ標準音声のすべてに即座に反映されます（音程は自動補正されピッチが狂うことはありません）。
@@ -1379,7 +1384,7 @@
       <img src="apple-touch-icon.png" alt="" class="pwa-banner-icon" width="36" height="36">
       <div class="pwa-banner-text">
         <strong>ホーム画面に追加してアプリ化</strong>
-        <p>全画面・完全オフライン・快適スワイプで練習できます</p>
+        <p>全画面・完全オフライン・快適操作で練習できます</p>
       </div>
     </div>
     <div class="pwa-banner-right">
@@ -1391,8 +1396,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=63"></script>
-  <script src="app.js?v=63"></script>
+  <script src="data.js?v=64"></script>
+  <script src="app.js?v=64"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

@@ -1222,13 +1222,23 @@
     const rallies = state.customRallies || [];
     const total = cards.length + rallies.length;
 
+    const startCustomBtn = $("#start-custom");
+    if (startCustomBtn) {
+      if (cards.length > 0) {
+        startCustomBtn.style.display = "inline-flex";
+        startCustomBtn.innerHTML = `<svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-bolt"></use></svg> 自作カードで特訓 (${cards.length}問)`;
+      } else {
+        startCustomBtn.style.display = "none";
+      }
+    }
+
     if (total === 0) {
       box.innerHTML = `
         <div class="empty-state" style="padding: 36px 20px; text-align: center; background: var(--surface); border: 1px dashed var(--border); border-radius: 14px;">
           <p style="font-size: 2.2rem; margin: 0 0 10px;">🤖</p>
           <strong style="font-size: 1.05rem; color: var(--text);">作成したAIオリジナル問題はありません</strong>
           <p style="font-size: 0.85rem; color: var(--muted); margin: 8px auto 0; max-width: 320px; line-height: 1.5;">
-            ホームの「AI専用例文」や「シチュエーション即答ラリー」で作成した問題がここに蓄積されます。
+            上の「AIでオリジナル例文を生成」または「シチュエーション即答ラリー」で作成した問題がここに蓄積されます。
           </p>
         </div>
       `;
@@ -5515,7 +5525,7 @@ ${targetPatterns}
     {
       target: ".today-card",
       title: "🎯 今日の瞬間パターントレーニング",
-      desc: "「今日の練習をはじめる」を押すと特訓スタート！日本語を見て1秒で発声し、めくってスワイプで即判定。忘却曲線が復習を自動管理します。"
+      desc: "「今日の練習をはじめる」を押すと特訓スタート！日本語を見て1秒で発声し、「答えを見る」を押して判定ボタンで即採点。忘却曲線が復習を自動管理します。"
     },
     {
       target: "#rally-banner-card",
