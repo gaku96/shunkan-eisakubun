@@ -1072,6 +1072,20 @@
         });
         return { title: "⚡️ 弱点集中特訓", queue: sorted.slice(0, 10) };
       }
+      case "rally": {
+        const presets = (window.RALLY_PRESETS || []).map((r) => ({
+          ...r,
+          pattern: r.pattern || window.PATTERNS.find((p) => p.id === (r.mission && r.mission.targetPatternId)) || window.PATTERNS[0],
+        }));
+        const customs = (state.customRallies || []).map((r) => ({
+          ...r,
+          isRally: true,
+          pattern: r.pattern || window.PATTERNS.find((p) => p.id === (r.mission && r.mission.targetPatternId)) || window.PATTERNS[0],
+        }));
+        const combined = [...presets, ...customs];
+        const selected = shuffle(combined).slice(0, 10);
+        return { title: "🥊 シチュエーション即答ラリー", queue: selected };
+      }
     }
   }
 
@@ -1128,14 +1142,67 @@
     sp.max = session.queue.length;
     sp.value = session.index;
 
-    $("#card-pattern").textContent = s.showHint
-      ? (card.isCustom ? `[${card.theme || "AI"}] ${card.pattern.en}` : (card.tag ? `[${card.tag}] ${card.pattern.en}` : card.pattern.en))
-      : "";
-    $("#card-ja").textContent = card.ja;
-    $("#card-en").textContent = card.en;
-    $("#card-note").textContent = card.isCustom
-      ? `✨ AIカスタム（${card.theme || "オリジナル"}）| ${card.pattern.en}：${card.pattern.ja}`
-      : (card.tag ? `🎓 TED・GRIT [${card.tag}] | ${card.pattern.en}：${card.pattern.ja}` : `${card.pattern.en}：${card.pattern.ja}`);
+    const normalView = $("#normal-card-view");
+    const rallyView = $("#rally-card-view");
+    const normalAnswerView = $("#normal-answer-view");
+    const rallyAnswerView = $("#rally-answer-view");
+
+    if (card.isRally) {
+      if (fc) fc.classList.add("is-rally");
+      if (normalView) normalView.hidden = true;
+      if (rallyView) rallyView.hidden = false;
+      if (normalAnswerView) normalAnswerView.hidden = true;
+      if (rallyAnswerView) rallyAnswerView.hidden = true;
+
+      const avatarEl = $("#rally-partner-avatar");
+      const nameEl = $("#rally-partner-name");
+      const contextEl = $("#rally-partner-context");
+      const partnerEnEl = $("#rally-partner-en");
+      const partnerJaEl = $("#rally-partner-ja");
+      const promptEl = $("#rally-mission-prompt");
+      const hintEl = $("#rally-mission-hint");
+
+      if (avatarEl) avatarEl.textContent = (card.partner && card.partner.avatar) || "🧑‍💼";
+      if (nameEl) nameEl.textContent = (card.partner && card.partner.name) || "Partner";
+      if (contextEl) contextEl.textContent = (card.partner && card.partner.context) || (card.category || "英会話ラリー");
+      if (partnerEnEl) partnerEnEl.textContent = (card.partner && card.partner.en) || "";
+      if (partnerJaEl) partnerJaEl.textContent = (card.partner && card.partner.ja) || "";
+      if (promptEl) promptEl.textContent = (card.mission && card.mission.prompt) || card.ja;
+      if (hintEl) {
+        hintEl.textContent = (card.mission && card.mission.hint) ? `💡 ${card.mission.hint}` : "";
+        hintEl.hidden = !(card.mission && card.mission.hint);
+      }
+
+      // 相手のセリフ音声ボタン
+      const partnerAudioBtn = $("#rally-partner-audio-btn");
+      if (partnerAudioBtn) {
+        partnerAudioBtn.onclick = (e) => {
+          e.stopPropagation();
+          speakBrowser((card.partner && card.partner.en) || "");
+        };
+      }
+
+      // 自動再生がONなら相手の英語セリフを自動読み上げ
+      if (s.autoSpeak && card.partner && card.partner.en) {
+        speakBrowser(card.partner.en);
+      }
+    } else {
+      if (fc) fc.classList.remove("is-rally");
+      if (normalView) normalView.hidden = false;
+      if (rallyView) rallyView.hidden = true;
+      if (normalAnswerView) normalAnswerView.hidden = false;
+      if (rallyAnswerView) rallyAnswerView.hidden = true;
+
+      $("#card-pattern").textContent = s.showHint
+        ? (card.isCustom ? `[${card.theme || "AI"}] ${card.pattern.en}` : (card.tag ? `[${card.tag}] ${card.pattern.en}` : card.pattern.en))
+        : "";
+      $("#card-ja").textContent = card.ja;
+      $("#card-en").textContent = card.en;
+      $("#card-note").textContent = card.isCustom
+        ? `✨ AIカスタム（${card.theme || "オリジナル"}）| ${card.pattern.en}：${card.pattern.ja}`
+        : (card.tag ? `🎓 TED・GRIT [${card.tag}] | ${card.pattern.en}：${card.pattern.ja}` : `${card.pattern.en}：${card.pattern.ja}`);
+    }
+
     $("#answer").hidden = true;
     $("#reveal-actions").hidden = false;
     const gc = $("#grade-container") || $("#grade-actions");
@@ -1275,54 +1342,102 @@
     const nuance = getCardNuance(card);
     const alts = getCardAlts(card);
 
-    // 💡 ネイティブニュアンス解説
-    const nuanceEl = $("#card-nuance-text");
-    const nuanceBlock = $("#card-nuance-block");
-    if (nuanceEl && nuanceBlock) {
-      nuanceEl.textContent = nuance;
-      nuanceBlock.hidden = !nuance;
-    }
+    const normalAnswerView = $("#normal-answer-view");
+    const rallyAnswerView = $("#rally-answer-view");
 
-    // 💬 自然な別解・言い換え
-    const altsBlock = $("#card-alts-block");
-    const altsListEl = $("#card-alts-list");
-    if (altsBlock && altsListEl) {
-      if (alts.length > 0) {
-        altsBlock.hidden = false;
-        altsListEl.replaceChildren(...alts.slice(0, 3).map((alt) => {
-          const li = document.createElement("li");
-          li.className = "card-alt-item";
-          li.textContent = alt;
-          return li;
-        }));
-      } else {
-        altsBlock.hidden = true;
+    if (card.isRally) {
+      if (normalAnswerView) normalAnswerView.hidden = true;
+      if (rallyAnswerView) rallyAnswerView.hidden = false;
+
+      const patternTag = $("#rally-pattern-tag");
+      const userEn = $("#rally-user-en");
+      const userJa = $("#rally-user-ja");
+      const tipsText = $("#rally-tips-text");
+      const rallyAltsBlock = $("#rally-alts-block");
+      const rallyAltsList = $("#rally-alts-list");
+
+      if (patternTag) {
+        patternTag.textContent = card.pattern ? `型${card.pattern.id}: ${card.pattern.en}` : (card.mission && card.mission.targetPatternId ? `型${card.mission.targetPatternId}` : "実戦型");
       }
-    }
+      if (userEn) userEn.textContent = card.en;
+      if (userJa) userJa.textContent = card.ja;
+      if (tipsText) tipsText.textContent = card.replyTips || "実戦で相手の意図を汲み取りながら自然に返す大人のフレーズです。";
 
-    if (state.settings.typingMode) {
-      const input = $("#type-input");
-      input.disabled = true;
-      const typed = normalize(input.value);
-      const answer = normalize(card.en);
-      const normalizedAlts = alts.map(normalize);
-      const res = $("#type-result");
-      res.hidden = false;
-      if (!typed) {
-        res.textContent = "（未入力）";
-        res.className = "type-result ng";
-      } else if (typed === answer) {
-        res.textContent = "✓ 完全一致！";
-        res.className = "type-result ok";
-      } else if (normalizedAlts.includes(typed)) {
-        res.textContent = "✓ 正解！（自然な別解表現と一致）";
-        res.className = "type-result ok";
-      } else {
-        const aw = answer.split(" ");
-        const tw = new Set(typed.split(" "));
-        const hit = aw.filter((w) => tw.has(w)).length;
-        res.textContent = `あなたの回答: ${input.value}（一致率 ${Math.round((hit / aw.length) * 100)}%）`;
-        res.className = "type-result ng";
+      const rallyAlts = card.alternatives || [];
+      if (rallyAltsBlock && rallyAltsList) {
+        if (rallyAlts.length > 0) {
+          rallyAltsBlock.hidden = false;
+          rallyAltsList.replaceChildren(...rallyAlts.map((alt) => {
+            const li = document.createElement("li");
+            li.className = "card-alt-item";
+            li.textContent = alt;
+            return li;
+          }));
+        } else {
+          rallyAltsBlock.hidden = true;
+        }
+      }
+
+      const rallySpeakBtn = $("#rally-speak-btn");
+      if (rallySpeakBtn) {
+        rallySpeakBtn.onclick = (e) => {
+          e.stopPropagation();
+          speakCard(card);
+        };
+      }
+    } else {
+      if (normalAnswerView) normalAnswerView.hidden = false;
+      if (rallyAnswerView) rallyAnswerView.hidden = true;
+
+      // 💡 ネイティブニュアンス解説
+      const nuanceEl = $("#card-nuance-text");
+      const nuanceBlock = $("#card-nuance-block");
+      if (nuanceEl && nuanceBlock) {
+        nuanceEl.textContent = nuance;
+        nuanceBlock.hidden = !nuance;
+      }
+
+      // 💬 自然な別解・言い換え
+      const altsBlock = $("#card-alts-block");
+      const altsListEl = $("#card-alts-list");
+      if (altsBlock && altsListEl) {
+        if (alts.length > 0) {
+          altsBlock.hidden = false;
+          altsListEl.replaceChildren(...alts.slice(0, 3).map((alt) => {
+            const li = document.createElement("li");
+            li.className = "card-alt-item";
+            li.textContent = alt;
+            return li;
+          }));
+        } else {
+          altsBlock.hidden = true;
+        }
+      }
+
+      if (state.settings.typingMode) {
+        const input = $("#type-input");
+        input.disabled = true;
+        const typed = normalize(input.value);
+        const answer = normalize(card.en);
+        const normalizedAlts = alts.map(normalize);
+        const res = $("#type-result");
+        res.hidden = false;
+        if (!typed) {
+          res.textContent = "（未入力）";
+          res.className = "type-result ng";
+        } else if (typed === answer) {
+          res.textContent = "✓ 完全一致！";
+          res.className = "type-result ok";
+        } else if (normalizedAlts.includes(typed)) {
+          res.textContent = "✓ 正解！（自然な別解表現と一致）";
+          res.className = "type-result ok";
+        } else {
+          const aw = answer.split(" ");
+          const tw = new Set(typed.split(" "));
+          const hit = aw.filter((w) => tw.has(w)).length;
+          res.textContent = `あなたの回答: ${input.value}（一致率 ${Math.round((hit / aw.length) * 100)}%）`;
+          res.className = "type-result ng";
+        }
       }
     }
 
@@ -2543,6 +2658,7 @@
 
   // ---------- イベント ----------
   $("#start-daily").addEventListener("click", () => startSession({ type: "daily" }));
+  $("#start-rally-btn")?.addEventListener("click", () => startSession({ type: "rally" }));
   $("#start-weak").addEventListener("click", () => startSession({ type: "weak" }));
   $("#start-random").addEventListener("click", () => startSession({ type: "random" }));
   $("#start-custom").addEventListener("click", () => startSession({ type: "custom" }));
@@ -4219,6 +4335,227 @@ ${targetPatterns}
     }
   }
   $("#bulk-download-btn")?.addEventListener("click", startBulkAudioDownload);
+
+  // ==========================================
+  // 🥊 AIシチュエーション即答ラリー生成モーダル制御 (v41)
+  // ==========================================
+  const rallyAiDialog = $("#rally-ai-dialog");
+  const openRallyAiBtn = $("#open-rally-ai-btn");
+  const closeRallyAiBtn = $("#close-rally-ai-dialog");
+  const rallyTopicInput = $("#rally-ai-topic");
+  const rallyToneSelect = $("#rally-ai-tone");
+  const rallyKeyHint = $("#rally-ai-key-hint");
+  const rallyGenerateBtn = $("#rally-ai-generate-btn");
+  const rallyLoadingEl = $("#rally-ai-loading");
+  const rallyPreviewEl = $("#rally-ai-preview");
+  const rallyPreviewList = $("#rally-ai-preview-list");
+  const rallyPreviewCount = $("#rally-ai-preview-count");
+  const rallySaveBtn = $("#rally-ai-save-btn");
+  const rallyCancelBtn = $("#rally-ai-cancel-btn");
+  const rallyPresetButtons = document.querySelectorAll(".rally-ai-preset");
+
+  let currentGeneratedRallies = [];
+
+  function updateRallyKeyHint() {
+    if (!rallyKeyHint) return;
+    const hasKey = !!state.settings.geminiApiKey;
+    if (hasKey) {
+      rallyKeyHint.className = "ai-key-hint with-key";
+      rallyKeyHint.innerHTML = "✨ <strong>Gemini 2.5 Flash 連携中</strong>：指定したシチュエーションに合わせ、臨場感あふれる即答対話ラリーをリアルタイム生成します。";
+    } else {
+      rallyKeyHint.className = "ai-key-hint no-key";
+      rallyKeyHint.innerHTML = "💡 <strong>0円・APIキー不要モード</strong>：おすすめシチュエーションから即座にラリーをセットアップできます。<br><small>オリジナルの場面を自由生成したい場合は、⚙️設定でGemini APIキーを登録できます。</small>";
+    }
+  }
+
+  openRallyAiBtn?.addEventListener("click", () => {
+    updateRallyKeyHint();
+    if (rallyLoadingEl) rallyLoadingEl.hidden = true;
+    if (rallyPreviewEl) rallyPreviewEl.hidden = true;
+    if (rallyGenerateBtn) rallyGenerateBtn.disabled = false;
+    currentGeneratedRallies = [];
+    rallyAiDialog?.showModal();
+  });
+
+  closeRallyAiBtn?.addEventListener("click", () => {
+    rallyAiDialog?.close();
+  });
+
+  rallyPresetButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      rallyPresetButtons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (rallyTopicInput) rallyTopicInput.value = btn.dataset.topic;
+    });
+  });
+
+  async function generateRalliesWithGemini(topic, tone, apiKey) {
+    const prompt = `あなたは英会話のプロコーチです。以下のシチュエーション・トピックとトーンに合わせて、「シチュエーション即答ラリー」のシナリオを5件作成してください。
+
+【シチュエーション・相手の立場】
+${topic}
+
+【トーン】
+${tone}
+
+【各ラリーカードのルール】
+- 相手（ネイティブ）が自然に英語で話しかけてくるシチュエーションです。
+- partner.avatar: 絵文字1文字（例: 🧑‍💼, 👩‍💻, 👱‍♀️, 🧔‍♂️など）
+- partner.name: 相手の名前
+- partner.context: 状況の短い説明（日本語）
+- partner.en: 相手が話しかけてくる英語（1〜2文、日常会話的で自然）
+- partner.ja: 相手の英語の日本語訳
+- mission.prompt: ユーザーへの返答ミッション（例:「〜とやんわり断って！」「〜と答えて！」）
+- mission.hint: 会話のヒント（日本語）
+- mission.targetPatternId: 70の基本構文の中で最も適した型ID（1〜70）
+- en: あなた（ユーザー）の模範返答となる英語
+- ja: 模範返答の自然な日本語訳
+- replyTips: なぜこの表現が効果的か、大人の切り返しのコツ解説（1〜2文）
+- alternatives: その他の自然な言い回し・返し方（2つの配列）
+
+出力は必ず以下のJSON配列のみを返してください：
+[
+  {
+    "partner": {
+      "avatar": "🧑‍💼",
+      "name": "Sarah",
+      "context": "クライアントからの日程変更依頼",
+      "en": "Could we possibly move our sync to next Tuesday?",
+      "ja": "打ち合わせを来週の火曜日に変更することは可能ですか？"
+    },
+    "mission": {
+      "prompt": "「私の知る限りでは、火曜なら大丈夫なはずです」と答えて！",
+      "hint": "自分の把握範囲に限定する型を使おう",
+      "targetPatternId": 11
+    },
+    "en": "As far as I know, Tuesday should be fine.",
+    "ja": "私の知る限りでは、火曜なら大丈夫なはずです。",
+    "replyTips": "As far as I know を使うことで、確定前にやんわり見通しを共有できます。",
+    "alternatives": ["As far as I'm aware, that works.", "Tuesday should work from what I know."]
+  }
+]`;
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      const msg = errJson.error?.message || `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+
+    const data = await res.json();
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) throw new Error("Geminiからデータを受信できませんでした。");
+
+    let parsed;
+    try {
+      parsed = JSON.parse(rawText);
+    } catch {
+      throw new Error("Geminiの応答を解析できませんでした。");
+    }
+
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      throw new Error("ラリーデータの形式が不正です。");
+    }
+
+    return parsed.map((item, idx) => ({
+      id: `custom-rally-${Date.now()}-${idx}`,
+      isRally: true,
+      category: topic,
+      partner: item.partner,
+      mission: item.mission,
+      pattern: window.PATTERNS.find((p) => p.id === (item.mission && item.mission.targetPatternId)) || window.PATTERNS[0],
+      en: item.en,
+      ja: item.ja,
+      replyTips: item.replyTips || "相手の意図を汲み取りながら自然に返す大人のフレーズです。",
+      alternatives: item.alternatives || []
+    }));
+  }
+
+  rallyGenerateBtn?.addEventListener("click", async () => {
+    const topic = (rallyTopicInput?.value || "").trim() || "日常会話・オフィスでの雑談";
+    const tone = rallyToneSelect?.value || "casual";
+    const apiKey = state.settings.geminiApiKey;
+
+    rallyGenerateBtn.disabled = true;
+    if (rallyLoadingEl) rallyLoadingEl.hidden = false;
+    if (rallyPreviewEl) rallyPreviewEl.hidden = true;
+
+    try {
+      if (apiKey) {
+        currentGeneratedRallies = await generateRalliesWithGemini(topic, tone, apiKey);
+      } else {
+        // APIキーなし: プリセットから5件ピックアップ
+        await new Promise((r) => setTimeout(r, 600));
+        const pool = [...(window.RALLY_PRESETS || [])];
+        currentGeneratedRallies = shuffle(pool).slice(0, 5);
+      }
+
+      if (rallyLoadingEl) rallyLoadingEl.hidden = true;
+      if (rallyPreviewEl) rallyPreviewEl.hidden = false;
+      if (rallyPreviewCount) rallyPreviewCount.textContent = currentGeneratedRallies.length;
+
+      if (rallyPreviewList) {
+        rallyPreviewList.replaceChildren(...currentGeneratedRallies.map((item) => {
+          const div = document.createElement("div");
+          div.className = "preview-card-item";
+          div.style.marginBottom = "10px";
+          div.style.padding = "10px 12px";
+          div.style.background = "var(--surface)";
+          div.style.border = "1px solid var(--border)";
+          div.style.borderRadius = "10px";
+          div.innerHTML = `
+            <div style="font-size:0.75rem; color:var(--accent); font-weight:700; margin-bottom:4px;">
+              ${item.partner?.avatar || "🧑‍💼"} ${item.partner?.name || "Partner"}「${item.partner?.en || ""}」
+            </div>
+            <div style="font-size:0.82rem; font-weight:700; color:var(--text); margin-bottom:2px;">
+              🎯 ${item.mission?.prompt || item.ja}
+            </div>
+            <div style="font-size:0.85rem; color:#2563eb; font-weight:700;">
+              ↳ 模範返答: ${item.en}
+            </div>
+          `;
+          return div;
+        }));
+      }
+    } catch (err) {
+      if (rallyLoadingEl) rallyLoadingEl.hidden = true;
+      alert(`生成エラー: ${err.message}`);
+    } finally {
+      rallyGenerateBtn.disabled = false;
+    }
+  });
+
+  rallyCancelBtn?.addEventListener("click", () => {
+    if (rallyPreviewEl) rallyPreviewEl.hidden = true;
+    currentGeneratedRallies = [];
+  });
+
+  rallySaveBtn?.addEventListener("click", () => {
+    if (!currentGeneratedRallies.length) return;
+    state.customRallies = state.customRallies || [];
+    state.customRallies.push(...currentGeneratedRallies);
+    save();
+    rallyAiDialog?.close();
+    showToast(`🥊 ${currentGeneratedRallies.length}問のラリーを登録しました！`);
+    startSession({ type: "rally" });
+  });
+
+  const rallyCountEl = $("#rally-preset-count");
+  if (rallyCountEl && window.RALLY_PRESETS) {
+    rallyCountEl.textContent = window.RALLY_PRESETS.length;
+  }
 
   updateBrandSub();
   updateCourseSwitchUI();

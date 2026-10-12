@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=40">
+  <link rel="stylesheet" href="style.css?v=41">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -274,6 +274,33 @@
         <p class="hint">復習予定の例文 → まだ解いていない例文 の順に出題します。</p>
       </div>
 
+      <!-- 🥊 シチュエーション即答ラリー（実戦アウトプット特訓） -->
+      <div class="card rally-banner-card" id="rally-banner-card">
+        <div class="rally-banner-header">
+          <div class="rally-banner-badge"><svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-sparkle"></use></svg> 実戦アウトプット特訓</div>
+          <span class="rally-banner-status"><span id="rally-preset-count">24</span> シチュエーション</span>
+        </div>
+        <div class="rally-banner-body">
+          <div class="rally-banner-title-row">
+            <span class="rally-banner-emoji">🥊</span>
+            <div>
+              <h2 class="rally-banner-title">シチュエーション即答ラリー</h2>
+              <p class="rally-banner-desc">相手からのリアルな英語の問いかけに、3秒以内に適切な型で即答！実戦会話の瞬発力と検索力を鍛えます。</p>
+            </div>
+          </div>
+          <div class="rally-banner-actions">
+            <button type="button" class="btn primary big rally-start-btn" id="start-rally-btn">
+              <svg class="ui-icon" aria-hidden="true"><use href="#icon-flame"></use></svg>
+              ラリーを開始（10問）
+            </button>
+            <button type="button" class="btn ghost rally-ai-btn" id="open-rally-ai-btn">
+              <svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg>
+              AIシチュエーション生成
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- ⚡️ クイック練習メニュー (2x2 Grid + Part Accordion) -->
       <div class="card home-menu-card">
         <div class="card-head-row">
@@ -414,8 +441,36 @@
           <span>△ あやしい</span>
         </div>
 
-        <p class="pattern-chip" id="card-pattern"></p>
-        <p class="prompt-ja" id="card-ja"></p>
+        <!-- 通常モード表示スロット -->
+        <div id="normal-card-view">
+          <p class="pattern-chip" id="card-pattern"></p>
+          <p class="prompt-ja" id="card-ja"></p>
+        </div>
+
+        <!-- 🥊 ラリーモード専用UIスロット（未回答時） -->
+        <div class="rally-card-view" id="rally-card-view" hidden>
+          <div class="rally-partner-bubble">
+            <div class="rally-partner-meta">
+              <span class="rally-partner-avatar" id="rally-partner-avatar">🧑‍💼</span>
+              <div class="rally-partner-info">
+                <span class="rally-partner-name" id="rally-partner-name">Alex</span>
+                <span class="rally-partner-context" id="rally-partner-context">同僚からの休日の誘い</span>
+              </div>
+              <button type="button" class="rally-audio-btn" id="rally-partner-audio-btn" aria-label="相手の英語をもう一度聴く">
+                <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-speaker"></use></svg>
+                <span>相手の音声</span>
+              </button>
+            </div>
+            <p class="rally-partner-en" id="rally-partner-en"></p>
+            <p class="rally-partner-ja" id="rally-partner-ja"></p>
+          </div>
+
+          <div class="rally-mission-box">
+            <div class="rally-mission-tag">🎯 あなたの返答ミッション（3秒で即答！）</div>
+            <p class="rally-mission-prompt" id="rally-mission-prompt"></p>
+            <p class="rally-mission-hint" id="rally-mission-hint"></p>
+          </div>
+        </div>
 
         <div class="timer" id="timer" aria-hidden="true"><div class="timer-bar" id="timer-bar"></div></div>
 
@@ -425,23 +480,49 @@
         </form>
 
         <div class="answer" id="answer" hidden>
-          <p class="answer-en" id="card-en"></p>
-          <p class="type-result" id="type-result" hidden></p>
-          <div class="speak-row">
-            <button type="button" class="btn small" id="speak-btn"><svg class="ui-icon" aria-hidden="true"><use href="#icon-speaker"></use></svg> もう一度聞く <kbd>R</kbd></button>
-            <span class="tts-badge" id="tts-source" aria-live="polite"></span>
-          </div>
-          <p class="answer-note" id="card-note"></p>
-
-          <!-- 💡 ニュアンス解説 & 💬 別解ボックス -->
-          <div class="card-detail-box" id="card-detail-box">
-            <div class="card-detail-block" id="card-nuance-block">
-              <span class="detail-label"><svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-lightbulb"></use></svg> ネイティブのニュアンス</span>
-              <p class="card-nuance-text" id="card-nuance-text"></p>
+          <!-- 通常モード回答 -->
+          <div id="normal-answer-view">
+            <p class="answer-en" id="card-en"></p>
+            <p class="type-result" id="type-result" hidden></p>
+            <div class="speak-row">
+              <button type="button" class="btn small" id="speak-btn"><svg class="ui-icon" aria-hidden="true"><use href="#icon-speaker"></use></svg> もう一度聞く <kbd>R</kbd></button>
+              <span class="tts-badge" id="tts-source" aria-live="polite"></span>
             </div>
-            <div class="card-detail-block" id="card-alts-block">
-              <span class="detail-label"><svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-speech"></use></svg> 自然な別解・言い換え</span>
-              <ul class="card-alts-list" id="card-alts-list"></ul>
+            <p class="answer-note" id="card-note"></p>
+
+            <!-- 💡 ニュアンス解説 & 💬 別解ボックス -->
+            <div class="card-detail-box" id="card-detail-box">
+              <div class="card-detail-block" id="card-nuance-block">
+                <span class="detail-label"><svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-lightbulb"></use></svg> ネイティブのニュアンス</span>
+                <p class="card-nuance-text" id="card-nuance-text"></p>
+              </div>
+              <div class="card-detail-block" id="card-alts-block">
+                <span class="detail-label"><svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-speech"></use></svg> 自然な別解・言い換え</span>
+                <ul class="card-alts-list" id="card-alts-list"></ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- 🥊 ラリーモード専用 回答スロット -->
+          <div class="rally-answer-view" id="rally-answer-view" hidden>
+            <div class="rally-user-bubble">
+              <div class="rally-user-meta">
+                <span class="rally-user-badge">あなた（模範返答）</span>
+                <span class="rally-pattern-tag" id="rally-pattern-tag">型01: I'd say ~</span>
+              </div>
+              <p class="rally-user-en" id="rally-user-en"></p>
+              <p class="rally-user-ja" id="rally-user-ja"></p>
+              <div class="speak-row">
+                <button type="button" class="btn small" id="rally-speak-btn"><svg class="ui-icon" aria-hidden="true"><use href="#icon-speaker"></use></svg> 返答を聞く <kbd>R</kbd></button>
+              </div>
+            </div>
+            <div class="rally-tips-box" id="rally-tips-box">
+              <span class="detail-label"><svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-lightbulb"></use></svg> 会話ラリーのコツ・大人の切り返し</span>
+              <p class="rally-tips-text" id="rally-tips-text"></p>
+            </div>
+            <div class="card-detail-block" id="rally-alts-block">
+              <span class="detail-label"><svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-speech"></use></svg> その他の自然な返し方</span>
+              <ul class="card-alts-list" id="rally-alts-list"></ul>
             </div>
           </div>
         </div>
@@ -981,6 +1062,65 @@
     </div>
   </dialog>
 
+  <!-- 🥊 AIシチュエーション即答ラリー生成モーダル (v41) -->
+  <dialog id="rally-ai-dialog" class="badge-detail-dialog" closedby="any" aria-labelledby="rally-ai-title">
+    <div class="badge-detail-content ai-modal-content" style="text-align:left;">
+      <div class="dialog-header">
+        <h3 id="rally-ai-title"><svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg> AIシチュエーション即答ラリー生成</h3>
+        <button type="button" class="icon-btn" id="close-rally-ai-dialog" aria-label="閉じる"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"></use></svg></button>
+      </div>
+      <p class="dialog-intro">遭遇しそうな実戦の英会話シチュエーションを入力すると、Geminiが即答ラリー（相手の問いかけ＋返答ミッション＋模範返答）を自動生成します！</p>
+
+      <div class="ai-presets">
+        <p class="presets-label">おすすめシチュエーション:</p>
+        <div class="chip-group">
+          <button type="button" class="chip rally-ai-preset" data-topic="外資系IT企業の英語面接・職務経歴質問">💻 英語面接</button>
+          <button type="button" class="chip rally-ai-preset" data-topic="海外オフィスの同僚とのランチ・雑談">☕️ 同僚とランチ</button>
+          <button type="button" class="chip rally-ai-preset" data-topic="海外出張でのホテルチェックインや空港トラブル">✈️ 出張・ホテル</button>
+          <button type="button" class="chip rally-ai-preset" data-topic="グローバル会議での進捗報告と突発的な質問">📊 グローバル会議</button>
+          <button type="button" class="chip rally-ai-preset" data-topic="海外の友人との週末プラン・お誘いと断り方">🍻 週末の誘い・断り</button>
+        </div>
+      </div>
+
+      <label class="field-stacked">
+        <span>シチュエーション・相手の立場</span>
+        <input type="text" id="rally-ai-topic" placeholder="例: 海外クライアントとの価格交渉、ホームステイ先での雑談 など">
+      </label>
+
+      <label class="field">
+        <span>トーン / 場面設定</span>
+        <select id="rally-ai-tone">
+          <option value="casual" selected>カジュアル（同僚・友人・フランクな会話）</option>
+          <option value="business">ビジネス・丁寧（取引先・上司・会議）</option>
+          <option value="travel">旅行・街中・カフェ（スマートな日常会話）</option>
+        </select>
+      </label>
+
+      <div id="rally-ai-key-hint" class="ai-key-hint"></div>
+
+      <button type="button" class="btn primary big" id="rally-ai-generate-btn"><svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg> ラリーシナリオを生成する（5問）</button>
+
+      <!-- ローディング表示 -->
+      <div id="rally-ai-loading" class="ai-loading" hidden>
+        <div class="spinner"></div>
+        <p id="rally-ai-loading-text">Geminiが実戦対話ラリーを生成中...</p>
+      </div>
+
+      <!-- 生成結果プレビュー -->
+      <div id="rally-ai-preview" class="ai-preview" hidden>
+        <div class="preview-head">
+          <h3>生成された即答ラリー（<span id="rally-ai-preview-count">0</span>問）</h3>
+        </div>
+        <div id="rally-ai-preview-list" class="ai-preview-list"></div>
+
+        <div class="dialog-actions">
+          <button type="button" class="btn ghost" id="rally-ai-cancel-btn">やり直す</button>
+          <button type="button" class="btn primary" id="rally-ai-save-btn"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-check"></use></svg> ラリーに追加して特訓する</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
   <!-- 実績解除お祝いモーダル -->
   <dialog id="achievement-dialog" class="achievement-dialog" closedby="any" aria-labelledby="ach-title">
     <div class="achievement-content">
@@ -1140,8 +1280,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=40"></script>
-  <script src="app.js?v=40"></script>
+  <script src="data.js?v=41"></script>
+  <script src="app.js?v=41"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

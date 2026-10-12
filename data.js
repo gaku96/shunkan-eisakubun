@@ -1555,3 +1555,515 @@ window.CARD_ALTERNATIVES = {
   "5-2": ["Faster is not necessarily better.", "Faster doesn't necessarily mean better."],
   "5-3": ["Famous restaurants are not necessarily good.", "Being famous doesn't mean a restaurant is delicious."]
 };
+
+// ==========================================
+// 🥊 シチュエーション即答ラリー (v41)
+// 相手からの問いかけに対して、3秒以内に適切な型を想起・口頭返答する実戦特訓
+// ==========================================
+window.RALLY_PRESETS = [
+  {
+    id: "rally-1",
+    isRally: true,
+    category: "週末・予定",
+    partner: {
+      name: "Alex",
+      avatar: "🧑‍💻",
+      context: "同僚からの休日の誘い",
+      en: "Hey, are you free this Saturday? We're thinking of grabbing lunch!",
+      ja: "ねえ、今週の土曜空いてる？ランチ行こうって話してるんだけど！"
+    },
+    mission: {
+      prompt: "「大体80%の確率で空いてるかな」と答えて！",
+      hint: "ざっくり見積もって保険をかける型（Part 1）を使おう",
+      targetPatternId: 1
+    },
+    en: "I'd say there's an 80% chance I'm free.",
+    ja: "大体80%くらいの確率で空いてるかな。",
+    replyTips: "I'd say ~ を使うことで「絶対行ける」と断定せず、大人のやんわりした見通しを伝えられます。",
+    alternatives: ["I'd say I should be free around noon.", "I'd say yes, but let me double check my schedule."]
+  },
+  {
+    id: "rally-2",
+    isRally: true,
+    category: "アウトドア・計画",
+    partner: {
+      name: "Chloe",
+      avatar: "👩‍🎨",
+      context: "週末のキャンプの相談",
+      en: "Do you think we should go camping by the lake this weekend?",
+      ja: "今週末、湖の近くにキャンプに行くべきだと思う？"
+    },
+    mission: {
+      prompt: "「天気によるかな」と答えて！",
+      hint: "条件次第であることを示す型（Part 1）を使おう",
+      targetPatternId: 2
+    },
+    en: "It depends on the weather.",
+    ja: "天気によるかな。",
+    replyTips: "It depends on ~ は条件で変わる時の最頻出フレーズ。短くスマートに即答できます。",
+    alternatives: ["It depends on the forecast.", "That depends on how bad the rain is."]
+  },
+  {
+    id: "rally-3",
+    isRally: true,
+    category: "雑談・休日",
+    partner: {
+      name: "Marcus",
+      avatar: "🧔",
+      context: "月曜の朝、週末の過ごし方を聞かれて",
+      en: "How was your weekend? Did you do anything special?",
+      ja: "週末どうだった？何か特別なことした？"
+    },
+    mission: {
+      prompt: "「掃除とか洗濯とか、そんな感じのことをしたよ」と答えて！",
+      hint: "例をぼかして会話を滑らかにする型（Part 1）を使おう",
+      targetPatternId: 3
+    },
+    en: "I just did cleaning, laundry and stuff like that.",
+    ja: "掃除とか洗濯とか、そんな感じのことをしたよ。",
+    replyTips: "~ and stuff like that を添えることで、「〜など日常のあれこれ」と自然にまとめられます。",
+    alternatives: ["I mostly did housework, laundry and stuff like that.", "Just relaxing, watching movies and stuff like that."]
+  },
+  {
+    id: "rally-4",
+    isRally: true,
+    category: "相談・買い物",
+    partner: {
+      name: "Daniel",
+      avatar: "🧑‍💼",
+      context: "新しい高価なノートPCを買うべきか悩む同僚",
+      en: "This laptop is twice as expensive as the other one. Should I just buy it?",
+      ja: "このノートPC、もう一方の倍の値段するんだよね。思い切って買うべきかな？"
+    },
+    mission: {
+      prompt: "「高いからって良いとは限らないよ」と答えて！",
+      hint: "一面的な思い込みを否定する型（Part 2）を使おう",
+      targetPatternId: 4
+    },
+    en: "Just because it's expensive doesn't mean it's good.",
+    ja: "高いからって良いとは限らないよ。",
+    replyTips: "Just because A doesn't mean B は、短絡的な判断に冷静な視点を与えるスマートな大人の構文です。",
+    alternatives: ["Just because it costs more doesn't mean it's better.", "Expensive doesn't necessarily mean it's the right fit."]
+  },
+  {
+    id: "rally-5",
+    isRally: true,
+    category: "意見・議論",
+    partner: {
+      name: "Sophia",
+      avatar: "👩‍💼",
+      context: "英語学習についての雑談",
+      en: "You have to live in an English-speaking country to become fluent, right?",
+      ja: "ペラペラになるには英語圏の国に住まなきゃダメだよね？"
+    },
+    mission: {
+      prompt: "「必ずしもそうとは限らないよ」とマイルドに反論して！",
+      hint: "大人の含みを持たせて反論する型（Part 2）を使おう",
+      targetPatternId: 5
+    },
+    en: "Not necessarily.",
+    ja: "必ずしもそうとは限らないよ。",
+    replyTips: "Not necessarily は相手を全否定せず「必ずしも100%そうとは言えないよ」と知的かつ角を立てずに返せる一言です。",
+    alternatives: ["That's not necessarily true.", "Not necessarily, you can practice a lot online these days."]
+  },
+  {
+    id: "rally-6",
+    isRally: true,
+    category: "自己紹介・体質",
+    partner: {
+      name: "Ken",
+      avatar: "👨‍💻",
+      context: "朝7時半からのブレスト会議に誘われて",
+      en: "Can we schedule our strategy brainstorm for 7:30 tomorrow morning?",
+      ja: "明日の朝7時半から戦略ブレストのミーティング入れてもいい？"
+    },
+    mission: {
+      prompt: "「私は朝のほうが頭が働くタイプなんだ（大歓迎）」と答えて！",
+      hint: "自分の特性やタイプを表現する型（Part 3）を使おう",
+      targetPatternId: 6
+    },
+    en: "Sounds great! I have a brain that works best in the morning.",
+    ja: "いいね！私は朝のほうが頭が働くタイプなんだ。",
+    replyTips: "I have a ~ brain / body は「そういう体質・性質なんだ」とユーモアを交えて自己開示するのに最適です。",
+    alternatives: ["That works! I'm definitely a morning person.", "Perfect, I have a morning brain."]
+  },
+  {
+    id: "rally-7",
+    isRally: true,
+    category: "体験談・リアクション",
+    partner: {
+      name: "Emma",
+      avatar: "👱‍♀️",
+      context: "昨夜の電車の突然の運転見合わせについて",
+      en: "I heard the train stopped right in the middle of the bridge last night! How did you react?",
+      ja: "昨日の夜、電車が橋のど真ん中で止まったんだってね！どういう反応になった？"
+    },
+    mission: {
+      prompt: "「『え、マジで？』って感じだったよ」と当時のリアルな感情を伝えて！",
+      hint: "当時のトーンや心の声をそのまま再現する型（Part 3）を使おう",
+      targetPatternId: 7
+    },
+    en: "I was like, \"Seriously?\"",
+    ja: "「え、マジで？」って感じだったよ。",
+    replyTips: "I was like, \"...\" は会話を生き生きとさせるネイティブの最頻出リアル会話テクニックです。",
+    alternatives: ["I was like, \"You've got to be kidding me!\"", "I was just like, \"What are we supposed to do now?\""]
+  },
+  {
+    id: "rally-8",
+    isRally: true,
+    category: "オフィス・習慣",
+    partner: {
+      name: "Liam",
+      avatar: "👨‍🦰",
+      context: "朝イチのミーティング前、マグカップを手にしたあなたに",
+      en: "You always carry that giant mug around every morning, don't you?",
+      ja: "毎朝いつもその特大マグカップ持ち歩いてるよね？"
+    },
+    mission: {
+      prompt: "「朝のコーヒーがないと体が動かないんだ（無理なんだ）」と答えて！",
+      hint: "何かないと機能しないことを伝える型（Part 3）を使おう",
+      targetPatternId: 8
+    },
+    en: "Yeah, I can't function without my morning coffee.",
+    ja: "うん、朝のコーヒーがないと無理なんだ。",
+    replyTips: "I can't function without ~ は「これがないと使い物にならない」とクスッと笑える親しみやすい返答です。",
+    alternatives: ["I honestly can't function without caffeine.", "My brain simply can't function without it."]
+  },
+  {
+    id: "rally-9",
+    isRally: true,
+    category: "ランチ・健康",
+    partner: {
+      name: "David",
+      avatar: "🧑‍🦱",
+      context: "こってり豚骨ラーメンに誘われて",
+      en: "Hey, do you want to grab heavy tonkotsu ramen with extra garlic?",
+      ja: "ねえ、ニンニクマシマシのこってり豚骨ラーメン食べに行かない？"
+    },
+    mission: {
+      prompt: "「昔はよく食べてたけど、今は健康のために控えてるんだ」とやんわり断って！",
+      hint: "過去の習慣と今の変化を対比する型（Part 3）を使おう",
+      targetPatternId: 9
+    },
+    en: "I used to eat it all the time, but now I try to watch my health.",
+    ja: "昔はよく食べてたけど、今は健康に気をつけて控えてるんだ。",
+    replyTips: "I used to ~, but now ~ を使うと、相手の好みを否定せず「昔は自分も好きだったよ」と共感を残して断れます。",
+    alternatives: ["I used to love it, but now my stomach can't handle it.", "I used to eat that a lot, but now I'm eating healthier."]
+  },
+  {
+    id: "rally-10",
+    isRally: true,
+    category: "ビジネス・率直な意見",
+    partner: {
+      name: "Rachel",
+      avatar: "👩‍💼",
+      context: "提出前のプロモーション企画書を見せられて",
+      en: "Be completely frank with me. What do you think of this marketing plan?",
+      ja: "包み隠さず言って。このマーケティングプラン、どう思う？"
+    },
+    mission: {
+      prompt: "「正直言うと、ちょっと予算オーバーだと思う」と誠実に答えて！",
+      hint: "言いにくい本音を切り出すクッション型を使おう",
+      targetPatternId: 10
+    },
+    en: "To be honest, I think it's a bit over budget.",
+    ja: "正直言うと、ちょっと予算オーバーだと思う。",
+    replyTips: "To be honest, ~ は相手の求めに応じて信頼感のあるフィードバックを返す時の黄金フレーズです。",
+    alternatives: ["To be honest, it looks a little too expensive.", "Honestly, I think we might exceed the budget."]
+  },
+  {
+    id: "rally-11",
+    isRally: true,
+    category: "業務確認・情報共有",
+    partner: {
+      name: "Kevin",
+      avatar: "👨‍💻",
+      context: "今日の全体会議の出席者について",
+      en: "Is the project manager joining today's sprint review?",
+      ja: "プロジェクトマネージャーは今日のスプリントレビューに参加する？"
+    },
+    mission: {
+      prompt: "「私の知る限りでは、彼は来るはずだよ」と答えて！",
+      hint: "自分の把握している範囲に限定して責任を限定する型を使おう",
+      targetPatternId: 11
+    },
+    en: "As far as I know, he's supposed to join.",
+    ja: "私の知る限りでは、彼は来るはずだよ。",
+    replyTips: "As far as I know, ~ は「自分の把握している範囲では」という安全な防波堤を作れるビジネス必須の表現です。",
+    alternatives: ["As far as I know, yes, he'll be there.", "As far as I'm aware, he has it on his calendar."]
+  },
+  {
+    id: "rally-12",
+    isRally: true,
+    category: "気遣い・納得",
+    partner: {
+      name: "Jessica",
+      avatar: "👩‍🦰",
+      context: "同僚のMarkが今日ひどく疲れた顔をしている理由を聞いて",
+      en: "Did you hear? Mark stayed up until 4 AM to fix that production bug.",
+      ja: "聞いた？Mark、本番のバグ修正で朝の4時まで起きてたらしいよ。"
+    },
+    mission: {
+      prompt: "「どうりでひどく疲れた顔をしてるわけだ」と納得を返して！",
+      hint: "理由を知って深く納得する型を使おう",
+      targetPatternId: 12
+    },
+    en: "No wonder he looks so exhausted today.",
+    ja: "どうりで今日あんなに疲れた顔をしてるわけだ。",
+    replyTips: "No wonder ~ は「なるほど、合点がいった！」という共感を瞬時に相手と共有できる感情豊かな構文です。",
+    alternatives: ["No wonder he's drinking so much coffee.", "No wonder he seems a bit quiet today."]
+  },
+  {
+    id: "rally-13",
+    isRally: true,
+    category: "日常・選択",
+    partner: {
+      name: "Tom",
+      avatar: "🧑‍🍳",
+      context: "フードコートでメニューを見ながら",
+      en: "Have you decided what you're ordering yet?",
+      ja: "何を注文するかもう決まった？"
+    },
+    mission: {
+      prompt: "「パスタにするかピザにするかで迷ってるんだ」と答えて！",
+      hint: "2つの選択肢の間で心が揺れている型を使おう",
+      targetPatternId: 13
+    },
+    en: "I'm torn between the pasta and the pizza.",
+    ja: "パスタにするかピザにするかで迷ってるんだ。",
+    replyTips: "I'm torn between A and B は「どちらも魅力的で引き裂かれそうなくらい迷う」というネイティブの定番表現です。",
+    alternatives: ["I'm still torn between the two options.", "I'm torn between getting sushi or curry."]
+  },
+  {
+    id: "rally-14",
+    isRally: true,
+    category: "ビジネス・合意",
+    partner: {
+      name: "Brian",
+      avatar: "👨‍💼",
+      context: "厳しい納期のプロジェクト方針について",
+      en: "We need to hit this Friday deadline no matter what, right?",
+      ja: "何が何でも今週金曜の締め切りに間に合わせなきゃいけないよね？"
+    },
+    mission: {
+      prompt: "「言うまでもなく、クオリティも落とせないよ」と付け加えて！",
+      hint: "当然の前提として釘を刺す型を使おう",
+      targetPatternId: 14
+    },
+    en: "It goes without saying that quality is just as important.",
+    ja: "言うまでもなく、クオリティも同じくらい大切だよ。",
+    replyTips: "It goes without saying that ~ は議論の中で「言うまでもない前提」をスマートに提示する知的なフレーズです。",
+    alternatives: ["It goes without saying that we can't compromise on quality.", "Needless to say, we still need high standards."]
+  },
+  {
+    id: "rally-15",
+    isRally: true,
+    category: "オフィス・雑談",
+    partner: {
+      name: "Hannah",
+      avatar: "👱‍♀️",
+      context: "先週の京都への出張の話題が出た瞬間",
+      en: "Kyoto was quite crowded with tourists last week, wasn't it?",
+      ja: "先週の京都は観光客でかなり混んでたでしょ？"
+    },
+    mission: {
+      prompt: "「そう言えば、チームにお土産買ってきたんだ！」と話題を繋げて！",
+      hint: "話のきっかけを掴んでスムーズに展開する型を使おう",
+      targetPatternId: 15
+    },
+    en: "Speaking of which, I brought some sweets for the team!",
+    ja: "そう言えば、チームにお土産（お菓子）を買ってきたんだ！",
+    replyTips: "Speaking of which, ~ は前の発言に関連した話題をサラッと切り出す潤滑油のような接続表現です。",
+    alternatives: ["Speaking of which, here are some souvenirs.", "Speaking of Kyoto, I actually bought something for everyone."]
+  },
+  {
+    id: "rally-16",
+    isRally: true,
+    category: "ビジネス・丁寧な依頼",
+    partner: {
+      name: "Oliver",
+      avatar: "🧑‍💻",
+      context: "忙しそうなシニアエンジニアのデスクに立ち寄り",
+      en: "Hey! Did you need something from me?",
+      ja: "やあ！僕に何か用事でもあった？"
+    },
+    mission: {
+      prompt: "「このスライドをレビューしていただけないかと思いまして」と丁寧に切り出して！",
+      hint: "相手への配慮を込めた最も丁寧な依頼型を使おう",
+      targetPatternId: 16
+    },
+    en: "I was wondering if you could take a quick look at these slides.",
+    ja: "このスライドをさっと見ていただけないかと思いまして。",
+    replyTips: "I was wondering if you could ~ は「〜していただけたら嬉しいなと思っていたのですが」という角の立たない最高峰の依頼表現です。",
+    alternatives: ["I was wondering if you had a few minutes to check this.", "I was wondering if you could review my proposal."]
+  },
+  {
+    id: "rally-17",
+    isRally: true,
+    category: "カフェ・社交",
+    partner: {
+      name: "Lisa",
+      avatar: "👩‍💼",
+      context: "混雑したカフェのテーブルで同席者に",
+      en: "Excuse me, are you about to sit here?",
+      ja: "すみません、ここに座られるところですか？"
+    },
+    mission: {
+      prompt: "「こちらの席をお借りしてもよろしいですか？」と上品に尋ねて！",
+      hint: "相手に嫌悪感がないか気遣う丁寧な許可求め型を使おう",
+      targetPatternId: 17
+    },
+    en: "Would you mind if I took this chair?",
+    ja: "こちらの席をお借りしてもよろしいでしょうか？",
+    replyTips: "Would you mind if I [過去形] ~ ? は大人の洗練された気配り英語の決定版です。",
+    alternatives: ["Would you mind if I shared this table?", "Do you mind if I sit here?"]
+  },
+  {
+    id: "rally-18",
+    isRally: true,
+    category: "会議・進行",
+    partner: {
+      name: "Sam",
+      avatar: "👨‍🏫",
+      context: "議論が白熱して終了予定時間を過ぎそうな時",
+      en: "We still have a couple more minor points to debate...",
+      ja: "まだ議論すべき細かい点がいくつか残っていますが…"
+    },
+    mission: {
+      prompt: "「時間ですので、そろそろ今日の会議を終わりにしましょう」と仕切って！",
+      hint: "テキパキと会を締めくくる型を使おう",
+      targetPatternId: 18
+    },
+    en: "Let's wrap it up for today and follow up on Slack.",
+    ja: "今日はそろそろ終わりにして、Slackでフォローアップしましょう。",
+    replyTips: "Let's wrap it up はダラダラ伸びがちな会議を気持ちよく終わらせるビジネスの必須フレーズです。",
+    alternatives: ["Let's wrap up our meeting here.", "Why don't we wrap it up and continue tomorrow?"]
+  },
+  {
+    id: "rally-19",
+    isRally: true,
+    category: "ビジネス・即答",
+    partner: {
+      name: "Boss (Sarah)",
+      avatar: "👩‍💼",
+      context: "急ぎのクライアント提出用データの修正を頼まれて",
+      en: "We need this presentation updated with the latest revenue numbers ASAP!",
+      ja: "至急、このプレゼン資料を最新の売上データに更新してほしいんだけど！"
+    },
+    mission: {
+      prompt: "「すぐ取り掛かります！（お任せください）」と頼もしく即答して！",
+      hint: "電光石火で任せて安心感を与える型を使おう",
+      targetPatternId: 19
+    },
+    en: "I'm on it!",
+    ja: "すぐ取り掛かります！",
+    replyTips: "I'm on it! は3語で「了解、今まさに手をつけています」と圧倒的なスピード感と安心感を相手に与えます。",
+    alternatives: ["I'm on it right away.", "Consider it done, I'm on it."]
+  },
+  {
+    id: "rally-20",
+    isRally: true,
+    category: "共感・励まし",
+    partner: {
+      name: "Toby",
+      avatar: "👦",
+      context: "プレゼンで小さな言い間違いをして落ち込む後輩",
+      en: "I totally stumbled on slide 4... I ruined the entire pitch.",
+      ja: "スライド4で完全に噛んじゃいました…僕のせいで提案が台無しです。"
+    },
+    mission: {
+      prompt: "「そんなに自分を責めないで、誰も気にしてないよ」と温かく励まして！",
+      hint: "自責の念を優しく解きほぐす型を使おう",
+      targetPatternId: 20
+    },
+    en: "Don't be so hard on yourself. Nobody noticed!",
+    ja: "そんなに自分を責めないで。誰も気にしてないよ！",
+    replyTips: "Don't be so hard on yourself は落ち込む同僚や友人の心を救う、包容力にあふれた名フレーズです。",
+    alternatives: ["Don't beat yourself up over it.", "Take it easy on yourself, you did great."]
+  },
+  {
+    id: "rally-21",
+    isRally: true,
+    category: "前向き・レジリエンス",
+    partner: {
+      name: "Grace",
+      avatar: "👩‍🔬",
+      context: "大事なコンペで惜しくも次点に終わり、落胆するチームメイト",
+      en: "We put three months into this proposal, and they picked another vendor.",
+      ja: "この提案に3ヶ月も注ぎ込んだのに、別の業者を選ばれちゃった…"
+    },
+    mission: {
+      prompt: "「命まで取られるわけじゃないよ、次に活かそう」と励まして！",
+      hint: "物事を広い視野に戻して安心させる型を使おう",
+      targetPatternId: 21
+    },
+    en: "It's not the end of the world. We learned a lot for next time.",
+    ja: "この世の終わりじゃないよ。次回に向けてたくさん学べたじゃない。",
+    replyTips: "It's not the end of the world は大きな失敗や失意の底にいる人を冷静かつ前向きに引き上げる定番の励ましです。",
+    alternatives: ["It's not the end of the world, we'll bounce back.", "Cheer up, it's really not the end of the world."]
+  },
+  {
+    id: "rally-22",
+    isRally: true,
+    category: "大人の返答・感謝",
+    partner: {
+      name: "James",
+      avatar: "👨‍💼",
+      context: "急遽フライトの遅延で到着時間が遅れると連絡をくれた取引先",
+      en: "Sorry for the inconvenience, but my flight is delayed by two hours.",
+      ja: "ご迷惑をおかけして申し訳ありませんが、フライトが2時間遅延しています。"
+    },
+    mission: {
+      prompt: "「状況を教えていただきありがとうございます。どうぞお気をつけて」と返して！",
+      hint: "相手の事前連絡を快く受け止める大人の感謝型を使おう",
+      targetPatternId: 22
+    },
+    en: "I appreciate you letting me know. Safe travels!",
+    ja: "状況を教えてくださりありがとうございます。どうぞお気をつけて！",
+    replyTips: "I appreciate you letting me know はビジネスや社交で相手の手間や気遣いに対してスマートな品格を示す最高の一言です。",
+    alternatives: ["Thank you for the heads-up. Safe travels!", "I appreciate the update, don't worry about it."]
+  },
+  {
+    id: "rally-23",
+    isRally: true,
+    category: "称賛・エール",
+    partner: {
+      name: "Mia",
+      avatar: "👩‍💻",
+      context: "新しいデザインシステムの実装を無事完了させたメンバー",
+      en: "I just deployed the new responsive component library without any bugs!",
+      ja: "バグなしで新しいレスポンシブコンポーネントライブラリをデプロイできたよ！"
+    },
+    mission: {
+      prompt: "「素晴らしい！その調子で頑張ってね！」とエールを送って！",
+      hint: "相手の勢いを後押しする爽やかな称賛型を使おう",
+      targetPatternId: 23
+    },
+    en: "Awesome! Keep up the good work!",
+    ja: "素晴らしい！その調子で頑張ってね！",
+    replyTips: "Keep up the good work! は仕事や勉強の成果を祝し、背中をポンと叩いて応援する爽快な定番エールです。",
+    alternatives: ["Incredible job! Keep it up!", "Proud of you, keep up the amazing work!"]
+  },
+  {
+    id: "rally-24",
+    isRally: true,
+    category: "ポジティブ・締め",
+    partner: {
+      name: "Chris",
+      avatar: "🧔‍♂️",
+      context: "新製品の発売が来月に延期になってため息をつく同僚",
+      en: "Ugh, another delay... We have to wait another month for the launch.",
+      ja: "はぁ、また延期か…発売までもう1ヶ月も待たなきゃいけないよ。"
+    },
+    mission: {
+      prompt: "「プラス思考でいこうよ、テストする時間がもっと増えたんだから」と返して！",
+      hint: "困難の中に希望を見出すポジティブ転換型を使おう",
+      targetPatternId: 24
+    },
+    en: "Look on the bright side. We have more time for QA testing.",
+    ja: "プラス思考でいこうよ。品質テストをする時間がもっと増えたんだから。",
+    replyTips: "Look on the bright side はマイナスな状況を一瞬で希望に変える、明るく頼もしい大人の切り返しです。",
+    alternatives: ["Let's look on the bright side, at least we won't have to rush.", "Always look on the bright side!"]
+  }
+];
+
