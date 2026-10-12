@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=42">
+  <link rel="stylesheet" href="style.css?v=43">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -291,11 +291,12 @@
           <div class="rally-banner-actions">
             <button type="button" class="btn primary big rally-start-btn" id="start-rally-btn">
               <svg class="ui-icon" aria-hidden="true"><use href="#icon-flame"></use></svg>
-              ラリーを開始（10問）
+              <span>即答ラリーを開始（10問）</span>
             </button>
-            <button type="button" class="btn ghost rally-ai-btn" id="open-rally-ai-btn">
+            <button type="button" class="btn rally-ai-btn" id="open-rally-ai-btn">
               <svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg>
-              AIシチュエーション生成
+              <span>AIで新しい場面を作る</span>
+              <span class="rally-ai-pill-tag">NEW</span>
             </button>
           </div>
         </div>
@@ -1100,6 +1101,9 @@
 
       <button type="button" class="btn primary big" id="rally-ai-generate-btn"><svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg> ラリーシナリオを生成する（5問）</button>
 
+      <!-- エラー表示領域 -->
+      <div id="rally-ai-error-box" class="status-msg error" hidden style="margin-top: 10px; font-size: 0.85rem; line-height: 1.5;"></div>
+
       <!-- ローディング表示 -->
       <div id="rally-ai-loading" class="ai-loading" hidden>
         <div class="spinner"></div>
@@ -1280,8 +1284,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=42"></script>
-  <script src="app.js?v=42"></script>
+  <script src="data.js?v=43"></script>
+  <script src="app.js?v=43"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

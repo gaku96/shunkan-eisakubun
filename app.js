@@ -1173,18 +1173,18 @@
         hintEl.hidden = !(card.mission && card.mission.hint);
       }
 
-      // 相手のセリフ音声ボタン
+      // 相手のセリフ音声ボタン（高音質・自然な会話音声）
       const partnerAudioBtn = $("#rally-partner-audio-btn");
       if (partnerAudioBtn) {
         partnerAudioBtn.onclick = (e) => {
           e.stopPropagation();
-          speakBrowser((card.partner && card.partner.en) || "");
+          speakRallyPartner(card);
         };
       }
 
-      // 自動再生がONなら相手の英語セリフを自動読み上げ
+      // 自動再生がONなら相手の英語セリフを自然な音声で自動読み上げ
       if (s.autoSpeak && card.partner && card.partner.en) {
-        speakBrowser(card.partner.en);
+        speakRallyPartner(card);
       }
     } else {
       if (fc) fc.classList.remove("is-rally");
@@ -1711,12 +1711,18 @@
     if (!("speechSynthesis" in window)) return;
     const voices = speechSynthesis.getVoices();
     const enVoices = voices.filter((v) => v.lang.startsWith("en"));
-    const preferEn = ["Samantha", "Google US English", "Alex", "Microsoft Aria", "Microsoft Jenny"];
+    // 自然で高音質なEnhanced/Natural/Siri音声を最優先
+    const preferEn = [
+      "Ava (Enhanced)", "Ava (Premium)", "Samantha (Enhanced)", "Samantha (Premium)",
+      "Siri", "Allison (Enhanced)", "Zoe (Enhanced)", "Tom (Enhanced)",
+      "Microsoft Jenny Online (Natural)", "Microsoft Aria Online (Natural)", "Microsoft Guy Online (Natural)",
+      "Google US English", "Karen", "Daniel", "Samantha", "Alex"
+    ];
     browserVoice = preferEn.map((n) => enVoices.find((v) => v.name.includes(n))).find(Boolean)
       || enVoices.find((v) => v.lang === "en-US") || enVoices[0] || null;
 
     const jaVoices = voices.filter((v) => v.lang.startsWith("ja"));
-    const preferJa = ["Kyoko", "Otoya", "Google 日本語", "Microsoft Nanami"];
+    const preferJa = ["Kyoko (Enhanced)", "Otoya (Enhanced)", "Microsoft Nanami Online (Natural)", "Google 日本語", "Kyoko", "Otoya"];
     browserJaVoice = preferJa.map((n) => jaVoices.find((v) => v.name.includes(n))).find(Boolean)
       || jaVoices.find((v) => v.lang.startsWith("ja")) || null;
   }
@@ -1733,6 +1739,45 @@
     if (browserVoice) u.voice = browserVoice;
     u.rate = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
     speechSynthesis.speak(u);
+  }
+
+  // 🥊 ラリー会話相手のセリフ専用再生（自然な人間速度・Gemini TTSまたは高品質ブラウザ音声）
+  async function speakRallyPartner(card) {
+    if (!card || !card.partner || !card.partner.en) return;
+    const text = card.partner.en;
+    const s = state.settings;
+
+    // 1. Gemini APIキーがある場合は、Gemini 3.8 Flash TTS（人間そのままのスタジオ生声）で再生
+    if (s.geminiApiKey) {
+      try {
+        const cacheKey = `rally_partner_${card.id || text.slice(0, 24)}`;
+        let cached = await getCachedAudio(cacheKey);
+        if (!cached) {
+          const femaleNames = ["Chloe", "Sophia", "Emma", "Rachel", "Jessica", "Hannah", "Lisa", "Sarah", "Grace", "Mia"];
+          const isFemale = femaleNames.some((n) => (card.partner.name || "").includes(n));
+          const voice = isFemale ? "Kore" : "Fenrir";
+          cached = await generateGeminiSpeech(text, s.geminiApiKey, "gemini-3.8-flash-tts", voice, "en", "us");
+          await setCachedAudio(cacheKey, cached);
+        }
+        if (cached) {
+          playBlob(cached);
+          return;
+        }
+      } catch (err) {
+        console.warn("Rally partner Gemini TTS fallback:", err);
+      }
+    }
+
+    // 2. ブラウザ標準音声（最高音質ボイス・人間らしい等速 1.0 でクリアに再生）
+    if ("speechSynthesis" in window) {
+      stopAudio();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-US";
+      if (browserVoice) u.voice = browserVoice;
+      u.rate = 1.0; // 人間らしく等速でクリアに発音
+      u.pitch = 1.0;
+      speechSynthesis.speak(u);
+    }
   }
 
   async function speakJapanesePromise(cardOrText, rate = 1.0) {
@@ -3442,10 +3487,32 @@
   }
 
   // ==========================================
-  // 🤖 Gemini テキスト生成（gemini-3.8-flash + フォールバック）
+  // 🤖 Gemini テキスト生成（gemini-3.8-flash + 多重フォールバック）
   // ==========================================
+  function extractJsonArray(text) {
+    if (!text) return null;
+    let cleaned = String(text).trim();
+    if (cleaned.includes("```")) {
+      cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+    }
+    try {
+      const parsed = JSON.parse(cleaned);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {}
+
+    const match = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+    if (match) {
+      try {
+        const parsed = JSON.parse(match[0]);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {}
+    }
+    return null;
+  }
+
   async function requestGeminiContent(prompt, apiKey) {
-    const candidateModels = ["gemini-3.8-flash", "gemini-1.5-flash", "gemini-2.0-flash"];
+    // 優先度：3.8-flash -> 1.5-flash -> 2.0-flash -> 3.5-flash-lite
+    const candidateModels = ["gemini-3.8-flash", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-3.5-flash-lite"];
     let lastError = null;
 
     for (const model of candidateModels) {
@@ -3466,8 +3533,8 @@
         if (!res.ok) {
           const errJson = await res.json().catch(() => ({}));
           const msg = errJson.error?.message || `HTTP ${res.status}`;
-          if (msg.includes("is no longer available") || msg.includes("not found") || msg.includes("NotFound") || res.status === 404) {
-            console.warn(`Model ${model} unavailable (${msg}), trying next model...`);
+          if (msg.includes("no longer available") || msg.includes("not found") || msg.includes("NotFound") || res.status === 404 || res.status === 400) {
+            console.warn(`Model ${model} unavailable (${msg}), trying next candidate...`);
             lastError = new Error(msg);
             continue;
           }
@@ -3478,16 +3545,14 @@
         const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!rawText) throw new Error("Geminiからデータを受信できませんでした。");
 
-        let parsed;
-        try {
-          parsed = JSON.parse(rawText);
-        } catch {
-          throw new Error("Geminiの応答を解析できませんでした。");
+        const parsed = extractJsonArray(rawText);
+        if (!parsed) {
+          throw new Error("Geminiの応答をJSON配列として解析できませんでした。");
         }
         return parsed;
       } catch (err) {
         lastError = err;
-        if (err.message.includes("is no longer available") || err.message.includes("not found")) {
+        if (err.message.includes("no longer available") || err.message.includes("not found") || err.message.includes("404") || err.message.includes("400")) {
           continue;
         }
         throw err;
@@ -4486,8 +4551,14 @@ ${tone}
     const topic = (rallyTopicInput?.value || "").trim() || "日常会話・オフィスでの雑談";
     const tone = rallyToneSelect?.value || "casual";
     const apiKey = state.settings.geminiApiKey;
+    const errorBox = $("#rally-ai-error-box");
 
+    if (errorBox) {
+      errorBox.hidden = true;
+      errorBox.textContent = "";
+    }
     rallyGenerateBtn.disabled = true;
+    rallyGenerateBtn.innerHTML = `<div class="spinner icon-xs" style="display:inline-block; vertical-align:middle; width:14px; height:14px; border-width:2px; margin-right:6px;"></div> シナリオを生成中...`;
     if (rallyLoadingEl) rallyLoadingEl.hidden = false;
     if (rallyPreviewEl) rallyPreviewEl.hidden = true;
 
@@ -4502,7 +4573,12 @@ ${tone}
       }
 
       if (rallyLoadingEl) rallyLoadingEl.hidden = true;
-      if (rallyPreviewEl) rallyPreviewEl.hidden = false;
+      if (rallyPreviewEl) {
+        rallyPreviewEl.hidden = false;
+        setTimeout(() => {
+          rallyPreviewEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+      }
       if (rallyPreviewCount) rallyPreviewCount.textContent = currentGeneratedRallies.length;
 
       if (rallyPreviewList) {
@@ -4530,9 +4606,16 @@ ${tone}
       }
     } catch (err) {
       if (rallyLoadingEl) rallyLoadingEl.hidden = true;
-      alert(`生成エラー: ${err.message}`);
+      console.error("Rally generation error:", err);
+      if (errorBox) {
+        errorBox.hidden = false;
+        errorBox.textContent = `⚠️ 生成エラー: ${err.message}`;
+      } else {
+        alert(`生成エラー: ${err.message}`);
+      }
     } finally {
       rallyGenerateBtn.disabled = false;
+      rallyGenerateBtn.innerHTML = `<svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg> ラリーシナリオを生成する（5問）`;
     }
   });
 
