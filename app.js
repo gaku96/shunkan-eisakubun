@@ -4619,7 +4619,8 @@ ${targetPatterns}
       if (listening.runId !== currentRunId || !listening.playing) return;
 
       if (listening.enRepeats === 2) {
-        try { await cancellableSleep(600); } catch (e) { return; }
+        setListeningStep("en", "🔁 もう一度...", "en");
+        try { await cancellableSleep(1350); } catch (e) { return; }
         if (listening.runId !== currentRunId || !listening.playing) return;
         setListeningStep("en", "🔁 もう一度聞く", "en");
         updateSoundwave(true);
