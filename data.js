@@ -1560,10 +1560,24 @@ window.CARD_ALTERNATIVES = {
 // 🥊 シチュエーション即答ラリー (v41)
 // 相手からの問いかけに対して、3秒以内に適切な型を想起・口頭返答する実戦特訓
 // ==========================================
+
+// ==========================================
+// 🥊 シチュエーション即答ラリー テーマ定義
+// ==========================================
+window.RALLY_THEMES = [
+  { id: "all", name: "全シチュエーション（ランダム10問）", icon: "🔥", desc: "日常・ビジネス・旅行など全場面から総合ランダム出題", badge: "総合10問" },
+  { id: "daily", name: "日常・同僚との雑談・ランチ", icon: "☕️", desc: "週末の予定、天気、朝の習慣、趣味など同僚や友人とのフランクな会話", badge: "7問" },
+  { id: "business", name: "ビジネス・会議・進捗と依頼", icon: "💼", desc: "会議の進行、率直な意見、進捗確認、スライドの確認依頼、迅速な対応", badge: "6問" },
+  { id: "social", name: "お誘い・合流・大人の断り方", icon: "🍺", desc: "合流の連絡、飲み会、やんわり断る大人のマナー、お開きの一言", badge: "6問" },
+  { id: "travel", name: "カフェ・レストラン・旅行・街中", icon: "✈️", desc: "カフェの注文、席の確認、持ち帰り、お会計、距離や道案内", badge: "6問" },
+  { id: "empathy", name: "共感・励まし・とっさのフォロー", icon: "💬", desc: "ミスした仲間への励まし、共感、感謝、前向きな切り返し", badge: "6問" },
+  { id: "first_meet", name: "初対面・挨拶・アイスブレイク", icon: "🤝", desc: "初めての挨拶、名前の呼び方、自己紹介、褒め言葉、スマートな会話の始め方", badge: "6問" }
+];
+
 window.RALLY_PRESETS = [
   {
     id: "rally-1",
-    isRally: true,
+    isRally: true, theme: "daily",
     category: "週末・予定",
     partner: {
       name: "Alex",
@@ -1584,7 +1598,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-2",
-    isRally: true,
+    isRally: true, theme: "daily",
     category: "アウトドア・計画",
     partner: {
       name: "Chloe",
@@ -1605,7 +1619,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-3",
-    isRally: true,
+    isRally: true, theme: "daily",
     category: "雑談・休日",
     partner: {
       name: "Marcus",
@@ -1626,7 +1640,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-4",
-    isRally: true,
+    isRally: true, theme: "social",
     category: "相談・買い物",
     partner: {
       name: "Daniel",
@@ -1647,7 +1661,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-5",
-    isRally: true,
+    isRally: true, theme: "social",
     category: "意見・議論",
     partner: {
       name: "Sophia",
@@ -1668,7 +1682,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-6",
-    isRally: true,
+    isRally: true, theme: "first_meet",
     category: "自己紹介・体質",
     partner: {
       name: "Ken",
@@ -1689,7 +1703,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-7",
-    isRally: true,
+    isRally: true, theme: "first_meet",
     category: "体験談・リアクション",
     partner: {
       name: "Emma",
@@ -1710,7 +1724,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-8",
-    isRally: true,
+    isRally: true, theme: "daily",
     category: "オフィス・習慣",
     partner: {
       name: "Liam",
@@ -1731,7 +1745,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-9",
-    isRally: true,
+    isRally: true, theme: "daily",
     category: "ランチ・健康",
     partner: {
       name: "David",
@@ -1752,7 +1766,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-10",
-    isRally: true,
+    isRally: true, theme: "business",
     category: "ビジネス・率直な意見",
     partner: {
       name: "Rachel",
@@ -1773,7 +1787,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-11",
-    isRally: true,
+    isRally: true, theme: "business",
     category: "業務確認・情報共有",
     partner: {
       name: "Kevin",
@@ -1794,7 +1808,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-12",
-    isRally: true,
+    isRally: true, theme: "empathy",
     category: "気遣い・納得",
     partner: {
       name: "Jessica",
@@ -1815,7 +1829,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-13",
-    isRally: true,
+    isRally: true, theme: "daily",
     category: "日常・選択",
     partner: {
       name: "Tom",
@@ -1836,7 +1850,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-14",
-    isRally: true,
+    isRally: true, theme: "business",
     category: "ビジネス・合意",
     partner: {
       name: "Brian",
@@ -1857,7 +1871,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-15",
-    isRally: true,
+    isRally: true, theme: "daily",
     category: "オフィス・雑談",
     partner: {
       name: "Hannah",
@@ -1878,7 +1892,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-16",
-    isRally: true,
+    isRally: true, theme: "business",
     category: "ビジネス・丁寧な依頼",
     partner: {
       name: "Oliver",
@@ -1899,7 +1913,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-17",
-    isRally: true,
+    isRally: true, theme: "travel",
     category: "カフェ・社交",
     partner: {
       name: "Lisa",
@@ -1920,7 +1934,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-18",
-    isRally: true,
+    isRally: true, theme: "business",
     category: "会議・進行",
     partner: {
       name: "Sam",
@@ -1941,7 +1955,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-19",
-    isRally: true,
+    isRally: true, theme: "business",
     category: "ビジネス・即答",
     partner: {
       name: "Boss (Sarah)",
@@ -1962,7 +1976,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-20",
-    isRally: true,
+    isRally: true, theme: "empathy",
     category: "共感・励まし",
     partner: {
       name: "Toby",
@@ -1983,7 +1997,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-21",
-    isRally: true,
+    isRally: true, theme: "empathy",
     category: "前向き・レジリエンス",
     partner: {
       name: "Grace",
@@ -2004,7 +2018,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-22",
-    isRally: true,
+    isRally: true, theme: "empathy",
     category: "大人の返答・感謝",
     partner: {
       name: "James",
@@ -2025,7 +2039,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-23",
-    isRally: true,
+    isRally: true, theme: "empathy",
     category: "称賛・エール",
     partner: {
       name: "Mia",
@@ -2046,7 +2060,7 @@ window.RALLY_PRESETS = [
   },
   {
     id: "rally-24",
-    isRally: true,
+    isRally: true, theme: "empathy",
     category: "ポジティブ・締め",
     partner: {
       name: "Chris",
@@ -2064,6 +2078,293 @@ window.RALLY_PRESETS = [
     ja: "プラス思考でいこうよ。品質テストをする時間がもっと増えたんだから。",
     replyTips: "Look on the bright side はマイナスな状況を一瞬で希望に変える、明るく頼もしい大人の切り返しです。",
     alternatives: ["Let's look on the bright side, at least we won't have to rush.", "Always look on the bright side!"]
+  }
+,
+  {
+    id: "rally-25",
+    isRally: true,
+    theme: "social",
+    category: "合流・人数連絡",
+    partner: {
+      name: "Luke",
+      avatar: "🍻",
+      context: "先にお店に着いてテーブルを確保してくれた同僚",
+      en: "Hey, we just got a table at the pub! How many people are with you?",
+      ja: "パブの席取れたよ！そっちは何人一緒？"
+    },
+    mission: {
+      prompt: "「後からもう2人合流する予定だよ」と伝えて！",
+      hint: "人数の追加を自然に伝える表現を使おう",
+      targetPatternId: 34
+    },
+    en: "Two more will be joining us later.",
+    ja: "後からもう2人合流する予定だよ。",
+    replyTips: "Two more will be joining us はレストランやパブでの合流連絡の鉄板フレーズです。",
+    alternatives: ["Two more friends will join us soon.", "There are two more coming later."]
+  },
+  {
+    id: "rally-26",
+    isRally: true,
+    theme: "social",
+    category: "お誘い・大人の断り方",
+    partner: {
+      name: "Dave",
+      avatar: "🍺",
+      context: "仕事終わりに飲みに行こうと声をかけてくれた同僚",
+      en: "Do you want to come out for drinks with the team tonight?",
+      ja: "今夜チームのみんなと飲みに行かない？"
+    },
+    mission: {
+      prompt: "「今夜は遠慮しておくよ（誘ってくれてありがとう）」と角を立てずに断って！",
+      hint: "マイルドに辞退する大人の型を使おう",
+      targetPatternId: 66
+    },
+    en: "I'd rather not tonight, but thanks for asking!",
+    ja: "今夜は遠慮しておくよ、誘ってくれてありがとう！",
+    replyTips: "I'd rather not に thanks for asking を添えることで、相手の誘いを尊重しつつスマートに断れます。",
+    alternatives: ["I think I'll pass tonight, but thank you!", "I'd rather stay in tonight, thanks though!"]
+  },
+  {
+    id: "rally-27",
+    isRally: true,
+    theme: "social",
+    category: "別れ際・お開き",
+    partner: {
+      name: "Mark",
+      avatar: "🍷",
+      context: "深夜近くまで盛り上がっている集まりで切り出す場面",
+      en: "It's already past 11 PM. Should we order another round or head home?",
+      ja: "もう夜11時過ぎてるね。もう一杯頼む？それとも帰る？"
+    },
+    mission: {
+      prompt: "「今日はここまでにしましょう（お開きにしよう）」と提案して！",
+      hint: "爽やかに締めくくる表現（Part 6）を使おう",
+      targetPatternId: 40
+    },
+    en: "Let's call it a day.",
+    ja: "今日はここまでにしましょう（お開きにしよう）。",
+    replyTips: "Let's call it a day は飲み会や仕事のキリが良いタイミングでスマートにお開きを促す最強フレーズです。",
+    alternatives: ["I think we should call it a day.", "Let's wrap it up and call it a day."]
+  },
+  {
+    id: "rally-28",
+    isRally: true,
+    theme: "social",
+    category: "夕食の提案",
+    partner: {
+      name: "Emily",
+      avatar: "🍕",
+      context: "疲れて料理をする気力がない日の夕方",
+      en: "Nobody feels like cooking tonight. What should we do for dinner?",
+      ja: "今夜は誰も料理する気分じゃないね。夕飯どうしようか？"
+    },
+    mission: {
+      prompt: "「今夜はピザを頼むのはどう？」と提案して！",
+      hint: "How about we の提案型を使おう",
+      targetPatternId: 17
+    },
+    en: "How about we order pizza tonight?",
+    ja: "今夜ピザを頼むのはどう？",
+    replyTips: "How about we ~? は相手にプレッシャーを与えずにフランクな提案を投げかける定番です。",
+    alternatives: ["Why don't we order some pizza?", "How about ordering delivery pizza tonight?"]
+  },
+  {
+    id: "rally-29",
+    isRally: true,
+    theme: "travel",
+    category: "カフェ・持ち帰り注文",
+    partner: {
+      name: "Barista",
+      avatar: "☕️",
+      context: "カウンターでドリンクを受け取る際のやり取り",
+      en: "Here is your iced latte. Anything else I can get for you?",
+      ja: "アイスラテお待たせしました。他にご注文はございますか？"
+    },
+    mission: {
+      prompt: "「これを持ち帰り（テイクアウト）にできますか？」と頼んで！",
+      hint: "Can I get this ~? の型を使おう",
+      targetPatternId: 42
+    },
+    en: "Can I get this to go?",
+    ja: "これをお持ち帰りにできますか？",
+    replyTips: "海外では「take out」より「to go」が最も自然に通じます。",
+    alternatives: ["Could you make that to go, please?", "Can I have this in a to-go cup?"]
+  },
+  {
+    id: "rally-30",
+    isRally: true,
+    theme: "travel",
+    category: "レストラン・同席注文",
+    partner: {
+      name: "Server",
+      avatar: "🍽️",
+      context: "友人が注文した後に自分の番が回ってきた時",
+      en: "And what can I get started for you today?",
+      ja: "お客様は何をご注文されますか？"
+    },
+    mission: {
+      prompt: "「私も（友人と同じものを）ください」と注文して！",
+      hint: "I will have the same thing の型を使おう",
+      targetPatternId: 42
+    },
+    en: "I'll have the same thing, please.",
+    ja: "私も同じものをください。",
+    replyTips: "I'll have the same thing はメニューを見返さずにスマートに同じ品を頼む鉄板表現です。",
+    alternatives: ["The same for me, please.", "I'll go with the same thing."]
+  },
+  {
+    id: "rally-31",
+    isRally: true,
+    theme: "travel",
+    category: "旅行・距離の確認",
+    partner: {
+      name: "Local Guide",
+      avatar: "🗺️",
+      context: "旅先で目的地の場所を教えてもらった場面",
+      en: "The national gallery is just straight down this boulevard.",
+      ja: "国立美術館はこの大通りをまっすぐ行ったところにありますよ。"
+    },
+    mission: {
+      prompt: "「ここからどれくらいの距離ですか？」と尋ねて！",
+      hint: "How far is it ~? の距離確認型を使おう",
+      targetPatternId: 47
+    },
+    en: "How far is it from here?",
+    ja: "ここからどれくらいの距離ですか？",
+    replyTips: "How far is it from here? は徒歩か交通機関を使うか判断する際のとっさの必需品です。",
+    alternatives: ["Is it within walking distance from here?", "About how far is it on foot?"]
+  },
+  {
+    id: "rally-32",
+    isRally: true,
+    theme: "travel",
+    category: "お会計・レシート",
+    partner: {
+      name: "Cashier",
+      avatar: "🧾",
+      context: "レジでの支払いが完了した瞬間",
+      en: "Your payment went through. Have a wonderful afternoon!",
+      ja: "お支払いが完了しました。素敵な午後をお過ごしください！"
+    },
+    mission: {
+      prompt: "「レシートをいただけますか？」と丁寧に頼んで！",
+      hint: "Could I have a receipt, please? の丁寧型を使おう",
+      targetPatternId: 44
+    },
+    en: "Could I have a receipt, please?",
+    ja: "レシートをいただけますか？",
+    replyTips: "Could I have a receipt, please? は経費精算や旅行中の記録に必須の丁寧な表現です。",
+    alternatives: ["May I have the receipt, please?", "Can I get a receipt for this?"]
+  },
+  {
+    id: "rally-33",
+    isRally: true,
+    theme: "travel",
+    category: "食事・おごり",
+    partner: {
+      name: "Travel Buddy",
+      avatar: "💳",
+      context: "ディナーの後輩やお世話になった友人との食事",
+      en: "Let me split the check with you! How much do I owe?",
+      ja: "割り勘にさせて！いくら払えばいい？"
+    },
+    mission: {
+      prompt: "「気にしないで、私がおごるよ（ご馳走するよ）」とスマートに返して！",
+      hint: "I will treat you の型を使おう",
+      targetPatternId: 45
+    },
+    en: "Don't worry about it. I'll treat you.",
+    ja: "気にしないで、ご馳走するよ（おごるよ）。",
+    replyTips: "I'll treat you は「私が出すよ・おごるよ」と相手を立ててご馳走する最高の一言です。",
+    alternatives: ["It's on me tonight!", "Don't worry, my treat!"]
+  },
+  {
+    id: "rally-34",
+    isRally: true,
+    theme: "first_meet",
+    category: "初対面・挨拶",
+    partner: {
+      name: "Ethan",
+      avatar: "🤝",
+      context: "カンファレンスの懇親会で声をかけてくれた他支社の同僚",
+      en: "Hi there! I'm Ethan from the Seattle team. Great to finally see you in person!",
+      ja: "こんにちは！シアトルチームのイーサンです。直接お会いできて嬉しいです！"
+    },
+    mission: {
+      prompt: "「初めまして！お話しするのは初めてですよね」とスマートに返して！",
+      hint: "I think we have never spoken before の型を使おう",
+      targetPatternId: 31
+    },
+    en: "Nice to meet you! I think we have never spoken before.",
+    ja: "初めまして！お話しするのは初めてですよね。",
+    replyTips: "初対面の挨拶にこの一言を添えることで、スムーズに会話の緊張をほぐせます。",
+    alternatives: ["Great to meet you too! We haven't spoken before, right?", "Nice to meet you! This is our first time talking, isn't it?"]
+  },
+  {
+    id: "rally-35",
+    isRally: true,
+    theme: "first_meet",
+    category: "初対面・名前の呼び方",
+    partner: {
+      name: "Christopher",
+      avatar: "🏷️",
+      context: "自己紹介でニックネームを教えてくれた新しい同僚",
+      en: "Hey! Everyone in the office calls me CJ, though my badge says Christopher.",
+      ja: "やあ！名札にはクリストファーと書いてあるけど、社内ではみんなCJと呼んでるよ。"
+    },
+    mission: {
+      prompt: "「何とお呼びすればいいですか？」と尋ねて！",
+      hint: "What should I call you? の型を使おう",
+      targetPatternId: 31
+    },
+    en: "What should I call you?",
+    ja: "何とお呼びすればいいですか？",
+    replyTips: "What should I call you? は相手の好む呼び名を尊重するグローバルな好印象フレーズです。",
+    alternatives: ["Should I call you CJ?", "How would you like me to address you?"]
+  },
+  {
+    id: "rally-36",
+    isRally: true,
+    theme: "first_meet",
+    category: "雑談・天気の共感",
+    partner: {
+      name: "Colleague",
+      avatar: "☀️",
+      context: "エレベーターで一緒になった同僚とのアイスブレイク",
+      en: "Finally some blue sky after days of freezing rain!",
+      ja: "連日の冷たい雨の後で、ようやく青空が出ましたね！"
+    },
+    mission: {
+      prompt: "「今日は暖かくて気持ちいいね」と共感して！",
+      hint: "It is nice and warm today の型を使おう",
+      targetPatternId: 36
+    },
+    en: "Yeah, it's nice and warm today.",
+    ja: "うん、今日は暖かくて気持ちいいね。",
+    replyTips: "天気の話題は万国共通の最強のアイスブレイクです。",
+    alternatives: ["It really is nice and warm today.", "Totally, what a lovely warm day!"]
+  },
+  {
+    id: "rally-37",
+    isRally: true,
+    theme: "first_meet",
+    category: "褒め言葉・外見",
+    partner: {
+      name: "Teammate",
+      avatar: "👔",
+      context: "新しいジャケットを着てオフィスに現れたチームメイト",
+      en: "I picked up this navy jacket on sale over the weekend. How does it look?",
+      ja: "週末セールでこのネイビージャケット買ったんだ。どう見える？"
+    },
+    mission: {
+      prompt: "「それ、君によく似合ってるよ！」と自然に褒めて！",
+      hint: "That looks good on you の型を使おう",
+      targetPatternId: 48
+    },
+    en: "That looks really good on you!",
+    ja: "それ、君によく似合ってるよ！",
+    replyTips: "That looks good on you は服や髪型、持ち物を自然に褒めるネイティブの定番です。",
+    alternatives: ["It suits you really well!", "That looks great on you!"]
   }
 ];
 

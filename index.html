@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=49">
+  <link rel="stylesheet" href="style.css?v=50">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -315,12 +315,12 @@
           <div class="rally-banner-actions">
             <button type="button" class="btn primary big rally-start-btn" id="start-rally-btn">
               <svg class="ui-icon" aria-hidden="true"><use href="#icon-flame"></use></svg>
-              <span>即答ラリーを開始（10問）</span>
+              <span>全場面ランダムラリー（10問）</span>
             </button>
-            <button type="button" class="btn rally-ai-btn" id="open-rally-ai-btn">
-              <svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg>
-              <span>AIで新しい場面を作る</span>
-              <span class="rally-ai-pill-tag">NEW</span>
+            <button type="button" class="btn rally-ai-btn" id="open-rally-select-btn">
+              <svg class="ui-icon" aria-hidden="true"><use href="#icon-speech"></use></svg>
+              <span>シチュエーションを選ぶ</span>
+              <span class="rally-ai-pill-tag">厳選6テーマ</span>
             </button>
           </div>
         </div>
@@ -375,17 +375,17 @@
             </div>
           </button>
 
-          <!-- 🤖 AI例文生成 -->
-          <button type="button" class="quick-action-tile" id="open-ai-modal">
-            <div class="quick-tile-icon-wrap ai">
-              <span class="quick-tile-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-robot"></use></svg></span>
+          <!-- 🥊 場面別ラリー集 -->
+          <button type="button" class="quick-action-tile" id="open-rally-quick-tile">
+            <div class="quick-tile-icon-wrap ai" style="background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(234, 88, 12, 0.25) 100%);">
+              <span class="quick-tile-icon" style="color: #ea580c;"><svg class="ui-icon" aria-hidden="true"><use href="#icon-speech"></use></svg></span>
             </div>
             <div class="quick-tile-body">
               <div class="quick-tile-title-row">
-                <span class="quick-tile-title">AI専用例文</span>
-                <span class="quick-tile-badge ai">AI</span>
+                <span class="quick-tile-title">場面別ラリー</span>
+                <span class="quick-tile-badge ai" style="background: #ea580c; color: #fff;">厳選</span>
               </div>
-              <p class="quick-tile-desc">仕事や趣味に合わせて作成</p>
+              <p class="quick-tile-desc">日常・仕事・旅行の即答特訓</p>
             </div>
           </button>
         </div>
@@ -1169,58 +1169,28 @@
     </div>
   </dialog>
 
-  <!-- 🥊 AIシチュエーション即答ラリー生成モーダル (v41) -->
-  <dialog id="rally-ai-dialog" class="badge-detail-dialog" closedby="any" aria-labelledby="rally-ai-title">
-    <div class="badge-detail-content ai-modal-content" style="text-align:left;">
+  <!-- 🥊 実戦シチュエーション即答ラリー選択モーダル (v50) -->
+  <dialog id="rally-select-dialog" class="badge-detail-dialog" closedby="any" aria-labelledby="rally-select-title">
+    <div class="badge-detail-content ai-modal-content" style="text-align:left; max-width: 520px; padding: 20px;">
       <div class="dialog-header">
-        <h3 id="rally-ai-title"><svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg> AIシチュエーション即答ラリー生成</h3>
-        <button type="button" class="icon-btn" id="close-rally-ai-dialog" aria-label="閉じる"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"></use></svg></button>
+        <h3 id="rally-select-title" style="display:flex; align-items:center; gap:8px; margin:0;">
+          <svg class="ui-icon" aria-hidden="true" style="color:#ea580c;"><use href="#icon-flame"></use></svg>
+          シチュエーション即答ラリー
+        </h3>
+        <button type="button" class="icon-btn" id="close-rally-select-dialog" aria-label="閉じる"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"></use></svg></button>
       </div>
-      <p class="dialog-intro">遭遇しそうな実戦の英会話シチュエーションを入力すると、Geminiが即答ラリー（相手の問いかけ＋返答ミッション＋模範返答）を自動生成します！</p>
+      <p class="dialog-intro" style="margin: 8px 0 12px; font-size: 0.86rem; color: var(--muted); line-height: 1.5;">
+        遭遇しやすい英会話の場面を選んで即座に特訓！相手のリアルな英語の問いかけに3秒以内に適切な型で即答する実戦トレーニングです。
+      </p>
 
-      <div class="ai-presets">
-        <p class="presets-label">おすすめシチュエーション:</p>
-        <div class="chip-group">
-          <button type="button" class="chip rally-ai-preset" data-topic="外資系IT企業の英語面接・職務経歴質問">💻 英語面接</button>
-          <button type="button" class="chip rally-ai-preset" data-topic="海外オフィスの同僚とのランチ・雑談">☕️ 同僚とランチ</button>
-          <button type="button" class="chip rally-ai-preset" data-topic="海外出張でのホテルチェックインや空港トラブル">✈️ 出張・ホテル</button>
-          <button type="button" class="chip rally-ai-preset" data-topic="グローバル会議での進捗報告と突発的な質問">📊 グローバル会議</button>
-          <button type="button" class="chip rally-ai-preset" data-topic="海外の友人との週末プラン・お誘いと断り方">🍻 週末の誘い・断り</button>
-        </div>
+      <div class="rally-features-pills">
+        <span class="rally-feat-pill">⚡️ 待ち時間0秒・即スタート</span>
+        <span class="rally-feat-pill">📶 オフライン対応</span>
+        <span class="rally-feat-pill">🎯 実戦ネイティブ厳選</span>
       </div>
 
-      <label class="field-stacked">
-        <span>シチュエーション・相手の立場</span>
-        <input type="text" id="rally-ai-topic" placeholder="例: 海外クライアントとの価格交渉、ホームステイ先での雑談 など">
-      </label>
-
-      <label class="field">
-        <span>トーン / 場面設定</span>
-        <select id="rally-ai-tone">
-          <option value="casual" selected>カジュアル（同僚・友人・フランクな会話）</option>
-          <option value="business">ビジネス・丁寧（取引先・上司・会議）</option>
-          <option value="travel">旅行・街中・カフェ（スマートな日常会話）</option>
-        </select>
-      </label>
-
-      <div id="rally-ai-key-hint" class="ai-key-hint"></div>
-
-      <button type="button" class="btn primary big" id="rally-ai-generate-btn"><svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg> ラリーシナリオを生成する（5問）</button>
-
-      <!-- エラー表示領域 -->
-      <div id="rally-ai-error-box" class="status-msg error" hidden style="margin-top: 10px; font-size: 0.85rem; line-height: 1.5;"></div>
-
-      <!-- 生成結果プレビュー -->
-      <div id="rally-ai-preview" class="ai-preview" hidden>
-        <div class="preview-head">
-          <h3>生成された即答ラリー（<span id="rally-ai-preview-count">0</span>問）</h3>
-        </div>
-        <div id="rally-ai-preview-list" class="ai-preview-list"></div>
-
-        <div class="dialog-actions">
-          <button type="button" class="btn ghost" id="rally-ai-cancel-btn">やり直す</button>
-          <button type="button" class="btn primary" id="rally-ai-save-btn"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-check"></use></svg> ラリーに追加して特訓する</button>
-        </div>
+      <div class="rally-theme-list" id="rally-theme-list">
+        <!-- JSでテーマ一覧を動的描画 -->
       </div>
     </div>
   </dialog>
@@ -1412,8 +1382,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=49"></script>
-  <script src="app.js?v=49"></script>
+  <script src="data.js?v=50"></script>
+  <script src="app.js?v=50"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

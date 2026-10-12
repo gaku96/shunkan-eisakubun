@@ -1433,7 +1433,7 @@
         };
       }
       case "rally": {
-        const presets = (window.RALLY_PRESETS || []).map((r) => ({
+        let pool = (window.RALLY_PRESETS || []).map((r) => ({
           ...r,
           pattern: r.pattern || window.PATTERNS.find((p) => p.id === (r.mission && r.mission.targetPatternId)) || window.PATTERNS[0],
         }));
@@ -1442,9 +1442,24 @@
           isRally: true,
           pattern: r.pattern || window.PATTERNS.find((p) => p.id === (r.mission && r.mission.targetPatternId)) || window.PATTERNS[0],
         }));
-        const combined = [...presets, ...customs];
-        const selected = shuffle(combined).slice(0, 10);
-        return { title: "🥊 シチュエーション即答ラリー", queue: selected };
+        if (customs.length) pool = [...pool, ...customs];
+
+        const themeId = mode.theme;
+        let title = "🥊 シチュエーション即答ラリー";
+        let count = 10;
+        if (themeId && themeId !== "all") {
+          const filtered = pool.filter((r) => r.theme === themeId);
+          if (filtered.length) {
+            pool = filtered;
+            count = pool.length;
+          }
+          const foundTheme = (window.RALLY_THEMES || []).find((t) => t.id === themeId);
+          if (foundTheme) {
+            title = `🥊 ${foundTheme.name}`;
+          }
+        }
+        const selected = shuffle(pool).slice(0, count);
+        return { title, queue: selected };
       }
     }
   }
@@ -5067,222 +5082,51 @@ ${targetPatterns}
   $("#bulk-download-btn")?.addEventListener("click", startBulkAudioDownload);
 
   // ==========================================
-  // 🥊 AIシチュエーション即答ラリー生成モーダル制御 (v41)
+  // 🥊 シチュエーション即答ラリー テーマ選択モーダル制御 (v50)
   // ==========================================
-  const rallyAiDialog = $("#rally-ai-dialog");
-  const openRallyAiBtn = $("#open-rally-ai-btn");
-  const closeRallyAiBtn = $("#close-rally-ai-dialog");
-  const rallyTopicInput = $("#rally-ai-topic");
-  const rallyToneSelect = $("#rally-ai-tone");
-  const rallyKeyHint = $("#rally-ai-key-hint");
-  const rallyGenerateBtn = $("#rally-ai-generate-btn");
-  const rallyPreviewEl = $("#rally-ai-preview");
-  const rallyPreviewList = $("#rally-ai-preview-list");
-  const rallyPreviewCount = $("#rally-ai-preview-count");
-  const rallySaveBtn = $("#rally-ai-save-btn");
-  const rallyCancelBtn = $("#rally-ai-cancel-btn");
-  const rallyPresetButtons = document.querySelectorAll(".rally-ai-preset");
+  const rallySelectDialog = $("#rally-select-dialog");
+  const openRallySelectBtn = $("#open-rally-select-btn");
+  const openRallyQuickTile = $("#open-rally-quick-tile");
+  const closeRallySelectBtn = $("#close-rally-select-dialog");
+  const rallyThemeListEl = $("#rally-theme-list");
 
-  let currentGeneratedRallies = [];
-
-  function updateRallyKeyHint() {
-    if (!rallyKeyHint) return;
-    const hasKey = !!state.settings.geminiApiKey;
-    if (hasKey) {
-      rallyKeyHint.className = "ai-key-hint with-key";
-      rallyKeyHint.innerHTML = "✨ <strong>Gemini Flash 連携中</strong>：指定したシチュエーションに合わせ、臨場感あふれる即答対話ラリーをリアルタイム生成します。";
-    } else {
-      rallyKeyHint.className = "ai-key-hint no-key";
-      rallyKeyHint.innerHTML = "💡 <strong>0円・APIキー不要モード</strong>：おすすめシチュエーションから即座にラリーをセットアップできます。<br><small>オリジナルの場面を自由生成したい場合は、⚙️設定でGemini APIキーを登録できます。</small>";
-    }
+  function renderRallyThemeList() {
+    if (!rallyThemeListEl) return;
+    const themes = window.RALLY_THEMES || [];
+    rallyThemeListEl.replaceChildren(
+      ...themes.map((theme) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `rally-theme-card${theme.id === "all" ? " highlight" : ""}`;
+        btn.innerHTML = `
+          <span class="rally-theme-icon">${theme.icon}</span>
+          <span class="rally-theme-info">
+            <span class="rally-theme-title-row">
+              <span class="rally-theme-title">${theme.name}</span>
+              <span class="rally-theme-badge">${theme.badge || ""}</span>
+            </span>
+            <span class="rally-theme-desc">${theme.desc}</span>
+          </span>
+          <span class="rally-theme-arrow">›</span>
+        `;
+        btn.addEventListener("click", () => {
+          rallySelectDialog?.close();
+          startSession({ type: "rally", theme: theme.id });
+        });
+        return btn;
+      })
+    );
   }
 
-  openRallyAiBtn?.addEventListener("click", () => {
-    updateRallyKeyHint();
-    if (rallyPreviewEl) rallyPreviewEl.hidden = true;
-    if (rallyGenerateBtn) {
-      rallyGenerateBtn.disabled = false;
-      rallyGenerateBtn.innerHTML = `<svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg> ラリーシナリオを生成する（5問）`;
-    }
-    const errorBox = $("#rally-ai-error-box");
-    if (errorBox) {
-      errorBox.hidden = true;
-      errorBox.textContent = "";
-    }
-    currentGeneratedRallies = [];
-    rallyAiDialog?.showModal();
-  });
-
-  closeRallyAiBtn?.addEventListener("click", () => {
-    rallyAiDialog?.close();
-  });
-
-  rallyPresetButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      rallyPresetButtons.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      if (rallyTopicInput) rallyTopicInput.value = btn.dataset.topic;
-    });
-  });
-
-  async function generateRalliesWithGemini(topic, tone, apiKey) {
-    const prompt = `あなたは英会話のプロコーチです。以下のシチュエーション・トピックとトーンに合わせて、「シチュエーション即答ラリー」のシナリオを5件作成してください。
-
-【シチュエーション・相手の立場】
-${topic}
-
-【トーン】
-${tone}
-
-【各ラリーカードのルール】
-- 相手（ネイティブ）が自然に英語で話しかけてくるシチュエーションです。
-- partner.avatar: 絵文字1文字（例: 🧑‍💼, 👩‍💻, 👱‍♀️, 🧔‍♂️など）
-- partner.name: 相手の名前
-- partner.context: 状況の短い説明（日本語）
-- partner.en: 相手が話しかけてくる英語（1〜2文、日常会話的で自然）
-- partner.ja: 相手の英語の日本語訳
-- mission.prompt: ユーザーへの返答ミッション（例:「〜とやんわり断って！」「〜と答えて！」）
-- mission.hint: 会話のヒント（日本語）
-- mission.targetPatternId: 70の基本構文の中で最も適した型ID（1〜70）
-- en: あなた（ユーザー）の模範返答となる英語
-- ja: 模範返答の自然な日本語訳
-- replyTips: なぜこの表現が効果的か、大人の切り返しのコツ解説（1〜2文）
-- alternatives: その他の自然な言い回し・返し方（2つの配列）
-
-出力は必ず以下のJSON配列のみを返してください：
-[
-  {
-    "partner": {
-      "avatar": "🧑‍💼",
-      "name": "Sarah",
-      "context": "クライアントからの日程変更依頼",
-      "en": "Could we possibly move our sync to next Tuesday?",
-      "ja": "打ち合わせを来週の火曜日に変更することは可能ですか？"
-    },
-    "mission": {
-      "prompt": "「私の知る限りでは、火曜なら大丈夫なはずです」と答えて！",
-      "hint": "自分の把握範囲に限定する型を使おう",
-      "targetPatternId": 11
-    },
-    "en": "As far as I know, Tuesday should be fine.",
-    "ja": "私の知る限りでは、火曜なら大丈夫なはずです。",
-    "replyTips": "As far as I know を使うことで、確定前にやんわり見通しを共有できます。",
-    "alternatives": ["As far as I'm aware, that works.", "Tuesday should work from what I know."]
-  }
-]`;
-
-    const parsed = await requestGeminiContent(prompt, apiKey);
-
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      throw new Error("ラリーデータの形式が不正です。");
-    }
-
-    return parsed.map((item, idx) => ({
-      id: `custom-rally-${Date.now()}-${idx}`,
-      isRally: true,
-      category: topic,
-      partner: item.partner,
-      mission: item.mission,
-      pattern: window.PATTERNS.find((p) => p.id === (item.mission && item.mission.targetPatternId)) || window.PATTERNS[0],
-      en: item.en,
-      ja: item.ja,
-      replyTips: item.replyTips || "相手の意図を汲み取りながら自然に返す大人のフレーズです。",
-      alternatives: item.alternatives || []
-    }));
+  function openRallySelect() {
+    renderRallyThemeList();
+    rallySelectDialog?.showModal();
   }
 
-  rallyGenerateBtn?.addEventListener("click", async () => {
-    const topic = (rallyTopicInput?.value || "").trim() || "日常会話・オフィスでの雑談";
-    const tone = rallyToneSelect?.value || "casual";
-    const apiKey = state.settings.geminiApiKey;
-    const errorBox = $("#rally-ai-error-box");
-
-    if (errorBox) {
-      errorBox.hidden = true;
-      errorBox.textContent = "";
-    }
-    rallyGenerateBtn.disabled = true;
-    rallyGenerateBtn.innerHTML = `<span class="spinner icon-xs" style="display:inline-block; vertical-align:middle; width:14px; height:14px; border-width:2px; margin-right:6px;"></span> シナリオを生成中...`;
-    if (rallyPreviewEl) rallyPreviewEl.hidden = true;
-
-    try {
-      if (apiKey) {
-        try {
-          currentGeneratedRallies = await generateRalliesWithGemini(topic, tone, apiKey);
-        } catch (apiErr) {
-          console.warn("Gemini rally generation failed, falling back to curated presets:", apiErr);
-          if (errorBox) {
-            errorBox.hidden = false;
-            errorBox.textContent = `⚠️ Gemini連携エラー (${apiErr.message})。プリセットからシナリオを展開しました。`;
-          }
-          const pool = [...(window.RALLY_PRESETS || [])];
-          currentGeneratedRallies = shuffle(pool).slice(0, 5);
-        }
-      } else {
-        // APIキーなし: プリセットから5件ピックアップ
-        await new Promise((r) => setTimeout(r, 400));
-        const pool = [...(window.RALLY_PRESETS || [])];
-        currentGeneratedRallies = shuffle(pool).slice(0, 5);
-      }
-
-      if (rallyPreviewEl) {
-        rallyPreviewEl.hidden = false;
-        setTimeout(() => {
-          rallyPreviewEl.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 100);
-      }
-      if (rallyPreviewCount) rallyPreviewCount.textContent = currentGeneratedRallies.length;
-
-      if (rallyPreviewList) {
-        rallyPreviewList.replaceChildren(...currentGeneratedRallies.map((item) => {
-          const div = document.createElement("div");
-          div.className = "preview-card-item";
-          div.style.marginBottom = "10px";
-          div.style.padding = "10px 12px";
-          div.style.background = "var(--surface)";
-          div.style.border = "1px solid var(--border)";
-          div.style.borderRadius = "10px";
-          div.innerHTML = `
-            <div style="font-size:0.75rem; color:var(--accent); font-weight:700; margin-bottom:4px;">
-              ${item.partner?.avatar || "🧑‍💼"} ${item.partner?.name || "Partner"}「${item.partner?.en || ""}」
-            </div>
-            <div style="font-size:0.82rem; font-weight:700; color:var(--text); margin-bottom:2px;">
-              🎯 ${item.mission?.prompt || item.ja}
-            </div>
-            <div style="font-size:0.85rem; color:#2563eb; font-weight:700;">
-              ↳ 模範返答: ${item.en}
-            </div>
-          `;
-          return div;
-        }));
-      }
-    } catch (err) {
-      console.error("Rally generation error:", err);
-      if (errorBox) {
-        errorBox.hidden = false;
-        errorBox.textContent = `⚠️ 生成エラー: ${err.message}`;
-      } else {
-        alert(`生成エラー: ${err.message}`);
-      }
-    } finally {
-      rallyGenerateBtn.disabled = false;
-      rallyGenerateBtn.innerHTML = `<svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg> ラリーシナリオを生成する（5問）`;
-    }
-  });
-
-  rallyCancelBtn?.addEventListener("click", () => {
-    if (rallyPreviewEl) rallyPreviewEl.hidden = true;
-    currentGeneratedRallies = [];
-  });
-
-  rallySaveBtn?.addEventListener("click", () => {
-    if (!currentGeneratedRallies.length) return;
-    state.customRallies = state.customRallies || [];
-    state.customRallies.push(...currentGeneratedRallies);
-    save();
-    rallyAiDialog?.close();
-    showToast(`🥊 ${currentGeneratedRallies.length}問のラリーを登録しました！`);
-    startSession({ type: "rally" });
+  openRallySelectBtn?.addEventListener("click", openRallySelect);
+  openRallyQuickTile?.addEventListener("click", openRallySelect);
+  closeRallySelectBtn?.addEventListener("click", () => {
+    rallySelectDialog?.close();
   });
 
   const rallyCountEl = $("#rally-preset-count");
