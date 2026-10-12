@@ -16,8 +16,8 @@ import re
 import sys
 import time
 import urllib.request
-import urllib.error
 import struct
+import subprocess
 
 def pcm_to_wav(pcm_data: bytes, sample_rate: int = 24000, num_channels: int = 1, bits_per_sample: int = 16) -> bytes:
     byte_rate = (sample_rate * num_channels * bits_per_sample) // 8
@@ -133,14 +133,30 @@ console.log(JSON.stringify(cards));
     raw = subprocess.check_output(cmd, encoding="utf-8")
     return json.loads(raw)
 
+import getpass
+
 def main():
     parser = argparse.ArgumentParser(description="Generate all Gemini TTS audio files")
-    parser.add_argument("--api-key", required=True, help="Gemini API Key")
+    parser.add_argument("--api-key", default=None, help="Gemini API Key (omittable; will prompt securely or read GEMINI_API_KEY env)")
     parser.add_argument("--model", default="gemini-3.8-flash-tts", help="Gemini model")
     parser.add_argument("--voice", default="Kore", help="Voice name (Kore, Puck, Aoede, Fenrir, Charon)")
     parser.add_argument("--accent", default="us", choices=["us", "uk", "in", "au", "global"], help="Accent: us, uk, in, au, global")
     parser.add_argument("--output-dir", default=None, help="Output directory (defaults to audio/)")
     args = parser.parse_args()
+
+    api_key = args.api_key or os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        try:
+            api_key = getpass.getpass("🔑 Gemini APIキーを入力してください (非表示入力・履歴に残りません): ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nキャンセルされました。")
+            sys.exit(1)
+
+    if not api_key:
+        print("❌ エラー: APIキーが入力されていません。")
+        sys.exit(1)
+
+    args.api_key = api_key
 
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     output_dir = args.output_dir or os.path.join(base_dir, "audio")
@@ -162,37 +178,56 @@ def main():
         cid = card["id"]
         course_tag = "GRIT" if card["course"] == "grit" else "口語"
         eff_accent = get_effective_accent(cid, args.accent)
-        en_file = os.path.join(output_dir, f"{cid}.wav")
-        ja_file = os.path.join(output_dir, f"{cid}_ja.wav")
+        en_mp3 = os.path.join(output_dir, f"{cid}.mp3")
+        ja_mp3 = os.path.join(output_dir, f"{cid}_ja.mp3")
 
-        print(f"[{idx}/{total_cards}] ({course_tag}・{eff_accent.upper()}) {cid}: {card['en'][:30]}...")
+        en_needed = not os.path.exists(en_mp3) or os.path.getsize(en_mp3) < 200
+        ja_needed = not os.path.exists(ja_mp3) or os.path.getsize(ja_mp3) < 200
+
+        if not en_needed and not ja_needed:
+            success_count += 2
+            continue
+
+        print(f"[{idx}/{total_cards}] ({course_tag}・{eff_accent.upper()}) {cid}: {card['en'][:35]}...")
 
         # 1. English
-        if not os.path.exists(en_file) or os.path.getsize(en_file) == 0:
+        if en_needed:
             try:
                 wav_bytes = call_gemini_tts(card["en"], args.api_key, args.model, args.voice, "en", eff_accent)
-                with open(en_file, "wb") as f:
+                temp_wav = os.path.join(output_dir, f"_temp_{cid}.wav")
+                with open(temp_wav, "wb") as f:
                     f.write(wav_bytes)
+                subprocess.run(["lame", "-b", "64", "-m", "m", temp_wav, en_mp3], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                if os.path.exists(temp_wav):
+                    os.remove(temp_wav)
                 success_count += 1
-                time.sleep(0.8) # rate-limit pause
+                print(f"  ✓ EN created: {os.path.basename(en_mp3)} ({os.path.getsize(en_mp3)} bytes)")
+                time.sleep(0.8)
             except Exception as e:
                 print(f"  ❌ Error EN: {e}")
                 if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                    print("  ⏳ 429 Rate limit encountered, pausing 10s...")
                     time.sleep(10)
         else:
             success_count += 1
 
         # 2. Japanese
-        if not os.path.exists(ja_file) or os.path.getsize(ja_file) == 0:
+        if ja_needed:
             try:
                 wav_bytes = call_gemini_tts(card["ja"], args.api_key, args.model, args.voice, "ja")
-                with open(ja_file, "wb") as f:
+                temp_wav = os.path.join(output_dir, f"_temp_{cid}_ja.wav")
+                with open(temp_wav, "wb") as f:
                     f.write(wav_bytes)
+                subprocess.run(["lame", "-b", "64", "-m", "m", temp_wav, ja_mp3], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                if os.path.exists(temp_wav):
+                    os.remove(temp_wav)
                 success_count += 1
+                print(f"  ✓ JA created: {os.path.basename(ja_mp3)} ({os.path.getsize(ja_mp3)} bytes)")
                 time.sleep(0.8)
             except Exception as e:
                 print(f"  ❌ Error JA: {e}")
                 if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                    print("  ⏳ 429 Rate limit encountered, pausing 10s...")
                     time.sleep(10)
         else:
             success_count += 1
