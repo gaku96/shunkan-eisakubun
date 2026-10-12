@@ -3658,7 +3658,8 @@ ${targetPatterns}
       renderListeningCard(listening.queue[listening.index], false);
     }
     if (!listening.playing) {
-      resumeListening();
+      setListeningStep("idle", "▶ 再生ボタンを押して開始", "ready");
+      updateSoundwave(false);
     }
   }
 
@@ -3949,13 +3950,22 @@ ${targetPatterns}
   $("#listening-btn-play")?.addEventListener("click", toggleListeningPlay);
   $("#listening-btn-next")?.addEventListener("click", nextListening);
   $("#listening-btn-prev")?.addEventListener("click", prevListening);
+  $("#listening-deck-card")?.addEventListener("click", (e) => {
+    if (e.target.closest("button, a, input, select, progress")) return;
+    toggleListeningPlay();
+  });
   $("#listening-btn-shuffle")?.addEventListener("click", () => {
     listening.shuffle = !listening.shuffle;
+    const wasPlaying = listening.playing;
     pauseListening();
     loadListeningQueue(listening.range);
     renderListeningCard(listening.queue[listening.index], false);
     updateListeningControlsUI();
-    resumeListening();
+    if (wasPlaying) {
+      resumeListening();
+    } else {
+      setListeningStep("idle", "▶ 再生ボタンを押して開始", "ready");
+    }
   });
   $("#listening-btn-loop")?.addEventListener("click", () => {
     listening.loop = !listening.loop;
@@ -3968,12 +3978,17 @@ ${targetPatterns}
     if (!pill) return;
     const range = pill.dataset.range;
     if (range === listening.range) return;
+    const wasPlaying = listening.playing;
     pauseListening();
     loadListeningQueue(range);
     updateListeningFilterPills();
     renderListeningCard(listening.queue[listening.index], false);
     updateListeningControlsUI();
-    resumeListening();
+    if (wasPlaying) {
+      resumeListening();
+    } else {
+      setListeningStep("idle", "▶ 再生ボタンを押して開始", "ready");
+    }
   });
 
   // Settings toggles
