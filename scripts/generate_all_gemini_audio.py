@@ -153,6 +153,7 @@ def main():
     parser.add_argument("--voice", default="Kore", help="Voice name (Kore, Puck, Aoede, Fenrir, Charon)")
     parser.add_argument("--accent", default="us", choices=["us", "uk", "in", "au", "global"], help="Accent: us, uk, in, au, global")
     parser.add_argument("--output-dir", default=None, help="Output directory (defaults to audio/)")
+    parser.add_argument("--replace-temp", action="store_true", default=True, help="Automatically replace temporary macOS audio cards from scripts/temp_audio_cards.json")
     args = parser.parse_args()
 
     api_key = args.api_key or os.environ.get("GEMINI_API_KEY")
@@ -172,12 +173,23 @@ def main():
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     output_dir = args.output_dir or os.path.join(base_dir, "audio")
     data_path = os.path.join(base_dir, "data.js")
+    temp_cards_file = os.path.join(base_dir, "scripts", "temp_audio_cards.json")
+
+    temp_cards_set = set()
+    if os.path.exists(temp_cards_file):
+        try:
+            with open(temp_cards_file, "r", encoding="utf-8") as f:
+                temp_cards_set = set(json.load(f))
+        except Exception:
+            pass
 
     os.makedirs(output_dir, exist_ok=True)
     cards = load_all_cards(data_path)
     total_cards = len(cards)
 
-    print(f"Loaded {total_cards} cards. Total files to generate: {total_cards * 2} (English + Japanese)")
+    print(f"Loaded {total_cards} cards. Total files: {total_cards * 2} (English + Japanese)")
+    if temp_cards_set:
+        print(f"🔄 Gemini未生成（一時音声）カード: {len(temp_cards_set)} 件 を優先的に置換します。")
     print(f"Model: {args.model}, Voice: {args.voice}, Accent: {args.accent}")
     print(f"Output directory: {output_dir}")
     print("=" * 60)
@@ -218,28 +230,41 @@ def main():
         en_mp3 = os.path.join(output_dir, f"{cid}.mp3")
         ja_mp3 = os.path.join(output_dir, f"{cid}_ja.mp3")
 
-        en_needed = not os.path.exists(en_mp3) or os.path.getsize(en_mp3) < 200
-        ja_needed = not os.path.exists(ja_mp3) or os.path.getsize(ja_mp3) < 200
+        is_temp = cid in temp_cards_set
+        en_needed = is_temp or not os.path.exists(en_mp3) or os.path.getsize(en_mp3) < 200
+        ja_needed = is_temp or not os.path.exists(ja_mp3) or os.path.getsize(ja_mp3) < 200
 
         if not en_needed and not ja_needed:
             success_count += 2
             continue
 
-        print(f"[{idx}/{total_cards}] ({course_tag}・{eff_accent.upper()}) {cid}: {card['en'][:35]}...")
+        tag_suffix = " (Gemini置換)" if is_temp else ""
+        print(f"[{idx}/{total_cards}] ({course_tag}・{eff_accent.upper()}) {cid}{tag_suffix}: {card['en'][:35]}...")
 
         # 1. English
+        ok_en = True
         if en_needed:
-            ok = generate_single_file(card["en"], "en", eff_accent, en_mp3, "EN")
-            if ok: success_count += 1
+            ok_en = generate_single_file(card["en"], "en", eff_accent, en_mp3, "EN")
+            if ok_en: success_count += 1
         else:
             success_count += 1
 
         # 2. Japanese
+        ok_ja = True
         if ja_needed:
-            ok = generate_single_file(card["ja"], "ja", "us", ja_mp3, "JA")
-            if ok: success_count += 1
+            ok_ja = generate_single_file(card["ja"], "ja", "us", ja_mp3, "JA")
+            if ok_ja: success_count += 1
         else:
             success_count += 1
+
+        # If both succeeded and it was temp, update tracking file
+        if is_temp and ok_en and ok_ja:
+            temp_cards_set.discard(cid)
+            try:
+                with open(temp_cards_file, "w", encoding="utf-8") as f:
+                    json.dump(sorted(list(temp_cards_set)), f, ensure_ascii=False, indent=2)
+            except Exception:
+                pass
 
     elapsed = time.time() - start_time
     print("=" * 60)
