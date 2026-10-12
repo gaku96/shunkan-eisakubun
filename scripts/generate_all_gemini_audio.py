@@ -100,8 +100,17 @@ def call_gemini_tts(text: str, api_key: str, model: str = "gemini-3.8-flash-tts"
         headers={"Content-Type": "application/json"}
     )
 
-    with urllib.request.urlopen(req, timeout=30) as response:
-        res_data = json.loads(response.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            res_data = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode("utf-8", errors="replace")
+        try:
+            err_json = json.loads(error_body)
+            detail = err_json.get("error", {}).get("message", error_body)
+        except Exception:
+            detail = error_body
+        raise RuntimeError(f"HTTP {e.code} ({e.reason}): {detail}")
 
     candidate = res_data.get("candidates", [{}])[0]
     part = candidate.get("content", {}).get("parts", [{}])[0]
@@ -195,6 +204,7 @@ def main():
                 if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
                     wait_sec = 12 * (attempt + 1)
                     print(f"  ⏳ [429 API制限検知] {wait_sec}秒待機して再試行します... (試行 {attempt + 1}/{max_retries})")
+                    print(f"     詳細: {err_str}")
                     time.sleep(wait_sec)
                 else:
                     print(f"  ❌ Error {tag_name}: {e}")
