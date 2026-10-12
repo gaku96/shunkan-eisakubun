@@ -174,7 +174,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 17, part: 5, en: "How about + 主語 + 動詞?", ja: "〜するのはどう？",
+    id: 17, part: 5, en: "How about we ~?", ja: "〜するのはどう？",
     note: "How about の後ろに普通の文（平叙文）をそのまま付けて提案する。",
     examples: [
       { ja: "今夜ピザを頼むのはどう？", en: "How about we order pizza tonight?" },
@@ -244,7 +244,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 24, part: 5, en: "It takes (時間) to ~", ja: "〜するのに（時間）かかる",
+    id: 24, part: 5, en: "It takes (time) to ~", ja: "〜するのに（時間）かかる",
     note: "主語を It にする基本チャンク。",
     examples: [
       { ja: "そこへ行くのに30分かかる。", en: "It takes 30 minutes to get there." },
@@ -314,7 +314,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 31, part: 6, en: "挨拶・初対面・名前の確認", ja: "初めての会話や名前を尋ねる表現",
+    id: 31, part: 6, en: "What should I call you?", ja: "挨拶・初対面・名前の確認",
     note: "初対面でスマートに会話を始めるフレーズ。",
     examples: [
       { ja: "お話しするのは初めてですよね。", en: "I think we have never spoken before." },
@@ -344,7 +344,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 34, part: 6, en: "合流・人数の連絡", ja: "人数の変更や後からの合流を伝える",
+    id: 34, part: 6, en: "Two more will be joining us", ja: "合流・人数の連絡",
     note: "飲み会や食事で追加の参加者を伝えるフレーズ。",
     examples: [
       { ja: "後からもう2人合流します。", en: "Two more will be joining us later." },
@@ -354,7 +354,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 35, part: 3, en: "What did you get up to? / 近況と習慣", ja: "休みの過ごし方や日常の習慣を語る",
+    id: 35, part: 3, en: "What did you get up to?", ja: "近況と習慣・休みの過ごし方",
     note: "週末何してた？や体質・日課を共有する。",
     examples: [
       { ja: "何をして過ごしてたの？", en: "What did you get up to?" },
@@ -364,7 +364,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 36, part: 6, en: "天気・気候の雑談", ja: "日常の会話を始める天気の話題",
+    id: 36, part: 6, en: "It's nice and warm today", ja: "天気・気候の雑談",
     note: "アイスブレイクにぴったりの天気の表現。",
     examples: [
       { ja: "今日は暖かくて気持ちいいね。", en: "It's nice and warm today." },
@@ -373,7 +373,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 37, part: 6, en: "体調・健康の気遣い", ja: "体調不良や相手の体を気遣う表現",
+    id: 37, part: 6, en: "Don't overdo it", ja: "体調・健康の気遣い",
     note: "くしゃみや風邪、相手の疲労を思いやる言葉。",
     examples: [
       { ja: "くしゃみが止まりません。", en: "I can't stop sneezing." },
@@ -383,7 +383,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 38, part: 6, en: "スマホ・日常のアクシデント", ja: "充電切れや度忘れなど日常のハプニング",
+    id: 38, part: 6, en: "My phone's almost dead", ja: "スマホ・日常のアクシデント",
     note: "日常で誰もが経験するトラブルのとっさの一言。",
     examples: [
       { ja: "スマホの充電（バッテリー）が切れそう。", en: "My phone's almost dead." },
@@ -393,7 +393,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 39, part: 6, en: "ちょっとした立ち寄り・移動", ja: "コンビニや席の移動を伝える表現",
+    id: 39, part: 6, en: "I should get going", ja: "ちょっとした立ち寄り・移動・離席",
     note: "生活の中のちょっとした行動を英語にする。",
     examples: [
       { ja: "コンビニに立ち寄りました。", en: "I stopped by at the convenience store." },
@@ -403,7 +403,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 40, part: 6, en: "別れ際の挨拶・気遣い", ja: "会話を心地よく締めくくるフレーズ",
+    id: 40, part: 6, en: "Let's call it a day", ja: "別れ際の挨拶・お開き・気遣い",
     note: "別れ際に相手の素敵な1日や知り合いへの伝言を伝える。",
     examples: [
       { ja: "良い一日をお過ごしください。", en: "I hope you have a great day." },
@@ -412,7 +412,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 41, part: 7, en: "Do you mind if ~? / 席・順番の確認", ja: "席や順番を丁寧に確認する表現",
+    id: 41, part: 7, en: "Do you mind if I sit here?", ja: "席や順番を丁寧に確認する表現",
     note: "混んでいるカフェや電車・行列で使う定番。",
     examples: [
       { ja: "ここに座ってもいいですか？", en: "Do you mind if I sit here?" },
@@ -422,7 +422,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 42, part: 7, en: "カフェ・レストランでの注文", ja: "注文をスムーズに通す定番フレーズ",
+    id: 42, part: 7, en: "Can I get this to go?", ja: "カフェ・レストランでの注文",
     note: "同じもの、持ち帰り、ドリンクのみなどの注文。",
     examples: [
       { ja: "私も同じものをください。", en: "I'll have the same thing." },
@@ -432,7 +432,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 43, part: 7, en: "注文のトラブル・確認", ja: "料理や注文の違いを指摘・確認する",
+    id: 43, part: 7, en: "This isn't what I ordered", ja: "注文のトラブル・確認",
     note: "頼んだものと違う時や素材を確認したい時。",
     examples: [
       { ja: "これは私が注文したものではありません。", en: "This isn't what I ordered." },
@@ -441,7 +441,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 44, part: 7, en: "お会計・割り勘の確認", ja: "支払い・レシート・金額の確認",
+    id: 44, part: 7, en: "Could I have a receipt, please?", ja: "お会計・割り勘の確認",
     note: "レジやテーブル会計で焦らず使える表現。",
     examples: [
       { ja: "レシートをいただけますか？", en: "Could I have a receipt, please?" },
@@ -451,7 +451,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 45, part: 7, en: "おごり・支払い・好み", ja: "ご馳走する・家で食べる・好みを伝える",
+    id: 45, part: 7, en: "I'll treat you", ja: "おごり・支払い・好み",
     note: "食事の支払いや好みをスマートに伝える。",
     examples: [
       { ja: "ご馳走するよ / おごるよ。", en: "I'll treat you." },
@@ -460,7 +460,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 46, part: 7, en: "買い物でのサイズ・在庫・値引き", ja: "店員さんにサイズや在庫を聞く表現",
+    id: 46, part: 7, en: "Do you have size ~ in black?", ja: "買い物でのサイズ・在庫・値引き",
     note: "ショッピングで希望のサイズや他の商品を探す時。",
     examples: [
       { ja: "黒の11サイズはありますか？", en: "Do you have size 11 in black?" },
@@ -469,7 +469,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 47, part: 7, en: "移動・距離・来訪理由", ja: "目的地への距離や訪問のきっかけを尋ねる",
+    id: 47, part: 7, en: "How far is it from here?", ja: "移動・距離・来訪理由",
     note: "道案内や旅先での会話に役立つフレーズ。",
     examples: [
       { ja: "ここからどれくらいの距離ですか？", en: "How far is it from here?" },
@@ -478,7 +478,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 48, part: 7, en: "外見・似合っていることを褒める", ja: "服や髪型を褒める定番フレーズ",
+    id: 48, part: 7, en: "That looks good on you", ja: "外見・似合っていることを褒める",
     note: "相手の身につけているものを自然に褒める。",
     examples: [
       { ja: "それ、君によく似合ってるよ。", en: "That looks good on you." },
@@ -487,7 +487,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 49, part: 7, en: "時間の合図とサロンでの指示", ja: "時間・終了予定や施術での指示",
+    id: 49, part: 7, en: "It's almost time", ja: "時間の合図とサロンでの指示",
     note: "開始や終了の合図、サロン等での定番表現。",
     examples: [
       { ja: "そろそろ時間だよ / もうすぐ時間だ。", en: "It's almost time." },
@@ -496,7 +496,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 50, part: 8, en: "What can I do for you? / サポートの申し出", ja: "相手への手助け・サポートを申し出る",
+    id: 50, part: 8, en: "What can I do for you?", ja: "相手への手助け・サポートの申し出",
     note: "困っていそうな相手に声をかけるビジネス口語。",
     examples: [
       { ja: "何かお手伝いしましょうか？ / ご用件は何ですか？", en: "What can I do for you?" },
@@ -505,7 +505,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 51, part: 8, en: "業務の引き継ぎ・依頼", ja: "作業の引き継ぎや助けを求める表現",
+    id: 51, part: 8, en: "Can you take it from here?", ja: "業務の引き継ぎ・依頼",
     note: "同僚にバトンタッチしたり協力を頼む時。",
     examples: [
       { ja: "ここから引き継いでもらえる？", en: "Can you take it from here?" },
@@ -515,7 +515,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 52, part: 8, en: "急な予定・手の離せない状況", ja: "突発的な用事や多忙を伝える表現",
+    id: 52, part: 8, en: "Something came up", ja: "急な予定・手の離せない状況",
     note: "急な予定が入ったり、手一杯な状態を伝える。",
     examples: [
       { ja: "急用ができちゃったんだ。", en: "Something came up." },
@@ -525,7 +525,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 53, part: 8, en: "日程調整・都合の確認", ja: "都合の良い日時を確認・提案する",
+    id: 53, part: 8, en: "When is a good time for you?", ja: "日程調整・都合の確認",
     note: "ミーティングやアポイントの日程調整の基本。",
     examples: [
       { ja: "いつなら都合がいいですか？", en: "When is a good time for you?" },
@@ -534,7 +534,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 54, part: 8, en: "電話での対応・折り返し", ja: "電話での掛け直しや間違い電話への対応",
+    id: 54, part: 8, en: "Can you call me back later?", ja: "電話での対応・折り返し",
     note: "電話口でのスマートな英語対応フレーズ。",
     examples: [
       { ja: "後でかけ直してもらえますか？", en: "Can you call me back later?" },
@@ -543,7 +543,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 55, part: 2, en: "手続き・サイン・意見の表明", ja: "署名の依頼や会議での発言の切り出し",
+    id: 55, part: 2, en: "Can I give you my opinion?", ja: "手続き・サイン・意見の表明",
     note: "書類のサイン依頼や、会議で意見を言いたい時。",
     examples: [
       { ja: "ここにサインをいただけますか？", en: "Could you sign here?" },
@@ -552,7 +552,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 56, part: 8, en: "検討・善処・対応の返答", ja: "持ち帰り検討や対応できる旨を伝える",
+    id: 56, part: 8, en: "I'll see what I can do", ja: "検討・善処・対応の返答",
     note: "即答せずに持ち帰る時や「任せて」と伝える時。",
     examples: [
       { ja: "少し考えさせてください。", en: "Let me think about it." },
@@ -562,7 +562,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 57, part: 8, en: "お詫び・限界の丁寧な伝達", ja: "力になれないことや邪魔したお詫び",
+    id: 57, part: 8, en: "I'm sorry to bother you", ja: "お詫び・限界の丁寧な伝達",
     note: "角を立てずに丁寧にお断りやお詫びをする。",
     examples: [
       { ja: "お役に立てず申し訳ありません。", en: "I'm sorry I can't be of any help." },
@@ -572,7 +572,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 58, part: 1, en: "要点確認・聞き返し", ja: "相手の発言の要点や意味を確かめる",
+    id: 58, part: 1, en: "What's your point?", ja: "要点確認・聞き返し",
     note: "会議や議論で論点を確認したい時に使う口語。",
     examples: [
       { ja: "要するに何が言いたいの？", en: "What's your point?" },
@@ -582,7 +582,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 59, part: 1, en: "相手を急かさない気遣い", ja: "相手のペースを尊重する優しい配慮",
+    id: 59, part: 1, en: "Take as long as you need", ja: "相手を急かさない気遣い",
     note: "「時間をかけて大丈夫」と相手を安心させる。",
     examples: [
       { ja: "必要なだけ時間をかけて大丈夫ですよ。", en: "Take as long as you need." },
@@ -590,7 +590,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 60, part: 9, en: "共感・理解・味方になる言葉", ja: "相手の気持ちに寄り添い同意する表現",
+    id: 60, part: 9, en: "I know how you feel", ja: "共感・理解・味方になる言葉",
     note: "信頼関係を深める温かい共感のフレーズ。",
     examples: [
       { ja: "その気持ち、よく分かるよ。", en: "I know how you feel." },
@@ -600,7 +600,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 61, part: 9, en: "お悔やみ・心配・慰め", ja: "悲しい知らせや悩みに寄り添う言葉",
+    id: 61, part: 9, en: "I'm sorry to hear that", ja: "お悔やみ・心配・慰め",
     note: "訃報や相手の辛い状況に心を込めて返す。",
     examples: [
       { ja: "それはお気の毒に / 残念ですね。", en: "I'm sorry to hear that." },
@@ -610,7 +610,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 62, part: 9, en: "安心させる・励ましの一言", ja: "相手の不安や緊張を和らげる表現",
+    id: 62, part: 9, en: "Don't worry, it's fine", ja: "安心させる・励ましの一言",
     note: "失敗やプレッシャーに直面している人を元気づける。",
     examples: [
       { ja: "心配しないで、大丈夫だから。", en: "Don't worry, it's fine." },
@@ -620,7 +620,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 63, part: 9, en: "挑戦の後押し・エール", ja: "一歩踏み出す背中を押すフレーズ",
+    id: 63, part: 9, en: "Why not take a chance?", ja: "挑戦の後押し・エール",
     note: "諦めそうな人や挑戦を迷う人を後押しする。",
     examples: [
       { ja: "思い切ってやってみたら？ / チャンスを掴んでみたら？", en: "Why not take a chance?" },
@@ -630,7 +630,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 64, part: 9, en: "驚き・初耳・強い疑い", ja: "意外な事実に対するリアルなリアクション",
+    id: 64, part: 9, en: "That's news to me", ja: "驚き・初耳・強い疑い",
     note: "感情が大きく動いた時のネイティブの反応。",
     examples: [
       { ja: "それは初耳です。", en: "That's news to me." },
@@ -640,7 +640,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 65, part: 4, en: "迷い・判断・直感", ja: "決められない気持ちや直感を伝える",
+    id: 65, part: 4, en: "I can't make up my mind", ja: "迷い・判断・直感",
     note: "優柔不断な時や勘を口にする時のフレーズ。",
     examples: [
       { ja: "決められないよ / 迷っちゃうな。", en: "I can't make up my mind." },
@@ -650,7 +650,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 66, part: 2, en: "角を立てない断り・反論", ja: "大人のマイルドな否定や断り方",
+    id: 66, part: 2, en: "I'd rather not", ja: "角を立てない断り・反論",
     note: "相手を不快にさせずに自分の立場を主張する。",
     examples: [
       { ja: "遠慮しておきます。", en: "I'd rather not." },
@@ -660,7 +660,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 67, part: 1, en: "クッション言葉・前置き", ja: "会話を滑らかにする前置きや念押し",
+    id: 67, part: 1, en: "Don't expect too much", ja: "クッション言葉・前置き",
     note: "自分の言いたいことを柔らかく伝えるクッション。",
     examples: [
       { ja: "あまり期待しすぎないでね。", en: "Don't expect too much." },
@@ -670,7 +670,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 68, part: 4, en: "感情の吐露・思い出・後悔", ja: "ノスタルジーや後悔の感情を伝える",
+    id: 68, part: 4, en: "That reminds me", ja: "感情の吐露・思い出・後悔",
     note: "心の内を素直に表現する味わい深いフレーズ。",
     examples: [
       { ja: "まるで子供に戻ったような気分だよ。", en: "I feel like I'm a kid again." },
@@ -680,7 +680,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 69, part: 9, en: "素直な気持ち・受け答え", ja: "嬉しい返答や気分を伝える口語",
+    id: 69, part: 9, en: "That would be nice", ja: "素直な気持ち・受け答え",
     note: "会話のテンポを良くするスマートな受け答え。",
     examples: [
       { ja: "そう言っていただけて嬉しいです。", en: "It's so nice of you to say." },
@@ -690,7 +690,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 70, part: 9, en: "戸惑い・疑問・理由の問いかけ", ja: "確信が持てない時や理由を尋ねる表現",
+    id: 70, part: 9, en: "I don't know what to say", ja: "戸惑い・疑問・理由の問いかけ",
     note: "言葉に詰まった時や感情の理由を深く聞く時。",
     examples: [
       { ja: "何と言っていいか分かりません。", en: "I don't know what to say." },
