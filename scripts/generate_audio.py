@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Gemini 3.8 TTSを使って、英会話の型30選の全例文（120問）の音声ファイルを一括生成するスクリプト。
+Gemini TTSを使って、構文の全例文の音声ファイルを生成するスクリプト。
 
 使用方法:
     export GEMINI_API_KEY="your_api_key_here"

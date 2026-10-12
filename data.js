@@ -1,19 +1,18 @@
-// 動画「ネイティブが毎日使う『英会話の型』30選」の構文データ
-// 各構文の最初の例文は動画内の例文、残りは追加の練習用例文です。
+// 瞬間パターンプラクティス：実戦英会話・口語70構文マスターデータ
+// 日常・ビジネス・社交でネイティブが頻出させる実戦英語構文をテーマ別に体系化
 window.PARTS = [
-  { id: 1, name: "Part① 断定を避ける構文" },
-  { id: 2, name: "Part② 自分について語れる構文" },
-  { id: 3, name: "Part③ 感情をリアルに伝えられる構文" },
-  { id: 4, name: "Part④ 会話を広げられる構文" },
-  { id: 5, name: "Part⑤ 一歩差がつく構文" },
-  { id: 6, name: "Part⑥ 日常・友人との交流・お誘い" },
-  { id: 7, name: "Part⑦ 外出・カフェ・買い物・移動" },
-  { id: 8, name: "Part⑧ 仕事・ビジネス・依頼・電話" },
-  { id: 9, name: "Part⑨ 感情・共感・大人のスマートな返し" },
+  { id: 1, name: "Part① クッション・前置き・断定回避" },
+  { id: 2, name: "Part② 意見表明・反論・大人の大局観" },
+  { id: 3, name: "Part③ 自己開示・習慣・ライフスタイル" },
+  { id: 4, name: "Part④ 感情・衝動・本音のリアル描写" },
+  { id: 5, name: "Part⑤ 提案・合意形成・スムーズな行動" },
+  { id: 6, name: "Part⑥ 日常・友人との交流・カジュアル雑談" },
+  { id: 7, name: "Part⑦ カフェ・買い物・外出移動" },
+  { id: 8, name: "Part⑧ ビジネス・業務調整・スマートな依頼" },
+  { id: 9, name: "Part⑨ 共感・励まし・大人のスマートな返し" },
 ];
 
 window.PATTERNS = [
-  // ---------- Part 1 ----------
   {
     id: 1, part: 1, en: "I'd say ~", ja: "〜くらいかな",
     note: "数字や割合などをざっくり見積もって、保険をかけながら伝える。",
@@ -45,7 +44,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 4, part: 1, en: "Just because ~ doesn't mean ~", ja: "〜だからといって〜とは限らない",
+    id: 4, part: 2, en: "Just because ~ doesn't mean ~", ja: "〜だからといって〜とは限らない",
     note: "一面的な判断をピシャリと否定する。",
     examples: [
       { ja: "お金持ちだからって幸せとは限らない。", en: "Just because he's rich doesn't mean he's happy." },
@@ -55,7 +54,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 5, part: 1, en: "not necessarily", ja: "必ずしも〜とは限らない",
+    id: 5, part: 2, en: "not necessarily", ja: "必ずしも〜とは限らない",
     note: "含みを持たせてマイルドに反論する、大人の表現。",
     examples: [
       { ja: "一番高いものが一番良いとは限らない。", en: "The most expensive option is not necessarily the best." },
@@ -64,10 +63,8 @@ window.PATTERNS = [
       { ja: "有名なレストランが美味しいとは限らない。", en: "Famous restaurants aren't necessarily good." },
     ],
   },
-
-  // ---------- Part 2 ----------
   {
-    id: 6, part: 2, en: "I have a ~ brain / body", ja: "〜な体質・性格なんだ",
+    id: 6, part: 3, en: "I have a ~ brain / body", ja: "〜な体質・性格なんだ",
     note: "自分の体質や性質を「そういう脳・体を持っている」と表現する。",
     examples: [
       { ja: "私はアイデアを出すのが得意なんだ。（クリエイティブな脳）", en: "I have a creative brain." },
@@ -77,7 +74,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 7, part: 2, en: "I was like, ~", ja: "〜って感じだったんだよ",
+    id: 7, part: 3, en: "I was like, ~", ja: "〜って感じだったんだよ",
     note: "当時の感情やトーンを丸ごと再現する。実際に口に出していなくてもOK。",
     examples: [
       { ja: "「え、何言ってんの？」って感じだったよ。", en: "I was like, \"What are you saying?\"" },
@@ -87,7 +84,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 8, part: 2, en: "I can't function without ~", ja: "〜がないと無理",
+    id: 8, part: 3, en: "I can't function without ~", ja: "〜がないと無理",
     note: "人を機械に例えて「これがないと体や頭が動かない」と言う。",
     examples: [
       { ja: "朝のコーヒーがないと無理。", en: "I can't function without my morning coffee." },
@@ -97,7 +94,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 9, part: 2, en: "I used to ~, but now ~", ja: "昔は〜だったけど、今は〜",
+    id: 9, part: 3, en: "I used to ~, but now ~", ja: "昔は〜だったけど、今は〜",
     note: "used to＋動詞の原形。昔と今を比較して変化を語る。",
     examples: [
       { ja: "昔は肉をよく食べてたけど、今はヴィーガンなんだ。", en: "I used to eat meat, but now I'm vegan." },
@@ -107,7 +104,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 10, part: 2, en: "I'm used to ~ing", ja: "〜するのに慣れている",
+    id: 10, part: 3, en: "I'm used to ~ing", ja: "〜するのに慣れている",
     note: "be used to＋〜ing（名詞）。I used to と混同しないようチャンクで覚える。",
     examples: [
       { ja: "朝5時に起きるのには慣れてるよ。", en: "I'm used to waking up at 5 a.m." },
@@ -116,10 +113,8 @@ window.PATTERNS = [
       { ja: "まだ英語で話すのに慣れてないんだ。", en: "I'm not used to speaking English yet." },
     ],
   },
-
-  // ---------- Part 3 ----------
   {
-    id: 11, part: 3, en: "I can't wait to / for ~", ja: "〜が楽しみで仕方ない",
+    id: 11, part: 4, en: "I can't wait to / for ~", ja: "〜が楽しみで仕方ない",
     note: "I'm looking forward to をカジュアルに熱くした表現。",
     examples: [
       { ja: "週末が待ちきれない。", en: "I can't wait for the weekend." },
@@ -129,7 +124,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 12, part: 3, en: "I can't stand ~", ja: "〜は耐えられない",
+    id: 12, part: 4, en: "I can't stand ~", ja: "〜は耐えられない",
     note: "stand＝耐える。激しく嫌がる「嫌い」の最上級。",
     examples: [
       { ja: "夏の暑さには耐えられない。", en: "I can't stand the heat in summer." },
@@ -139,7 +134,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 13, part: 3, en: "I don't feel like ~ing", ja: "〜する気分じゃない",
+    id: 13, part: 4, en: "I don't feel like ~ing", ja: "〜する気分じゃない",
     note: "自分のテンションを伝える。日常会話は気分で話すことが多い。",
     examples: [
       { ja: "今日は出かける気分じゃない。", en: "I don't feel like going out today." },
@@ -149,7 +144,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 14, part: 3, en: "I can't help ~ing", ja: "思わず〜してしまう",
+    id: 14, part: 4, en: "I can't help ~ing", ja: "思わず〜してしまう",
     note: "help＝避ける・抑える。感情や行動を抑えきれないとき。",
     examples: [
       { ja: "思わず笑っちゃう。", en: "I can't help laughing." },
@@ -159,7 +154,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 15, part: 3, en: "It was so ~ that ~", ja: "すごく〜だったから〜した",
+    id: 15, part: 4, en: "It was so ~ that ~", ja: "すごく〜だったから〜した",
     note: "感情と行動をセットで伝える大げさな表現。",
     examples: [
       { ja: "美味しすぎて食べるのが止まらなかった。", en: "It was so good that I couldn't stop eating." },
@@ -168,10 +163,8 @@ window.PATTERNS = [
       { ja: "疲れすぎてすぐ寝ちゃった。", en: "I was so tired that I fell asleep right away." },
     ],
   },
-
-  // ---------- Part 4 ----------
   {
-    id: 16, part: 4, en: "I'm supposed to ~", ja: "〜することになってる",
+    id: 16, part: 5, en: "I'm supposed to ~", ja: "〜することになってる",
     note: "ルールや予定でそう決まっている。義務感や言い訳を伝える。",
     examples: [
       { ja: "大事な試合に行くことになってるんだ。", en: "I'm supposed to be at the big game." },
@@ -181,7 +174,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 17, part: 4, en: "How about + 主語 + 動詞?", ja: "〜するのはどう？",
+    id: 17, part: 5, en: "How about + 主語 + 動詞?", ja: "〜するのはどう？",
     note: "How about の後ろに普通の文（平叙文）をそのまま付けて提案する。",
     examples: [
       { ja: "今夜ピザを頼むのはどう？", en: "How about we order pizza tonight?" },
@@ -191,7 +184,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 18, part: 4, en: "I'm willing to ~", ja: "必要なら喜んで〜する／〜する覚悟がある",
+    id: 18, part: 5, en: "I'm willing to ~", ja: "必要なら喜んで〜する／〜する覚悟がある",
     note: "頼もしく前向きな意思を示す、できる大人の表現。",
     examples: [
       { ja: "私が責任を取る覚悟があります。", en: "I'm willing to take responsibility." },
@@ -201,7 +194,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 19, part: 4, en: "Let me know when ~", ja: "〜の時に教えてね",
+    id: 19, part: 5, en: "Let me know when ~", ja: "〜の時に教えてね",
     note: "Please tell me よりマイルドで柔らかい。",
     examples: [
       { ja: "暇なとき教えてね。", en: "Let me know when you're free." },
@@ -211,7 +204,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 20, part: 4, en: "Are you down for ~?", ja: "〜やる？乗る？",
+    id: 20, part: 5, en: "Are you down for ~?", ja: "〜やる？乗る？",
     note: "down＝そっちに向かっている。気軽な誘い文句。返事は I'm down.",
     examples: [
       { ja: "後で夜ごはん行かない？", en: "Are you down for grabbing dinner later?" },
@@ -220,10 +213,8 @@ window.PATTERNS = [
       { ja: "（誘いに対して）乗った！", en: "I'm down!" },
     ],
   },
-
-  // ---------- Part 5 ----------
   {
-    id: 21, part: 5, en: "What I like about ~ is ~", ja: "〜の好きなところは、ズバリ〜",
+    id: 21, part: 3, en: "What I like about ~ is ~", ja: "〜の好きなところは、ズバリ〜",
     note: "特定の推しポイントを強調して伝える。",
     examples: [
       { ja: "この街の好きなところは食文化なんだ。", en: "What I like about this city is the food culture." },
@@ -233,7 +224,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 22, part: 5, en: "I ended up ~ing", ja: "結局〜することになった",
+    id: 22, part: 4, en: "I ended up ~ing", ja: "結局〜することになった",
     note: "紆余曲折あったけど、最終的にそうなった。",
     examples: [
       { ja: "結局一日中家にいることになった。", en: "I ended up staying home all day." },
@@ -243,7 +234,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 23, part: 5, en: "I found it ~", ja: "やってみたら〜だった",
+    id: 23, part: 3, en: "I found it ~", ja: "やってみたら〜だった",
     note: "find＝感じる・気づく。I think より客観的で大人っぽい感想。",
     examples: [
       { ja: "英語を学ぶのは難しいと感じた。", en: "I found it difficult to learn English." },
@@ -273,7 +264,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 26, part: 5, en: "kind of", ja: "なんか、ちょっと",
+    id: 26, part: 1, en: "kind of", ja: "なんか、ちょっと",
     note: "断定を避ける魔法のクッション。",
     examples: [
       { ja: "なんか疲れた。", en: "I'm kind of tired." },
@@ -283,7 +274,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 27, part: 5, en: "What's your take on ~?", ja: "〜をどう捉えた？",
+    id: 27, part: 2, en: "What's your take on ~?", ja: "〜をどう捉えた？",
     note: "take＝捉え方・解釈。What do you think より知的。",
     examples: [
       { ja: "これについてどう思う？", en: "What's your take on this?" },
@@ -293,7 +284,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 28, part: 5, en: "I respect that.", ja: "それもアリだね（尊重するよ）",
+    id: 28, part: 2, en: "I respect that.", ja: "それもアリだね（尊重するよ）",
     note: "自分とは違う選択でも、相手の考えを尊重する。",
     examples: [
       { ja: "旅行するために仕事を辞めるの？それもアリだね。", en: "You're quitting your job to travel? I respect that." },
@@ -303,7 +294,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 29, part: 5, en: "I'd rather (not) ~", ja: "どちらかというと〜したい（したくない）",
+    id: 29, part: 2, en: "I'd rather (not) ~", ja: "どちらかというと〜したい（したくない）",
     note: "I don't want to より角が立たない、大人の断り方。",
     examples: [
       { ja: "今夜はどちらかというと家にいたいな。", en: "I'd rather stay home tonight." },
@@ -313,7 +304,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 30, part: 5, en: "At the end of the day, ~", ja: "結局のところ〜",
+    id: 30, part: 2, en: "At the end of the day, ~", ja: "結局のところ〜",
     note: "いろいろあったけど最終的には…と話をビシッとまとめる決めゼリフ。",
     examples: [
       { ja: "結局、家族が一番大事だよ。", en: "At the end of the day, family is the most important." },
@@ -322,8 +313,6 @@ window.PATTERNS = [
       { ja: "結局、大事なのは結果だ。", en: "At the end of the day, results are what matter." },
     ],
   },
-
-  // ---------- Part 6: 日常・友人との交流・お誘い ----------
   {
     id: 31, part: 6, en: "挨拶・初対面・名前の確認", ja: "初めての会話や名前を尋ねる表現",
     note: "初対面でスマートに会話を始めるフレーズ。",
@@ -335,7 +324,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 32, part: 6, en: "Do you want to ~? / Let's ~", ja: "気軽なお誘い・提案の表現",
+    id: 32, part: 5, en: "Do you want to ~? / Let's ~", ja: "気軽なお誘い・提案の表現",
     note: "友達をフランクにご飯や遊びに誘う定番。",
     examples: [
       { ja: "一緒に遊ばない？ / 出かけない？", en: "Do you want to hang out?" },
@@ -365,7 +354,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 35, part: 6, en: "What did you get up to? / 近況と習慣", ja: "休みの過ごし方や日常の習慣を語る",
+    id: 35, part: 3, en: "What did you get up to? / 近況と習慣", ja: "休みの過ごし方や日常の習慣を語る",
     note: "週末何してた？や体質・日課を共有する。",
     examples: [
       { ja: "何をして過ごしてたの？", en: "What did you get up to?" },
@@ -422,8 +411,6 @@ window.PATTERNS = [
       { ja: "今日はここまでにしましょう（お開きにしよう）。", en: "Let's call it a day." },
     ],
   },
-
-  // ---------- Part 7: 外出・カフェ・買い物・移動 ----------
   {
     id: 41, part: 7, en: "Do you mind if ~? / 席・順番の確認", ja: "席や順番を丁寧に確認する表現",
     note: "混んでいるカフェや電車・行列で使う定番。",
@@ -508,8 +495,6 @@ window.PATTERNS = [
       { ja: "うつ伏せになってください。", en: "Please lie on your stomach." },
     ],
   },
-
-  // ---------- Part 8: 仕事・ビジネス・依頼・電話 ----------
   {
     id: 50, part: 8, en: "What can I do for you? / サポートの申し出", ja: "相手への手助け・サポートを申し出る",
     note: "困っていそうな相手に声をかけるビジネス口語。",
@@ -558,7 +543,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 55, part: 8, en: "手続き・サイン・意見の表明", ja: "署名の依頼や会議での発言の切り出し",
+    id: 55, part: 2, en: "手続き・サイン・意見の表明", ja: "署名の依頼や会議での発言の切り出し",
     note: "書類のサイン依頼や、会議で意見を言いたい時。",
     examples: [
       { ja: "ここにサインをいただけますか？", en: "Could you sign here?" },
@@ -587,7 +572,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 58, part: 8, en: "要点確認・聞き返し", ja: "相手の発言の要点や意味を確かめる",
+    id: 58, part: 1, en: "要点確認・聞き返し", ja: "相手の発言の要点や意味を確かめる",
     note: "会議や議論で論点を確認したい時に使う口語。",
     examples: [
       { ja: "要するに何が言いたいの？", en: "What's your point?" },
@@ -597,15 +582,13 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 59, part: 8, en: "相手を急かさない気遣い", ja: "相手のペースを尊重する優しい配慮",
+    id: 59, part: 1, en: "相手を急かさない気遣い", ja: "相手のペースを尊重する優しい配慮",
     note: "「時間をかけて大丈夫」と相手を安心させる。",
     examples: [
       { ja: "必要なだけ時間をかけて大丈夫ですよ。", en: "Take as long as you need." },
       { ja: "無理する必要はないよ。", en: "You don't need to push yourself." },
     ],
   },
-
-  // ---------- Part 9: 感情・共感・大人のスマートな返し ----------
   {
     id: 60, part: 9, en: "共感・理解・味方になる言葉", ja: "相手の気持ちに寄り添い同意する表現",
     note: "信頼関係を深める温かい共感のフレーズ。",
@@ -657,7 +640,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 65, part: 9, en: "迷い・判断・直感", ja: "決められない気持ちや直感を伝える",
+    id: 65, part: 4, en: "迷い・判断・直感", ja: "決められない気持ちや直感を伝える",
     note: "優柔不断な時や勘を口にする時のフレーズ。",
     examples: [
       { ja: "決められないよ / 迷っちゃうな。", en: "I can't make up my mind." },
@@ -667,7 +650,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 66, part: 9, en: "角を立てない断り・反論", ja: "大人のマイルドな否定や断り方",
+    id: 66, part: 2, en: "角を立てない断り・反論", ja: "大人のマイルドな否定や断り方",
     note: "相手を不快にさせずに自分の立場を主張する。",
     examples: [
       { ja: "遠慮しておきます。", en: "I'd rather not." },
@@ -677,7 +660,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 67, part: 9, en: "クッション言葉・前置き", ja: "会話を滑らかにする前置きや念押し",
+    id: 67, part: 1, en: "クッション言葉・前置き", ja: "会話を滑らかにする前置きや念押し",
     note: "自分の言いたいことを柔らかく伝えるクッション。",
     examples: [
       { ja: "あまり期待しすぎないでね。", en: "Don't expect too much." },
@@ -687,7 +670,7 @@ window.PATTERNS = [
     ],
   },
   {
-    id: 68, part: 9, en: "感情の吐露・思い出・後悔", ja: "ノスタルジーや後悔の感情を伝える",
+    id: 68, part: 4, en: "感情の吐露・思い出・後悔", ja: "ノスタルジーや後悔の感情を伝える",
     note: "心の内を素直に表現する味わい深いフレーズ。",
     examples: [
       { ja: "まるで子供に戻ったような気分だよ。", en: "I feel like I'm a kid again." },
