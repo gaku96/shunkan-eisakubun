@@ -955,7 +955,7 @@
           <div class="pattern-body">
             <p class="note"></p>
             <ul></ul>
-            <button type="button" class="btn small primary">この構文を練習</button>
+            <button type="button" class="btn small primary practice-pattern-btn">この構文を練習</button>
           </div>`;
         d.querySelector(".pattern-en").textContent = p.en;
         d.querySelector(".pattern-ja").textContent = p.ja;
@@ -1002,8 +1002,13 @@
           li.append(favBtn);
           return li;
         }));
-        d.querySelector("button").addEventListener("click", () =>
-          startSession({ type: "pattern", pattern: p.id }));
+        const practiceBtn = d.querySelector(".practice-pattern-btn");
+        if (practiceBtn) {
+          practiceBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            startSession({ type: "pattern", pattern: p.id, course: isGrit ? "grit" : "conversation" });
+          });
+        }
         block.append(d);
       }
       return block;
@@ -1134,11 +1139,11 @@
             <div class="ranking-bar"><div class="ranking-bar-fill ${accClass}" style="width: ${ps.accuracy !== null ? ps.accuracy : 0}%"></div></div>
             <div class="ranking-item-footer">
               <span class="ranking-mistake-count">✕ ミス ${ps.wrong}回 / 解答 ${ps.seen}回</span>
-              <button type="button" class="btn small primary">この構文を練習</button>
+              <button type="button" class="btn small primary practice-weak-pattern-btn">この構文を練習</button>
             </div>
           `;
-          item.querySelector("button")?.addEventListener("click", () => {
-            startSession({ type: "pattern", pattern: ps.pattern.id });
+          item.querySelector(".practice-weak-pattern-btn")?.addEventListener("click", () => {
+            startSession({ type: "pattern", pattern: ps.pattern.id, course: isGrit ? "grit" : "conversation" });
           });
           return item;
         }));
@@ -1172,11 +1177,11 @@
           <div class="part-rep-bar"><div class="part-rep-bar-fill" style="width: ${masteryRate}%"></div></div>
           <div class="part-rep-footer">
             <span class="part-rep-sub">習得: ${mastered}/${totalCards}問 (${masteryRate}%)</span>
-            <button type="button" class="btn small ghost">練習する</button>
+            <button type="button" class="btn small ghost practice-part-rep-btn">練習する</button>
           </div>
         `;
-        item.querySelector("button")?.addEventListener("click", () => {
-          startSession({ type: "part", part: part.id });
+        item.querySelector(".practice-part-rep-btn")?.addEventListener("click", () => {
+          startSession({ type: "part", part: part.id, course: isGrit ? "grit" : "conversation" });
         });
         return item;
       }));
@@ -1451,12 +1456,18 @@
         return { title: `カスタム例文（${customList.length}問）`, queue: shuffle(customList) };
       }
       case "part": {
-        const part = getActiveParts().find((p) => p.id === mode.part);
-        return { title: part ? part.name : "パート練習", queue: shuffle(CARDS.filter((c) => c.pattern.part === mode.part)) };
+        const isGrit = (mode.course === "grit") || (getActiveCourse() === "grit");
+        const partPool = isGrit ? (window.GRIT_PARTS || []) : window.PARTS;
+        const part = partPool.find((p) => p.id === mode.part);
+        const cardPool = isGrit ? GRIT_CARDS : CONV_CARDS;
+        return { title: part ? part.name : "パート練習", queue: shuffle(cardPool.filter((c) => c.pattern.part === mode.part)) };
       }
       case "pattern": {
-        const p = getActivePatterns().find((x) => x.id === mode.pattern);
-        return { title: p ? `型${p.id}: ${p.en}` : "構文練習", queue: shuffle(CARDS.filter((c) => c.pattern.id === mode.pattern)) };
+        const isGrit = (mode.course === "grit") || (getActiveCourse() === "grit");
+        const pPool = isGrit ? (window.GRIT_PATTERNS || []) : window.PATTERNS;
+        const p = pPool.find((x) => x.id === mode.pattern);
+        const cardPool = isGrit ? GRIT_CARDS : CONV_CARDS;
+        return { title: p ? `型${p.id}: ${p.en}` : "構文練習", queue: shuffle(cardPool.filter((c) => c.pattern.id === mode.pattern)) };
       }
       case "weak_drill": {
         const targetIds = new Set(mode.patternIds || []);
