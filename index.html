@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=45">
+  <link rel="stylesheet" href="style.css?v=46">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -1244,134 +1244,33 @@
     </div>
   </dialog>
 
-  <!-- 🔰 はじめてガイド（オンボーディングPOP） -->
-  <dialog id="onboarding-dialog" class="onboarding-dialog" closedby="any" aria-labelledby="onboarding-title">
-    <div class="onboarding-container">
-      <div class="onboarding-header">
-        <div class="onboarding-badge">🔰 はじめてガイド</div>
-        <button type="button" class="icon-btn-sub" id="close-onboarding" aria-label="閉じる"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"></use></svg></button>
+  <!-- 🧭 操作画面上のインタラクティブ・ガイドツアー（Coach Mark Spotlight） -->
+  <div id="coach-tour-container" class="coach-tour-container" hidden aria-live="polite">
+    <div id="coach-spotlight" class="coach-spotlight" aria-hidden="true"></div>
+    <div id="coach-tooltip" class="coach-tooltip" role="dialog" aria-modal="true" aria-labelledby="coach-title">
+      <div class="coach-tooltip-arrow" id="coach-arrow"></div>
+      <div class="coach-tooltip-header">
+        <span class="coach-step-badge" id="coach-step-badge">STEP 1 / 4</span>
+        <button type="button" class="coach-close-btn" id="coach-close-btn" aria-label="ガイドを閉じる">
+          <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-close"></use></svg>
+        </button>
       </div>
-      <h3 id="onboarding-title" class="visually-hidden">瞬間パターントレーニングの使い方ガイド</h3>
-
-      <!-- スライドトラック -->
-      <div class="onboarding-slider" id="onboarding-slider">
-        <!-- Slide 1: ホーム・瞬間パターントレーニング -->
-        <div class="onboarding-slide active" data-step="0">
-          <div class="onboarding-icon-banner banner-home">
-            <svg class="ui-icon icon-hero" aria-hidden="true"><use href="#icon-home"></use></svg>
-          </div>
-          <div class="onboarding-step-num">STEP 1 / 4</div>
-          <h4 class="onboarding-step-title">🏠 ホーム：瞬間パターントレーニング</h4>
-          <p class="onboarding-step-lead">日本語を見て<strong>1秒で英語を発声</strong>。反射的に英語が出る「英語脳」を作ります。</p>
-          <ul class="onboarding-features-list">
-            <li>
-              <span class="feat-bullet">👆</span>
-              <div><strong>カードタップで解答確認</strong>: ネイティブのリアルな音声と構文ポイントを即座にチェック。</div>
-            </li>
-            <li>
-              <span class="feat-bullet">↔️</span>
-              <div><strong>左右スワイプで即判定</strong>: 右スワイプ（言えた！）/ 左スワイプ（もう一度）で快適に仕分け。</div>
-            </li>
-            <li>
-              <span class="feat-bullet">🧠</span>
-              <div><strong>忘却曲線スマート出題</strong>: 忘れかけた絶妙なタイミングで自動復習を出題し長期記憶へ。</div>
-            </li>
-          </ul>
+      <h3 class="coach-title" id="coach-title">タイトル</h3>
+      <p class="coach-desc" id="coach-desc">説明文</p>
+      <div class="coach-footer">
+        <div class="coach-dots" id="coach-dots">
+          <span class="coach-dot active"></span>
+          <span class="coach-dot"></span>
+          <span class="coach-dot"></span>
+          <span class="coach-dot"></span>
         </div>
-
-        <!-- Slide 2: シチュエーション即答ラリー -->
-        <div class="onboarding-slide" data-step="1">
-          <div class="onboarding-icon-banner banner-rally">
-            <svg class="ui-icon icon-hero" aria-hidden="true"><use href="#icon-speech"></use></svg>
-          </div>
-          <div class="onboarding-step-num">STEP 2 / 4</div>
-          <h4 class="onboarding-step-title">🗣️ シチュエーション即答ラリー</h4>
-          <p class="onboarding-step-lead">独り言を卒業！相手のリアルな問いかけに<strong>学んだ型で即座に切り返す実戦特訓</strong>です。</p>
-          <ul class="onboarding-features-list">
-            <li>
-              <span class="feat-bullet">📍</span>
-              <div><strong>ホーム上部から開始</strong>: 「即答ラリーを開始」をタップしてすぐに会話セッションへ。</div>
-            </li>
-            <li>
-              <span class="feat-bullet">🎯</span>
-              <div><strong>実戦24場面を標準収録</strong>: 旅行、カフェ、同僚との雑談、トラブル対応などオフライン完備。</div>
-            </li>
-            <li>
-              <span class="feat-bullet">🤖</span>
-              <div><strong>AI無制限シチュエーション生成</strong>: 自分の仕事や興味に合わせた会話場面を自由に自動生成。</div>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Slide 3: 耳トレ -->
-        <div class="onboarding-slide" data-step="2">
-          <div class="onboarding-icon-banner banner-listening">
-            <svg class="ui-icon icon-hero" aria-hidden="true"><use href="#icon-headphones"></use></svg>
-          </div>
-          <div class="onboarding-step-num">STEP 3 / 4</div>
-          <h4 class="onboarding-step-title">🎧 耳トレ：完全ハンズフリー</h4>
-          <p class="onboarding-step-lead">画面を見ずに<strong>通勤・散歩・家事中に耳だけでトレーニング</strong>できます。</p>
-          <ul class="onboarding-features-list">
-            <li>
-              <span class="feat-bullet">🔁</span>
-              <div><strong>自動4ステップループ</strong>: 「🇯🇵 日本語 → 🤔 思考時間 → 🇺🇸 英語解答 → 🗣️ 声に出してリピート」。</div>
-            </li>
-            <li>
-              <span class="feat-bullet">🌍</span>
-              <div><strong>多国籍アクセント対応</strong>: Gemini 3.8 & ネイティブ音声で米・英・印・豪のリアルな発音に耳を慣らす。</div>
-            </li>
-            <li>
-              <span class="feat-bullet">📱</span>
-              <div><strong>バックグラウンド再生</strong>: スマホをポケットに入れたまま、ロック画面から操作可能。</div>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Slide 4: 構文一覧 & 弱点分析 -->
-        <div class="onboarding-slide" data-step="3">
-          <div class="onboarding-icon-banner banner-report">
-            <svg class="ui-icon icon-hero" aria-hidden="true"><use href="#icon-chart"></use></svg>
-          </div>
-          <div class="onboarding-step-num">STEP 4 / 4</div>
-          <h4 class="onboarding-step-title">📚 構文一覧 & 📊 弱点分析</h4>
-          <p class="onboarding-step-lead"><strong>70の核となる口語構文</strong>をいつでも検索でき、挫折しない継続設計も万全です。</p>
-          <ul class="onboarding-features-list">
-            <li>
-              <span class="feat-bullet">📖</span>
-              <div><strong>構文一覧</strong>: 全70パターンの例文・音声を辞書感覚で確認＆苦手な型を集中特訓。</div>
-            </li>
-            <li>
-              <span class="feat-bullet">📈</span>
-              <div><strong>弱点分析</strong>: 自分の正答率・忘却レベル分布・苦手な構文ランキングを自動分析。</div>
-            </li>
-            <li>
-              <span class="feat-bullet">🛡️</span>
-              <div><strong>ストリーク保護シールド</strong>: 毎日の継続日数を記録。忙しい日もシールドが継続を守ります！</div>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- ページネーション & 操作ボタン -->
-      <div class="onboarding-footer">
-        <div class="onboarding-dots" id="onboarding-dots" role="tablist" aria-label="ガイドステップ">
-          <button type="button" class="onboarding-dot active" data-step="0" aria-label="Step 1"></button>
-          <button type="button" class="onboarding-dot" data-step="1" aria-label="Step 2"></button>
-          <button type="button" class="onboarding-dot" data-step="2" aria-label="Step 3"></button>
-          <button type="button" class="onboarding-dot" data-step="3" aria-label="Step 4"></button>
-        </div>
-
-        <div class="onboarding-actions">
-          <button type="button" class="btn ghost small" id="onboarding-skip-btn">スキップ</button>
-          <div class="onboarding-nav-btns">
-            <button type="button" class="btn ghost small" id="onboarding-prev-btn" style="display:none;">前へ</button>
-            <button type="button" class="btn primary small" id="onboarding-next-btn">次へ ➔</button>
-            <button type="button" class="btn primary small" id="onboarding-start-btn" style="display:none;">始める！ 🚀</button>
-          </div>
+        <div class="coach-actions">
+          <button type="button" class="btn ghost small" id="coach-prev-btn" style="display:none;">前へ</button>
+          <button type="button" class="btn primary small" id="coach-next-btn">次へ ➔</button>
         </div>
       </div>
     </div>
-  </dialog>
+  </div>
 
   <!-- PWAホーム画面追加手順ダイアログ -->
   <dialog id="pwa-guide-dialog" class="badge-detail-dialog" closedby="any" aria-labelledby="pwa-guide-title">
@@ -1419,8 +1318,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=45"></script>
-  <script src="app.js?v=45"></script>
+  <script src="data.js?v=46"></script>
+  <script src="app.js?v=46"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

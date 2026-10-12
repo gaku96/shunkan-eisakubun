@@ -3165,198 +3165,157 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
   margin: 4px 0 0 0;
 }
 
-/* 🔰 はじめてガイド（オンボーディングPOP） */
-.onboarding-dialog {
-  max-width: 440px;
-  width: min(440px, 94vw);
-  padding: 0;
-  border-radius: 22px;
+/* 🧭 実際の操作画面上のガイドツアー (Coach Mark Overlay & Spotlight Tooltip) */
+.coach-tour-container {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: auto;
   overflow: hidden;
-  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--border);
+  animation: coachFadeIn .25s ease-out;
+}
+
+@keyframes coachFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.coach-spotlight {
+  position: fixed;
+  border-radius: 18px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.74), 0 0 24px rgba(79, 70, 229, 0.55);
+  border: 2.5px solid var(--accent);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all .32s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: coachPulse 2.4s infinite ease-in-out;
+}
+
+@keyframes coachPulse {
+  0%, 100% {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.74), 0 0 16px rgba(79, 70, 229, 0.4);
+  }
+  50% {
+    border-color: #a5b4fc;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.74), 0 0 28px rgba(129, 140, 248, 0.8);
+  }
+}
+
+.coach-tooltip {
+  position: fixed;
+  width: min(340px, calc(100vw - 32px));
   background: var(--surface);
   color: var(--text);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  border-radius: 18px;
+  padding: 16px 18px 14px;
+  box-shadow: 0 18px 40px -8px rgba(0, 0, 0, 0.45);
+  z-index: 100000;
+  transition: top .32s cubic-bezier(0.16, 1, 0.3, 1), left .32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.onboarding-container {
-  display: flex;
-  flex-direction: column;
-  padding: 18px 20px 16px;
-  max-height: 85vh;
+.coach-tooltip-arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--surface);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 55%, var(--border));
+  transform: rotate(45deg);
+  transition: left .32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.onboarding-header {
+.coach-tooltip-arrow.arrow-up {
+  top: -7px;
+  border-bottom: none;
+  border-right: none;
+}
+
+.coach-tooltip-arrow.arrow-down {
+  bottom: -7px;
+  border-top: none;
+  border-left: none;
+}
+
+.coach-tooltip-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
-.onboarding-badge {
-  font-size: .78rem;
+.coach-step-badge {
+  font-size: .72rem;
   font-weight: 800;
   color: var(--accent);
   background: var(--accent-soft);
-  padding: 4px 10px;
+  padding: 2.5px 8px;
   border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  letter-spacing: .02em;
+  letter-spacing: .05em;
 }
 
-.onboarding-slider {
-  position: relative;
-  overflow: hidden;
-  min-height: 385px;
-  touch-action: pan-y;
-}
-
-.onboarding-slide {
-  display: none;
-  animation: onboardingFadeIn .28s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.onboarding-slide.active {
-  display: block;
-}
-
-@keyframes onboardingFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.onboarding-icon-banner {
-  height: 68px;
-  border-radius: 16px;
+.coach-close-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  transition: color .2s, background .2s;
 }
 
-.onboarding-icon-banner .icon-hero {
-  width: 36px;
-  height: 36px;
+.coach-close-btn:hover {
+  color: var(--text);
+  background: var(--bg);
 }
 
-.banner-home {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), color-mix(in srgb, var(--accent) 26%, var(--surface)));
-  color: var(--accent);
-}
-
-.banner-rally {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--fire) 14%, var(--surface)), color-mix(in srgb, var(--fire) 26%, var(--surface)));
-  color: var(--fire);
-}
-
-.banner-listening {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--good) 14%, var(--surface)), color-mix(in srgb, var(--good) 26%, var(--surface)));
-  color: var(--good);
-}
-
-.banner-report {
-  background: linear-gradient(135deg, color-mix(in srgb, #8b5cf6 14%, var(--surface)), color-mix(in srgb, #8b5cf6 26%, var(--surface)));
-  color: #8b5cf6;
-}
-
-.onboarding-step-num {
-  font-size: .72rem;
+.coach-title {
+  font-size: 1.05rem;
   font-weight: 800;
-  color: var(--muted);
-  letter-spacing: .08em;
-  margin-bottom: 2px;
-}
-
-.onboarding-step-title {
-  font-size: 1.12rem;
-  font-weight: 800;
-  margin: 0 0 6px;
+  margin: 0 0 6px 0;
   line-height: 1.35;
   color: var(--text);
 }
 
-.onboarding-step-lead {
+.coach-desc {
   font-size: .83rem;
-  color: var(--text);
   line-height: 1.5;
-  margin: 0 0 10px;
-}
-
-.onboarding-features-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.onboarding-features-list li {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 9px 12px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  font-size: .81rem;
-  line-height: 1.42;
   color: var(--text);
+  margin: 0 0 14px 0;
+  opacity: .95;
 }
 
-.onboarding-features-list .feat-bullet {
-  font-size: 1.05rem;
-  line-height: 1.2;
-  flex-shrink: 0;
-}
-
-.onboarding-footer {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+.coach-footer {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.onboarding-dots {
-  display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
 }
 
-.onboarding-dot {
-  width: 8px;
-  height: 8px;
+.coach-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.coach-dot {
+  width: 7px;
+  height: 7px;
   border-radius: 999px;
   background: var(--border);
-  border: none;
-  padding: 0;
-  cursor: pointer;
   transition: all .25s ease;
 }
 
-.onboarding-dot.active {
-  width: 24px;
+.coach-dot.active {
+  width: 18px;
   background: var(--accent);
 }
 
-.onboarding-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-
-.onboarding-nav-btns {
+.coach-actions {
   display: flex;
   align-items: center;
   gap: 8px;

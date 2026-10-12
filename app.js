@@ -346,7 +346,7 @@
           streakShields: typeof raw.streakShields === "number" ? raw.streakShields : 1, // 初期ギフト1個
           shieldUsedDates: Array.isArray(raw.shieldUsedDates) ? raw.shieldUsedDates : [],
           shieldAwardedMilestones: Array.isArray(raw.shieldAwardedMilestones) ? raw.shieldAwardedMilestones : [],
-          hasSeenGuide: Boolean(raw.hasSeenGuide),
+          hasSeenCoachTour: Boolean(raw.hasSeenCoachTour),
         };
       }
     } catch (e) { /* 破損データは無視して初期化 */ }
@@ -361,7 +361,7 @@
       streakShields: 1,
       shieldUsedDates: [],
       shieldAwardedMilestones: [],
-      hasSeenGuide: false,
+      hasSeenCoachTour: false,
     };
   }
   let state = loadState();
@@ -4348,151 +4348,200 @@ ${targetPatterns}
     $("#legal-dialog")?.close();
   });
 
-  // 🔰 はじめてガイド（オンボーディングPOP）制御
-  let currentOnboardingStep = 0;
-  const TOTAL_ONBOARDING_STEPS = 4;
+  // 🧭 実際の操作画面上のガイドツアー (Coach Mark Overlay & Spotlight Tooltip)
+  const COACH_STEPS = [
+    {
+      target: "#home-course-switch",
+      title: "🔄 2つの学習コース切り替え",
+      desc: "日常・ビジネスで頻出する「口語70構文」と、名スピーチから学ぶ「知的思考GRIT」の2コースをいつでも切り替えられます。"
+    },
+    {
+      target: ".today-card",
+      title: "🎯 今日の瞬間パターントレーニング",
+      desc: "「今日の練習をはじめる」を押すと特訓スタート！日本語を見て1秒で発声し、めくってスワイプで即判定。忘却曲線が復習を自動管理します。"
+    },
+    {
+      target: "#rally-banner-card",
+      title: "🥊 シチュエーション即答ラリー",
+      desc: "相手からのリアルな英語の問いかけに、覚えた型を使って3秒以内に即答！AIで自分好みの会話場面も無制限に作れます。"
+    },
+    {
+      target: "#bottom-nav",
+      title: "📱 耳トレ・構文一覧・弱点分析",
+      desc: "画面を見ずに通勤中に聞ける「耳トレ」、全70構文の辞書「構文一覧」、学習継続ストリークや弱点分析へいつでもアクセスできます。"
+    }
+  ];
 
-  function renderOnboardingStep() {
-    const slides = $$(".onboarding-slide");
-    slides.forEach((s, idx) => {
-      s.classList.toggle("active", idx === currentOnboardingStep);
+  let currentCoachIndex = 0;
+  let isCoachActive = false;
+
+  function renderCoachStep() {
+    if (!isCoachActive) return;
+    const stepData = COACH_STEPS[currentCoachIndex];
+    if (!stepData) return;
+
+    const targetEl = document.querySelector(stepData.target);
+    if (!targetEl) return;
+
+    // ターゲットが視界に入るようスムーズスクロール
+    targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    setTimeout(() => {
+      positionCoachElements(targetEl, stepData);
+    }, 220);
+  }
+
+  function positionCoachElements(targetEl, stepData) {
+    if (!isCoachActive) return;
+    const spotlight = $("#coach-spotlight");
+    const tooltip = $("#coach-tooltip");
+    const arrow = $("#coach-arrow");
+    const badge = $("#coach-step-badge");
+    const titleEl = $("#coach-title");
+    const descEl = $("#coach-desc");
+    const prevBtn = $("#coach-prev-btn");
+    const nextBtn = $("#coach-next-btn");
+    const dots = $$(".coach-dot");
+
+    if (badge) badge.textContent = `STEP ${currentCoachIndex + 1} / ${COACH_STEPS.length}`;
+    if (titleEl) titleEl.textContent = stepData.title;
+    if (descEl) descEl.textContent = stepData.desc;
+
+    dots.forEach((dot, idx) => {
+      dot.classList.toggle("active", idx === currentCoachIndex);
     });
 
-    const dots = $$(".onboarding-dot");
-    dots.forEach((d, idx) => {
-      d.classList.toggle("active", idx === currentOnboardingStep);
-    });
+    if (prevBtn) prevBtn.style.display = currentCoachIndex > 0 ? "inline-flex" : "none";
+    if (nextBtn) {
+      if (currentCoachIndex === COACH_STEPS.length - 1) {
+        nextBtn.textContent = "完了！ さっそく試す 🚀";
+      } else {
+        nextBtn.textContent = "次へ ➔";
+      }
+    }
 
-    const prevBtn = $("#onboarding-prev-btn");
-    const nextBtn = $("#onboarding-next-btn");
-    const startBtn = $("#onboarding-start-btn");
+    const rect = targetEl.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
 
-    if (prevBtn) prevBtn.style.display = currentOnboardingStep > 0 ? "inline-flex" : "none";
-    if (currentOnboardingStep === TOTAL_ONBOARDING_STEPS - 1) {
-      if (nextBtn) nextBtn.style.display = "none";
-      if (startBtn) startBtn.style.display = "inline-flex";
+    // スポットライト位置設定
+    const pad = 6;
+    if (spotlight) {
+      spotlight.style.top = Math.max(0, rect.top - pad) + "px";
+      spotlight.style.left = Math.max(0, rect.left - pad) + "px";
+      spotlight.style.width = (rect.width + pad * 2) + "px";
+      spotlight.style.height = (rect.height + pad * 2) + "px";
+    }
+
+    if (!tooltip) return;
+
+    const tooltipWidth = Math.min(340, vw - 32);
+    tooltip.style.width = tooltipWidth + "px";
+    const tooltipHeight = tooltip.offsetHeight || 190;
+
+    let tooltipLeft = rect.left + (rect.width - tooltipWidth) / 2;
+    tooltipLeft = Math.max(16, Math.min(vw - tooltipWidth - 16, tooltipLeft));
+    tooltip.style.left = tooltipLeft + "px";
+
+    const spaceBelow = vh - rect.bottom;
+    const spaceAbove = rect.top;
+
+    let placeBelow = true;
+    if (spaceBelow < tooltipHeight + 20 && spaceAbove > spaceBelow) {
+      placeBelow = false;
+    }
+
+    if (placeBelow) {
+      const topPos = Math.min(vh - tooltipHeight - 16, rect.bottom + 12);
+      tooltip.style.top = topPos + "px";
+      if (arrow) {
+        arrow.className = "coach-tooltip-arrow arrow-up";
+        const arrowX = Math.max(16, Math.min(tooltipWidth - 24, (rect.left + rect.width / 2) - tooltipLeft - 6));
+        arrow.style.left = arrowX + "px";
+      }
     } else {
-      if (nextBtn) nextBtn.style.display = "inline-flex";
-      if (startBtn) startBtn.style.display = "none";
+      const topPos = Math.max(16, rect.top - tooltipHeight - 12);
+      tooltip.style.top = topPos + "px";
+      if (arrow) {
+        arrow.className = "coach-tooltip-arrow arrow-down";
+        const arrowX = Math.max(16, Math.min(tooltipWidth - 24, (rect.left + rect.width / 2) - tooltipLeft - 6));
+        arrow.style.left = arrowX + "px";
+      }
     }
   }
 
-  function openOnboardingGuide(step = 0) {
-    currentOnboardingStep = Math.max(0, Math.min(TOTAL_ONBOARDING_STEPS - 1, step));
-    renderOnboardingStep();
-    const dialog = $("#onboarding-dialog");
-    if (dialog && !dialog.open) {
-      dialog.showModal();
-    }
+  function startCoachTour(step = 0) {
+    showView("home");
+    isCoachActive = true;
+    currentCoachIndex = Math.max(0, Math.min(COACH_STEPS.length - 1, step));
+    const container = $("#coach-tour-container");
+    if (container) container.hidden = false;
+    renderCoachStep();
   }
 
-  function closeOnboardingGuide(markSeen = true) {
-    const dialog = $("#onboarding-dialog");
-    if (dialog && dialog.open) {
-      dialog.close();
-    }
-    if (markSeen && !state.hasSeenGuide) {
-      state.hasSeenGuide = true;
+  function endCoachTour(markSeen = true) {
+    isCoachActive = false;
+    const container = $("#coach-tour-container");
+    if (container) container.hidden = true;
+    if (markSeen && !state.hasSeenCoachTour) {
+      state.hasSeenCoachTour = true;
       save();
-      // ガイド終了後にPWAバナー判定
       setTimeout(checkPwaInstallBanner, 1500);
     }
   }
 
   function checkFirstVisitGuide() {
-    if (!state.hasSeenGuide) {
+    if (!state.hasSeenCoachTour) {
       setTimeout(() => {
-        openOnboardingGuide(0);
-      }, 500);
+        startCoachTour(0);
+      }, 600);
     }
   }
 
   $("#open-guide-btn")?.addEventListener("click", () => {
-    openOnboardingGuide(0);
+    startCoachTour(0);
   });
 
   $("#settings-open-guide-btn")?.addEventListener("click", () => {
     const settingsDialog = $("#settings-dialog");
     if (settingsDialog && settingsDialog.open) settingsDialog.close();
-    openOnboardingGuide(0);
+    startCoachTour(0);
   });
 
-  $("#close-onboarding")?.addEventListener("click", () => {
-    closeOnboardingGuide(true);
+  $("#coach-close-btn")?.addEventListener("click", () => {
+    endCoachTour(true);
   });
 
-  $("#onboarding-skip-btn")?.addEventListener("click", () => {
-    closeOnboardingGuide(true);
-  });
-
-  $("#onboarding-start-btn")?.addEventListener("click", () => {
-    closeOnboardingGuide(true);
-  });
-
-  $("#onboarding-next-btn")?.addEventListener("click", () => {
-    if (currentOnboardingStep < TOTAL_ONBOARDING_STEPS - 1) {
-      currentOnboardingStep++;
-      renderOnboardingStep();
+  $("#coach-next-btn")?.addEventListener("click", () => {
+    if (currentCoachIndex < COACH_STEPS.length - 1) {
+      currentCoachIndex++;
+      renderCoachStep();
+    } else {
+      endCoachTour(true);
     }
   });
 
-  $("#onboarding-prev-btn")?.addEventListener("click", () => {
-    if (currentOnboardingStep > 0) {
-      currentOnboardingStep--;
-      renderOnboardingStep();
+  $("#coach-prev-btn")?.addEventListener("click", () => {
+    if (currentCoachIndex > 0) {
+      currentCoachIndex--;
+      renderCoachStep();
     }
   });
 
-  $$(".onboarding-dot").forEach((dot) => {
-    dot.addEventListener("click", () => {
-      const step = Number(dot.dataset.step || 0);
-      currentOnboardingStep = step;
-      renderOnboardingStep();
-    });
+  // スポットライトタップでも次へ進める
+  $("#coach-spotlight")?.addEventListener("click", () => {
+    if (currentCoachIndex < COACH_STEPS.length - 1) {
+      currentCoachIndex++;
+      renderCoachStep();
+    } else {
+      endCoachTour(true);
+    }
   });
 
-  // モーダル背景クリックで閉じる
-  const obDialog = $("#onboarding-dialog");
-  if (obDialog) {
-    obDialog.addEventListener("click", (e) => {
-      const rect = obDialog.getBoundingClientRect();
-      if (
-        e.clientX < rect.left ||
-        e.clientX > rect.right ||
-        e.clientY < rect.top ||
-        e.clientY > rect.bottom
-      ) {
-        closeOnboardingGuide(true);
-      }
-    });
-  }
-
-  // スライダー上のタッチスワイプ（スマホ対応）
-  const obSlider = $("#onboarding-slider");
-  if (obSlider) {
-    let touchStartX = 0;
-    let touchStartY = 0;
-    obSlider.addEventListener("touchstart", (e) => {
-      if (!e.touches[0]) return;
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    obSlider.addEventListener("touchend", (e) => {
-      if (!e.changedTouches[0]) return;
-      const dx = e.changedTouches[0].clientX - touchStartX;
-      const dy = e.changedTouches[0].clientY - touchStartY;
-      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-        if (dx < 0 && currentOnboardingStep < TOTAL_ONBOARDING_STEPS - 1) {
-          currentOnboardingStep++;
-          renderOnboardingStep();
-        } else if (dx > 0 && currentOnboardingStep > 0) {
-          currentOnboardingStep--;
-          renderOnboardingStep();
-        }
-      }
-    }, { passive: true });
-  }
+  // 画面リサイズや向き変更時に追従
+  window.addEventListener("resize", () => {
+    if (isCoachActive) renderCoachStep();
+  });
 
   // 📲 PWAインストール案内バナー & 手順モーダル
   function checkPwaInstallBanner() {
@@ -4500,7 +4549,7 @@ ${targetPatterns}
     if (isStandalone) return;
     const dismissed = localStorage.getItem("pwa-banner-dismissed");
     if (dismissed) return;
-    if (!state.hasSeenGuide) return; // ガイド未読時は重なりを避ける
+    if (!state.hasSeenCoachTour) return; // ガイドツアー中はバナーを非表示
 
     const banner = $("#pwa-install-banner");
     if (banner) {
