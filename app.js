@@ -59,6 +59,7 @@
     autoSpeak: true,
     showHint: true,
     typingMode: false,
+    swipeEnabled: false, // デフォルトOFF: スクロール優先
     ttsEngine: "bundled", // "bundled", "gemini", or "browser"
     geminiApiKey: "",
     geminiModel: "gemini-3.8-flash-tts",
@@ -3046,21 +3047,21 @@
     $("#close-badge-detail").onclick = () => dialog.close();
   }
 
-  // ---------- スワイプ操作（Tinder / Anki風 カードめくり＆採点） ----------
+  // ---------- スワイプ・タップ操作 ----------
+  let swipeCleanup = null;
+
   function initSwipeCard() {
     const card = $("#flashcard");
     if (!card) return;
 
+    if (swipeCleanup) {
+      swipeCleanup();
+      swipeCleanup = null;
+    }
+
     const goodBadge = $("#swipe-badge-good");
     const againBadge = $("#swipe-badge-again");
     const hardBadge = $("#swipe-badge-hard");
-
-    let isPointerDown = false;
-    let startX = 0;
-    let startY = 0;
-    let startTime = 0;
-    let hasMoved = false;
-    let buzzedThreshold = null;
 
     function resetBadges() {
       if (goodBadge) goodBadge.style.opacity = "0";
@@ -3081,41 +3082,85 @@
       card.style.opacity = "1";
     }
 
-    card.addEventListener("pointerdown", (e) => {
-      if (e.target.closest("button, input, textarea, a, kbd, label")) return;
+    // デフォルト（スワイプ無効）: 縦スクロールを100%解放し、タップで答えを見るのみ対応
+    if (!state.settings.swipeEnabled) {
+      card.classList.remove("swipe-enabled");
+      card.style.touchAction = "pan-y";
+      resetCardPosition(false);
+
+      const handleClick = (e) => {
+        if (e.target.closest("button, input, textarea, a, kbd, label, select")) return;
+        if (session && !session.revealed) {
+          triggerHaptic("light");
+          reveal();
+        }
+      };
+
+      card.addEventListener("click", handleClick);
+      swipeCleanup = () => {
+        card.removeEventListener("click", handleClick);
+      };
+      return;
+    }
+
+    // スワイプ有効時: 左右スワイプのみ（上スワイプは完全廃止し、縦スクロールを絶対に阻害しない）
+    card.classList.add("swipe-enabled");
+    card.style.touchAction = "pan-y";
+
+    let isPointerDown = false;
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    let isHorizontalGesture = false;
+    let hasMoved = false;
+    let buzzedThreshold = null;
+
+    const onPointerDown = (e) => {
+      if (e.target.closest("button, input, textarea, a, kbd, label, select")) return;
       if (!session) return;
 
       isPointerDown = true;
       hasMoved = false;
+      isHorizontalGesture = false;
       buzzedThreshold = null;
       startX = e.clientX;
       startY = e.clientY;
       startTime = Date.now();
-
-      try { card.setPointerCapture(e.pointerId); } catch {}
-      card.style.touchAction = "none";
       card.style.transition = "none";
       card.classList.remove("card-enter");
-    });
+    };
 
-    card.addEventListener("pointermove", (e) => {
+    const onPointerMove = (e) => {
       if (!isPointerDown) return;
 
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
-      const dist = Math.hypot(dx, dy);
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
 
-      if (dist > 6) {
-        hasMoved = true;
-        card.classList.add("swiping");
+      // 初動判定: 縦スクロールが優先される場合はスワイプをキャンセルしてブラウザに委譲
+      if (!hasMoved) {
+        if (absY > 8 && absY >= absX) {
+          isPointerDown = false;
+          resetCardPosition(false);
+          return;
+        }
+        if (absX > 8 && absX > absY * 1.2) {
+          hasMoved = true;
+          isHorizontalGesture = true;
+          try { card.setPointerCapture(e.pointerId); } catch {}
+          card.classList.add("swiping");
+        }
       }
+
+      if (!isHorizontalGesture) return;
 
       if (session && session.revealed) {
         const rot = Math.min(Math.max(dx * 0.07, -16), 16);
-        card.style.transform = `translate3d(${dx}px, ${dy}px, 0) rotate(${rot}deg)`;
+        card.style.transform = `translate3d(${dx}px, 0, 0) rotate(${rot}deg)`;
 
-        if (dx > 15 && Math.abs(dx) >= Math.abs(dy) * 0.7) {
-          const progress = Math.min(1, (dx - 15) / 60);
+        if (dx > 20) {
+          const progress = Math.min(1, (dx - 20) / 60);
           if (goodBadge) goodBadge.style.opacity = String(progress);
           if (againBadge) againBadge.style.opacity = "0";
           if (hardBadge) hardBadge.style.opacity = "0";
@@ -3123,8 +3168,8 @@
             buzzedThreshold = "good";
             triggerHaptic("light");
           }
-        } else if (dx < -15 && Math.abs(dx) >= Math.abs(dy) * 0.7) {
-          const progress = Math.min(1, (-dx - 15) / 60);
+        } else if (dx < -20) {
+          const progress = Math.min(1, (-dx - 20) / 60);
           if (againBadge) againBadge.style.opacity = String(progress);
           if (goodBadge) goodBadge.style.opacity = "0";
           if (hardBadge) hardBadge.style.opacity = "0";
@@ -3132,35 +3177,24 @@
             buzzedThreshold = "again";
             triggerHaptic("light");
           }
-        } else if (dy < -20 && Math.abs(dy) > Math.abs(dx)) {
-          const progress = Math.min(1, (-dy - 20) / 55);
-          if (hardBadge) hardBadge.style.opacity = String(progress);
-          if (goodBadge) goodBadge.style.opacity = "0";
-          if (againBadge) againBadge.style.opacity = "0";
-          if (progress >= 1 && buzzedThreshold !== "hard") {
-            buzzedThreshold = "hard";
-            triggerHaptic("light");
-          }
         } else {
           resetBadges();
           buzzedThreshold = null;
         }
       } else {
-        card.style.transform = `translate3d(${dx * 0.22}px, ${dy * 0.22}px, 0) rotate(${dx * 0.02}deg)`;
+        card.style.transform = `translate3d(${dx * 0.22}px, 0, 0) rotate(${dx * 0.02}deg)`;
       }
-    });
+    };
 
     const handlePointerEnd = (e) => {
       if (!isPointerDown) return;
       isPointerDown = false;
       card.classList.remove("swiping");
-      card.style.touchAction = "pan-y";
       try { card.releasePointerCapture(e.pointerId); } catch {}
 
       const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
       const dt = Date.now() - startTime;
-      const dist = Math.hypot(dx, dy);
+      const dist = Math.hypot(dx, e.clientY - startY);
 
       if (!hasMoved || (dist < 10 && dt < 350)) {
         if (!session.revealed) {
@@ -3172,7 +3206,7 @@
       }
 
       if (!session.revealed) {
-        if (dy < -35 || Math.abs(dx) > 40) {
+        if (Math.abs(dx) > 50) {
           triggerHaptic("light");
           reveal();
         }
@@ -3181,35 +3215,37 @@
       }
 
       const isFlick = dt < 240;
-      const triggerRight = dx > 70 || (isFlick && dx > 35);
-      const triggerLeft = dx < -70 || (isFlick && dx < -35);
-      const triggerUp = (dy < -65 || (isFlick && dy < -35)) && Math.abs(dy) > Math.abs(dx) * 0.7;
+      const triggerRight = dx > 70 || (isFlick && dx > 40);
+      const triggerLeft = dx < -70 || (isFlick && dx < -40);
 
       if (triggerRight) {
         card.style.transition = "transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease";
-        card.style.transform = `translate3d(120vw, ${dy}px, 0) rotate(22deg)`;
+        card.style.transform = `translate3d(120vw, 0, 0) rotate(22deg)`;
         card.style.opacity = "0";
         triggerHaptic("success");
         setTimeout(() => grade("good"), 180);
       } else if (triggerLeft) {
         card.style.transition = "transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease";
-        card.style.transform = `translate3d(-120vw, ${dy}px, 0) rotate(-22deg)`;
+        card.style.transform = `translate3d(-120vw, 0, 0) rotate(-22deg)`;
         card.style.opacity = "0";
         triggerHaptic("warning");
         setTimeout(() => grade("again"), 180);
-      } else if (triggerUp) {
-        card.style.transition = "transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease";
-        card.style.transform = `translate3d(${dx}px, -120vh, 0) rotate(0deg)`;
-        card.style.opacity = "0";
-        triggerHaptic("medium");
-        setTimeout(() => grade("hard"), 180);
       } else {
         resetCardPosition(true);
       }
     };
 
+    card.addEventListener("pointerdown", onPointerDown);
+    card.addEventListener("pointermove", onPointerMove);
     card.addEventListener("pointerup", handlePointerEnd);
     card.addEventListener("pointercancel", handlePointerEnd);
+
+    swipeCleanup = () => {
+      card.removeEventListener("pointerdown", onPointerDown);
+      card.removeEventListener("pointermove", onPointerMove);
+      card.removeEventListener("pointerup", handlePointerEnd);
+      card.removeEventListener("pointercancel", handlePointerEnd);
+    };
   }
 
   // ---------- イベント ----------
@@ -3421,6 +3457,7 @@
       autoSpeak: form.autoSpeak.checked,
       showHint: form.showHint.checked,
       typingMode: form.typingMode.checked,
+      swipeEnabled: form.swipeEnabled ? form.swipeEnabled.checked : false,
       ttsEngine: form.ttsEngine.value,
       geminiApiKey: form.geminiApiKey.value.trim(),
       geminiModel: form.geminiModel.value,
@@ -3430,6 +3467,7 @@
     const h = state.history[todayKey()];
     if (h) h.goal = state.settings.dailyGoal;
     save();
+    initSwipeCard();
   }
 
 
@@ -3622,6 +3660,7 @@
     form.autoSpeak.checked = s.autoSpeak;
     form.showHint.checked = s.showHint;
     form.typingMode.checked = s.typingMode;
+    if (form.swipeEnabled) form.swipeEnabled.checked = Boolean(s.swipeEnabled);
     form.ttsEngine.value = s.ttsEngine;
     form.geminiApiKey.value = s.geminiApiKey;
     form.geminiModel.value = s.geminiModel;

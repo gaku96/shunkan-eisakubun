@@ -875,15 +875,23 @@ progress.done::-moz-progress-bar { background: var(--good); }
   justify-content: center;
   text-align: center;
   gap: 14px;
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
+  cursor: pointer;
+  user-select: text;
+  -webkit-user-select: text;
   touch-action: pan-y;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
   will-change: transform, opacity;
 }
-.flashcard:active {
+.flashcard.revealed {
+  cursor: default;
+}
+.flashcard.swipe-enabled {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.flashcard.swipe-enabled:active {
   cursor: grabbing;
 }
 .flashcard.swiping {
