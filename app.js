@@ -335,12 +335,17 @@
         if (raw.settings && (raw.settings.speechRate === 1 || raw.settings.speechRate === "1" || !raw.settings.speechRate)) {
           settings.speechRate = 1.15;
         }
+        const existingAnswered = Object.values(raw.history || {}).reduce((a, b) => a + (b.answered || 0), 0);
+        const initialEst = (existingAnswered * 12) + ((raw.listeningCount || 0) * 8);
         return {
           activeCourse: (raw.activeCourse === "grit" ? "grit" : "conversation"),
           settings,
           cards: raw.cards || {},
           history: raw.history || {},
           customCards: Array.isArray(raw.customCards) ? raw.customCards : [],
+          customRallies: Array.isArray(raw.customRallies) ? raw.customRallies : [],
+          favorites: Array.isArray(raw.favorites) ? raw.favorites : [],
+          totalStudySeconds: typeof raw.totalStudySeconds === "number" ? raw.totalStudySeconds : initialEst,
           achievements: raw.achievements || {},
           listeningCount: typeof raw.listeningCount === "number" ? raw.listeningCount : 0,
           streakShields: typeof raw.streakShields === "number" ? raw.streakShields : 1, // 初期ギフト1個
@@ -356,6 +361,9 @@
       cards: {},
       history: {},
       customCards: [],
+      customRallies: [],
+      favorites: [],
+      totalStudySeconds: 0,
       achievements: {},
       listeningCount: 0,
       streakShields: 1,
@@ -523,9 +531,124 @@
   const views = {
     home: $("#view-home"), practice: $("#view-practice"),
     result: $("#view-result"), list: $("#view-list"),
-    report: $("#view-report"),
+    report: $("#view-report"), mypage: $("#view-report"),
     listening: $("#view-listening"),
   };
+
+  // ---------- ⏱️ 総学習時間の追跡 & フォーマット ----------
+  function formatStudyTime(seconds) {
+    const sec = Math.max(0, seconds || 0);
+    if (sec < 60) return "1分未満";
+    const totalMin = Math.floor(sec / 60);
+    if (totalMin < 60) return `${totalMin}分`;
+    const hours = Math.floor(totalMin / 60);
+    const mins = totalMin % 60;
+    return mins > 0 ? `${hours}時間 ${mins}分` : `${hours}時間`;
+  }
+
+  let studyTimeInterval = null;
+  let lastStudyTick = Date.now();
+
+  function checkStudyTimeActive() {
+    const isTraining = views.practice && !views.practice.hidden;
+    const isListening = (typeof listening !== "undefined" && listening && listening.active);
+    const shouldRun = isTraining || isListening;
+
+    if (shouldRun && !studyTimeInterval) {
+      lastStudyTick = Date.now();
+      studyTimeInterval = setInterval(() => {
+        if (!document.hidden) {
+          const now = Date.now();
+          const diff = Math.min(3, Math.max(1, Math.round((now - lastStudyTick) / 1000)));
+          state.totalStudySeconds = (state.totalStudySeconds || 0) + diff;
+          lastStudyTick = now;
+          if (state.totalStudySeconds % 15 === 0) {
+            save();
+            const timeEl = $("#mypage-study-time");
+            if (timeEl && views.report && !views.report.hidden) {
+              timeEl.textContent = formatStudyTime(state.totalStudySeconds);
+            }
+          }
+        } else {
+          lastStudyTick = Date.now();
+        }
+      }, 1000);
+    } else if (!shouldRun && studyTimeInterval) {
+      clearInterval(studyTimeInterval);
+      studyTimeInterval = null;
+      save();
+    }
+  }
+
+  // ---------- ⭐ お気に入り機能ヘルパー ----------
+  function isCardFavorited(cardId) {
+    if (!cardId) return false;
+    return (state.favorites || []).some((f) => f.id === cardId);
+  }
+
+  function toggleCardFavorite(card) {
+    if (!card) return;
+    state.favorites = state.favorites || [];
+    const idx = state.favorites.findIndex((f) => f.id === card.id);
+    if (idx >= 0) {
+      state.favorites.splice(idx, 1);
+      save();
+      showToast("お気に入りを解除しました");
+    } else {
+      state.favorites.push({
+        id: card.id,
+        en: card.en,
+        ja: card.ja,
+        patternId: card.pattern ? card.pattern.id : (card.patternId || 1),
+        patternEn: card.pattern ? card.pattern.en : "",
+        patternJa: card.pattern ? card.pattern.ja : "",
+        nuance: card.nuance || card.replyTips || (card.pattern ? card.pattern.note : ""),
+        alternatives: card.alternatives || [],
+        category: card.category || (card.partner ? card.partner.context : ""),
+        partner: card.partner || null,
+        mission: card.mission || null,
+        isRally: !!card.isRally,
+        addedAt: Date.now()
+      });
+      save();
+      showToast("⭐ お気に入りに追加しました！");
+    }
+    updateCardFavButton(card);
+    updateListeningFavButton(card);
+    updateHomeFavoritesPill();
+    if (views.report && !views.report.hidden) {
+      renderMyPage();
+    }
+  }
+
+  function updateCardFavButton(card) {
+    const btn = $("#card-fav-btn");
+    if (!btn || !card) return;
+    const isFav = isCardFavorited(card.id);
+    btn.classList.toggle("active", isFav);
+    btn.innerHTML = `<svg class="ui-icon" aria-hidden="true"><use href="#${isFav ? "icon-star-filled" : "icon-star"}"></use></svg>`;
+    btn.title = isFav ? "お気に入りを解除" : "お気に入りに保存";
+  }
+
+  function updateListeningFavButton(card) {
+    const btn = $("#listening-fav-btn");
+    if (!btn || !card) return;
+    const isFav = isCardFavorited(card.id);
+    btn.classList.toggle("active", isFav);
+    btn.innerHTML = `<svg class="ui-icon icon-xs" aria-hidden="true"><use href="#${isFav ? "icon-star-filled" : "icon-star"}"></use></svg>`;
+    btn.title = isFav ? "お気に入りを解除" : "お気に入りに保存";
+  }
+
+  function updateHomeFavoritesPill() {
+    const favBtn = $("#start-favorites-btn");
+    const favCountPill = $("#fav-count-pill");
+    const count = (state.favorites || []).length;
+    if (favBtn) {
+      favBtn.hidden = count === 0;
+      if (favCountPill) favCountPill.textContent = count;
+    }
+  }
+
   function updateNavIndicator() {
     const bNav = $("#bottom-nav");
     if (!bNav || bNav.hidden) return;
@@ -552,22 +675,26 @@
     if (name !== "listening" && typeof stopListening === "function" && listening && listening.active) {
       stopListening();
     }
-    for (const [k, el] of Object.entries(views)) if (el) el.hidden = k !== name;
+    for (const [k, el] of Object.entries(views)) {
+      if (el) el.hidden = (k !== name && !(name === "mypage" && k === "report") && !(name === "report" && k === "mypage"));
+    }
 
     const bNav = $("#bottom-nav");
     if (bNav) {
       bNav.hidden = (name === "practice");
       const tabs = bNav.querySelectorAll(".nav-tab");
       tabs.forEach((tab) => {
-        tab.classList.toggle("active", tab.dataset.nav === name);
+        const isActive = tab.dataset.nav === name || (name === "mypage" && tab.dataset.nav === "report") || (name === "report" && tab.dataset.nav === "mypage");
+        tab.classList.toggle("active", isActive);
       });
       requestAnimationFrame(updateNavIndicator);
       setTimeout(updateNavIndicator, 60);
     }
 
+    checkStudyTimeActive();
     if (name === "home") renderHome();
     if (name === "list") renderList();
-    if (name === "report") renderReport();
+    if (name === "report" || name === "mypage") renderMyPage();
     if (name === "listening") renderListeningView();
     window.scrollTo({ top: 0 });
   }
@@ -622,6 +749,8 @@
       const countEl = $("#custom-count");
       if (countEl) countEl.textContent = customCount;
     }
+
+    updateHomeFavoritesPill();
 
     const partBox = $("#part-buttons");
     partBox.replaceChildren(...getActiveParts().map((part) => {
@@ -793,8 +922,9 @@
         d.querySelector(".pattern-en").textContent = p.en;
         d.querySelector(".pattern-ja").textContent = p.ja;
         d.querySelector(".note").textContent = p.note;
-        d.querySelector("ul").replaceChildren(...p.examples.map((ex) => {
+        d.querySelector("ul").replaceChildren(...p.examples.map((ex, i) => {
           const li = document.createElement("li");
+          const exId = isGrit ? `grit-${p.id}-${i}` : `${p.id}-${i}`;
           if (ex.tag) {
             const tagSpan = document.createElement("span");
             tagSpan.style.cssText = "font-size:.72rem; font-weight:700; color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, transparent); padding:2px 7px; border-radius:5px; margin-right:6px; display:inline-block;";
@@ -807,6 +937,31 @@
           const s = document.createElement("span");
           s.textContent = ex.ja;
           li.append(s);
+
+          const favBtn = document.createElement("button");
+          favBtn.type = "button";
+          favBtn.className = "ex-fav-btn";
+          const isFav = isCardFavorited(exId);
+          favBtn.classList.toggle("active", isFav);
+          favBtn.innerHTML = `<svg class="ui-icon icon-xs" aria-hidden="true"><use href="#${isFav ? "icon-star-filled" : "icon-star"}"></use></svg>`;
+          favBtn.title = isFav ? "お気に入りを解除" : "お気に入りに追加";
+          favBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggleCardFavorite({
+              id: exId,
+              en: ex.en,
+              ja: ex.ja,
+              pattern: p,
+              patternId: p.id,
+              patternEn: p.en,
+              patternJa: p.ja,
+              nuance: p.note,
+            });
+            const nowFav = isCardFavorited(exId);
+            favBtn.classList.toggle("active", nowFav);
+            favBtn.innerHTML = `<svg class="ui-icon icon-xs" aria-hidden="true"><use href="#${nowFav ? "icon-star-filled" : "icon-star"}"></use></svg>`;
+          });
+          li.append(favBtn);
           return li;
         }));
         d.querySelector("button").addEventListener("click", () =>
@@ -866,7 +1021,8 @@
     return stats;
   }
 
-  function renderReport() {
+  // ---------- 📊 弱点・学習分析セクション描画 ----------
+  function renderAnalysisSection() {
     const patternStats = computePatternStats();
     let totalAttempts = 0;
     let totalGood = 0;
@@ -883,120 +1039,132 @@
     }
 
     const overallAcc = totalAttempts > 0 ? Math.round((totalGood / totalAttempts) * 100) : null;
-    $("#rep-accuracy").textContent = overallAcc !== null ? `${overallAcc}%` : "--%";
-    $("#rep-mastered").innerHTML = `${masteredPatterns}<small>/30</small>`;
-    $("#rep-weak-count").textContent = weakCount;
+    const accEl = $("#rep-accuracy");
+    if (accEl) accEl.textContent = overallAcc !== null ? `${overallAcc}%` : "--%";
+    const mastEl = $("#rep-mastered");
+    if (mastEl) mastEl.innerHTML = `${masteredPatterns}<small>/30</small>`;
+    const weakEl = $("#rep-weak-count");
+    if (weakEl) weakEl.textContent = weakCount;
     const totalAnsweredAll = Object.values(state.history || {}).reduce((a, b) => a + (b.answered || 0), 0);
-    $("#rep-total-answered").textContent = totalAnsweredAll;
+    const totAnsEl = $("#rep-total-answered");
+    if (totAnsEl) totAnsEl.textContent = totalAnsweredAll;
 
     // AI/コーチのアドバイス生成
     const coachEl = $("#rep-coach-text");
     const sortedWeak = [...patternStats].filter((p) => p.isWeak || p.wrong > 0).sort((a, b) => b.weakScore - a.weakScore);
 
-    if (totalAnsweredAll < 5) {
-      coachEl.innerHTML = "🌱 まだ解答データが少なめです。まずは今日の練習メニューから10〜20問解いて、あなたの英語の強み・弱点を分析しましょう！";
-    } else if (sortedWeak.length === 0) {
-      coachEl.innerHTML = "🌟 <strong>パーフェクトな状態です！</strong> 目立った弱点構文はなく、全構文で安定した英語発話ができています。設定から制限時間を短くして、瞬発力をさらに磨きましょう！";
-    } else {
-      const worst = sortedWeak[0];
-      const worstPartObj = getActiveParts().find((pt) => pt.id === worst.pattern.part);
-      coachEl.innerHTML = `⚠️ 現在最もミスが出やすいのは <strong>${worstPartObj ? worstPartObj.name : ''}</strong> の <strong>「${worst.pattern.en}」</strong>（ミス ${worst.wrong}回）です。<br>「${worst.pattern.note || ''}」を意識して、下の特訓ボタンからピンポイントで復習しましょう！`;
+    if (coachEl) {
+      if (totalAnsweredAll < 5) {
+        coachEl.innerHTML = "🌱 まだ解答データが少なめです。まずは今日の練習メニューから10〜20問解いて、あなたの英語の強み・弱点を分析しましょう！";
+      } else if (sortedWeak.length === 0) {
+        coachEl.innerHTML = "🌟 <strong>パーフェクトな状態です！</strong> 目立った弱点構文はなく、全構文で安定した英語発話ができています。設定から制限時間を短くして、瞬発力をさらに磨きましょう！";
+      } else {
+        const worst = sortedWeak[0];
+        const worstPartObj = getActiveParts().find((pt) => pt.id === worst.pattern.part);
+        coachEl.innerHTML = `⚠️ 現在最もミスが出やすいのは <strong>${worstPartObj ? worstPartObj.name : ''}</strong> の <strong>「${worst.pattern.en}」</strong>（ミス ${worst.wrong}回）です。<br>「${worst.pattern.note || ''}」を意識して、下の特訓ボタンからピンポイントで復習しましょう！`;
+      }
     }
 
     // 弱点ランキング
     const rankingBox = $("#rep-ranking-list");
-    if (sortedWeak.length === 0) {
-      rankingBox.innerHTML = `
-        <div class="empty-state" style="padding: 24px; text-align: center; color: var(--good);">
-          <p style="font-size: 1.5rem; margin-bottom: 6px;">🎉</p>
-          <strong>現在要注意な苦手構文はありません！</strong>
-          <p style="font-size: .85rem; color: var(--muted); margin-top: 4px;">全構文で高い正答率を維持しています。</p>
-        </div>
-      `;
-    } else {
-      const topWeak = sortedWeak.slice(0, 5);
-      rankingBox.replaceChildren(...topWeak.map((ps, idx) => {
-        const item = document.createElement("div");
-        item.className = `ranking-item ${idx === 0 ? 'worst-1' : ''}`;
-        const rankClass = idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : 'rank-other';
-        const rankText = idx < 3 ? `ワースト ${idx + 1}位` : `${idx + 1}位`;
-        const accText = ps.accuracy !== null ? `正答率 ${ps.accuracy}%` : `未正解`;
-        const accClass = ps.accuracy !== null && ps.accuracy >= 70 ? 'good' : (ps.accuracy !== null && ps.accuracy >= 50 ? 'moderate' : '');
-
-        item.innerHTML = `
-          <div class="ranking-item-header">
-            <span class="ranking-rank-pill ${rankClass}">${rankText}</span>
-            <span class="ranking-rate-badge ${accClass}">${accText}</span>
-          </div>
-          <h3 class="ranking-title">#${ps.pattern.id} ${ps.pattern.en}</h3>
-          <p class="ranking-ja">${ps.pattern.ja}</p>
-          <div class="ranking-bar"><div class="ranking-bar-fill ${accClass}" style="width: ${ps.accuracy !== null ? ps.accuracy : 0}%"></div></div>
-          <div class="ranking-item-footer">
-            <span class="ranking-mistake-count">✕ ミス ${ps.wrong}回 / 解答 ${ps.seen}回</span>
-            <button type="button" class="btn small primary">この構文を練習</button>
+    if (rankingBox) {
+      if (sortedWeak.length === 0) {
+        rankingBox.innerHTML = `
+          <div class="empty-state" style="padding: 24px; text-align: center; color: var(--good);">
+            <p style="font-size: 1.5rem; margin-bottom: 6px;">🎉</p>
+            <strong>現在要注意な苦手構文はありません！</strong>
+            <p style="font-size: .85rem; color: var(--muted); margin-top: 4px;">全構文で高い正答率を維持しています。</p>
           </div>
         `;
-        item.querySelector("button").addEventListener("click", () => {
-          startSession({ type: "pattern", pattern: ps.pattern.id });
+      } else {
+        const topWeak = sortedWeak.slice(0, 5);
+        rankingBox.replaceChildren(...topWeak.map((ps, idx) => {
+          const item = document.createElement("div");
+          item.className = `ranking-item ${idx === 0 ? 'worst-1' : ''}`;
+          const rankClass = idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : 'rank-other';
+          const rankText = idx < 3 ? `ワースト ${idx + 1}位` : `${idx + 1}位`;
+          const accText = ps.accuracy !== null ? `正答率 ${ps.accuracy}%` : `未正解`;
+          const accClass = ps.accuracy !== null && ps.accuracy >= 70 ? 'good' : (ps.accuracy !== null && ps.accuracy >= 50 ? 'moderate' : '');
+
+          item.innerHTML = `
+            <div class="ranking-item-header">
+              <span class="ranking-rank-pill ${rankClass}">${rankText}</span>
+              <span class="ranking-rate-badge ${accClass}">${accText}</span>
+            </div>
+            <h3 class="ranking-title">#${ps.pattern.id} ${ps.pattern.en}</h3>
+            <p class="ranking-ja">${ps.pattern.ja}</p>
+            <div class="ranking-bar"><div class="ranking-bar-fill ${accClass}" style="width: ${ps.accuracy !== null ? ps.accuracy : 0}%"></div></div>
+            <div class="ranking-item-footer">
+              <span class="ranking-mistake-count">✕ ミス ${ps.wrong}回 / 解答 ${ps.seen}回</span>
+              <button type="button" class="btn small primary">この構文を練習</button>
+            </div>
+          `;
+          item.querySelector("button")?.addEventListener("click", () => {
+            startSession({ type: "pattern", pattern: ps.pattern.id });
+          });
+          return item;
+        }));
+      }
+    }
+
+    // Part別習得状況
+    const partBox = $("#rep-part-list");
+    if (partBox) {
+      partBox.replaceChildren(...getActiveParts().map((part) => {
+        const partPats = patternStats.filter((ps) => ps.pattern.part === part.id);
+        let seen = 0, wrong = 0, good = 0, mastered = 0, totalCards = 0;
+        for (const ps of partPats) {
+          seen += ps.seen;
+          wrong += ps.wrong;
+          good += ps.good;
+          mastered += ps.mastered;
+          totalCards += ps.totalCards;
+        }
+        const attempts = good + wrong;
+        const acc = attempts > 0 ? Math.round((good / attempts) * 100) : (seen > 0 ? 100 : null);
+        const masteryRate = totalCards > 0 ? Math.round((mastered / totalCards) * 100) : 0;
+
+        const item = document.createElement("div");
+        item.className = "part-rep-item";
+        item.innerHTML = `
+          <div class="part-rep-head">
+            <span class="part-rep-title">${part.name}</span>
+            <span class="part-rep-acc">${acc !== null ? `正答率 ${acc}%` : `未着手`}</span>
+          </div>
+          <div class="part-rep-bar"><div class="part-rep-bar-fill" style="width: ${masteryRate}%"></div></div>
+          <div class="part-rep-footer">
+            <span class="part-rep-sub">習得: ${mastered}/${totalCards}問 (${masteryRate}%)</span>
+            <button type="button" class="btn small ghost">練習する</button>
+          </div>
+        `;
+        item.querySelector("button")?.addEventListener("click", () => {
+          startSession({ type: "part", part: part.id });
         });
         return item;
       }));
     }
 
-    // Part別習得状況
-    const partBox = $("#rep-part-list");
-    partBox.replaceChildren(...getActiveParts().map((part) => {
-      const partPats = patternStats.filter((ps) => ps.pattern.part === part.id);
-      let seen = 0, wrong = 0, good = 0, mastered = 0, totalCards = 0;
-      for (const ps of partPats) {
-        seen += ps.seen;
-        wrong += ps.wrong;
-        good += ps.good;
-        mastered += ps.mastered;
-        totalCards += ps.totalCards;
-      }
-      const attempts = good + wrong;
-      const acc = attempts > 0 ? Math.round((good / attempts) * 100) : (seen > 0 ? 100 : null);
-      const masteryRate = totalCards > 0 ? Math.round((mastered / totalCards) * 100) : 0;
-
-      const item = document.createElement("div");
-      item.className = "part-rep-item";
-      item.innerHTML = `
-        <div class="part-rep-head">
-          <span class="part-rep-title">${part.name}</span>
-          <span class="part-rep-acc">${acc !== null ? `正答率 ${acc}%` : `未着手`}</span>
-        </div>
-        <div class="part-rep-bar"><div class="part-rep-bar-fill" style="width: ${masteryRate}%"></div></div>
-        <div class="part-rep-footer">
-          <span class="part-rep-sub">習得: ${mastered}/${totalCards}問 (${masteryRate}%)</span>
-          <button type="button" class="btn small ghost">練習する</button>
-        </div>
-      `;
-      item.querySelector("button").addEventListener("click", () => {
-        startSession({ type: "part", part: part.id });
-      });
-      return item;
-    }));
-
-    // 全30構文マトリックス
+    // 全構文マトリックス
     const matrixBox = $("#rep-all-matrix");
-    matrixBox.replaceChildren(...patternStats.map((ps) => {
-      const item = document.createElement("div");
-      item.className = "matrix-item";
-      const accColor = ps.accuracy === null ? 'var(--muted)' : ps.accuracy >= 75 ? 'var(--good)' : (ps.accuracy >= 50 ? '#f59e0b' : 'var(--again)');
-      item.innerHTML = `
-        <div>
-          <span class="matrix-pnum">#${ps.pattern.id}</span>
-          <span class="matrix-acc" style="color: ${accColor}">${ps.accuracy !== null ? `${ps.accuracy}%` : '-'}</span>
-        </div>
-        <span class="matrix-ja">${ps.pattern.en}</span>
-      `;
-      item.title = `${ps.pattern.en} (${ps.pattern.ja}) - 正答率: ${ps.accuracy !== null ? ps.accuracy + '%' : '未解答'}`;
-      item.addEventListener("click", () => {
-        startSession({ type: "pattern", pattern: ps.pattern.id });
-      });
-      return item;
-    }));
+    if (matrixBox) {
+      matrixBox.replaceChildren(...patternStats.map((ps) => {
+        const item = document.createElement("div");
+        item.className = "matrix-item";
+        const accColor = ps.accuracy === null ? 'var(--muted)' : ps.accuracy >= 75 ? 'var(--good)' : (ps.accuracy >= 50 ? '#f59e0b' : 'var(--again)');
+        item.innerHTML = `
+          <div>
+            <span class="matrix-pnum">#${ps.pattern.id}</span>
+            <span class="matrix-acc" style="color: ${accColor}">${ps.accuracy !== null ? `${ps.accuracy}%` : '-'}</span>
+          </div>
+          <span class="matrix-ja">${ps.pattern.en}</span>
+        `;
+        item.title = `${ps.pattern.en} (${ps.pattern.ja}) - 正答率: ${ps.accuracy !== null ? ps.accuracy + '%' : '未解答'}`;
+        item.addEventListener("click", () => {
+          startSession({ type: "pattern", pattern: ps.pattern.id });
+        });
+        return item;
+      }));
+    }
 
     // 弱点集中特訓ボタン
     const drillBtn = $("#start-weak-drill");
@@ -1007,6 +1175,186 @@
       };
     }
   }
+
+  // ---------- 🤖 AI自作・ラリー一覧描画 ----------
+  function renderCustomSection() {
+    const box = $("#mypage-custom-list");
+    if (!box) return;
+    const cards = state.customCards || [];
+    const rallies = state.customRallies || [];
+    const total = cards.length + rallies.length;
+
+    if (total === 0) {
+      box.innerHTML = `
+        <div class="empty-state" style="padding: 36px 20px; text-align: center; background: var(--surface); border: 1px dashed var(--border); border-radius: 14px;">
+          <p style="font-size: 2.2rem; margin: 0 0 10px;">🤖</p>
+          <strong style="font-size: 1.05rem; color: var(--text);">作成したAIオリジナル問題はありません</strong>
+          <p style="font-size: 0.85rem; color: var(--muted); margin: 8px auto 0; max-width: 320px; line-height: 1.5;">
+            ホームの「AI専用例文」や「シチュエーション即答ラリー」で作成した問題がここに蓄積されます。
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    const items = [];
+    rallies.forEach((r, idx) => {
+      const div = document.createElement("div");
+      div.className = "fav-card-item";
+      div.innerHTML = `
+        <div class="fav-card-head">
+          <span class="fav-card-pattern" style="background:rgba(239, 68, 68, 0.12); color:#dc2626;">🥊 AIラリー: ${r.category || "即答ラリー"}</span>
+          <div class="fav-card-actions">
+            <button type="button" class="btn small ghost custom-play-btn" style="padding: 4px 8px;">
+              <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-speaker"></use></svg> 聴く
+            </button>
+            <button type="button" class="icon-btn-sub custom-del-btn" style="width: 28px; height: 28px; color: var(--muted);" title="削除">
+              <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-trash"></use></svg>
+            </button>
+          </div>
+        </div>
+        <div style="font-size:0.8rem; color:var(--muted); font-weight:700;">
+          ${r.partner?.avatar || "🧑‍💼"} ${r.partner?.name || "Partner"}: 「${r.partner?.en || ""}」
+        </div>
+        <div class="fav-card-ja">🎯 ${r.mission?.prompt || r.ja}</div>
+        <div class="fav-card-en">↳ 模範: ${r.en}</div>
+      `;
+      div.querySelector(".custom-play-btn")?.addEventListener("click", () => {
+        speakBrowser(r.en);
+      });
+      div.querySelector(".custom-del-btn")?.addEventListener("click", () => {
+        if (confirm("このラリーカードを削除しますか？")) {
+          state.customRallies.splice(idx, 1);
+          save();
+          renderMyPage();
+        }
+      });
+      items.push(div);
+    });
+
+    cards.forEach((c, idx) => {
+      const div = document.createElement("div");
+      div.className = "fav-card-item";
+      div.innerHTML = `
+        <div class="fav-card-head">
+          <span class="fav-card-pattern">🤖 AI例文: ${c.theme || "オリジナル"}</span>
+          <div class="fav-card-actions">
+            <button type="button" class="btn small ghost custom-play-btn" style="padding: 4px 8px;">
+              <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-speaker"></use></svg> 聴く
+            </button>
+            <button type="button" class="icon-btn-sub custom-del-btn" style="width: 28px; height: 28px; color: var(--muted);" title="削除">
+              <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-trash"></use></svg>
+            </button>
+          </div>
+        </div>
+        <div class="fav-card-ja">🇯🇵 ${c.ja}</div>
+        <div class="fav-card-en">🇺🇸 ${c.en}</div>
+      `;
+      div.querySelector(".custom-play-btn")?.addEventListener("click", () => {
+        speakBrowser(c.en);
+      });
+      div.querySelector(".custom-del-btn")?.addEventListener("click", () => {
+        if (confirm("この例文を削除しますか？")) {
+          state.customCards.splice(idx, 1);
+          save();
+          renderMyPage();
+        }
+      });
+      items.push(div);
+    });
+
+    box.replaceChildren(...items);
+  }
+
+  // ---------- 👤 マイページ総合レンダリング ----------
+  function renderMyPage() {
+    // 1. トップのヒーローダッシュボード更新
+    const studyTimeEl = $("#mypage-study-time");
+    if (studyTimeEl) studyTimeEl.textContent = formatStudyTime(state.totalStudySeconds);
+
+    const favCountEl = $("#mypage-fav-count");
+    const favs = state.favorites || [];
+    if (favCountEl) favCountEl.textContent = favs.length;
+
+    const totalAnsweredAll = Object.values(state.history || {}).reduce((a, b) => a + (b.answered || 0), 0);
+    const totalAnsEl = $("#mypage-total-answered");
+    if (totalAnsEl) totalAnsEl.textContent = totalAnsweredAll;
+
+    const streakEl = $("#mypage-streak");
+    if (streakEl) streakEl.textContent = currentStreak();
+
+    const favBadge = $("#mypage-tab-fav-badge");
+    if (favBadge) favBadge.textContent = favs.length;
+
+    const customCount = (state.customCards || []).length + (state.customRallies || []).length;
+    const customBadge = $("#mypage-tab-custom-badge");
+    if (customBadge) customBadge.textContent = customCount;
+
+    // 2. セクション1: お気に入り一覧の描画
+    const favListBox = $("#mypage-fav-list");
+    const startFavDrillBtn = $("#start-fav-drill");
+    if (startFavDrillBtn) {
+      startFavDrillBtn.disabled = favs.length === 0;
+      startFavDrillBtn.onclick = () => {
+        if (favs.length === 0) {
+          showToast("★ お気に入りのフレーズがまだありません");
+          return;
+        }
+        startSession({ type: "favorites" });
+      };
+    }
+
+    if (favListBox) {
+      if (favs.length === 0) {
+        favListBox.innerHTML = `
+          <div class="empty-state" style="padding: 36px 20px; text-align: center; background: var(--surface); border: 1px dashed var(--border); border-radius: 14px;">
+            <p style="font-size: 2.2rem; margin: 0 0 10px;">⭐</p>
+            <strong style="font-size: 1.05rem; color: var(--text);">まだお気に入りフレーズがありません</strong>
+            <p style="font-size: 0.85rem; color: var(--muted); margin: 8px auto 0; max-width: 320px; line-height: 1.5;">
+              練習画面や耳トレ、構文一覧の右上の「★」をタップすると、自分専用のフレーズ集としてここに保存されます。
+            </p>
+          </div>
+        `;
+      } else {
+        favListBox.replaceChildren(...favs.map((item) => {
+          const div = document.createElement("div");
+          div.className = "fav-card-item";
+          const patName = item.patternEn ? `型${item.patternId}: ${item.patternEn}` : (item.isRally ? "🥊 実戦即答ラリー" : "お気に入りフレーズ");
+          div.innerHTML = `
+            <div class="fav-card-head">
+              <span class="fav-card-pattern">${patName}</span>
+              <div class="fav-card-actions">
+                <button type="button" class="btn small ghost fav-play-btn" style="padding: 4px 8px;" title="発音を聞く">
+                  <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-speaker"></use></svg> 聴く
+                </button>
+                <button type="button" class="icon-btn-sub fav-del-btn" style="width: 28px; height: 28px; color: var(--muted);" title="お気に入りを解除" aria-label="お気に入り解除">
+                  <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-trash"></use></svg>
+                </button>
+              </div>
+            </div>
+            <div class="fav-card-ja">🇯🇵 ${item.ja || (item.mission && item.mission.prompt) || ""}</div>
+            <div class="fav-card-en">🇺🇸 ${item.en}</div>
+            ${item.nuance ? `<div class="fav-card-nuance">💡 ${item.nuance}</div>` : ""}
+          `;
+          div.querySelector(".fav-play-btn")?.addEventListener("click", () => {
+            speakCard(item).catch(() => speakBrowser(item.en));
+          });
+          div.querySelector(".fav-del-btn")?.addEventListener("click", () => {
+            toggleCardFavorite(item);
+            renderMyPage();
+          });
+          return div;
+        }));
+      }
+    }
+
+    // 3. セクション2: 弱点・学習分析
+    renderAnalysisSection();
+
+    // 4. セクション3: AI自作・ラリー一覧
+    renderCustomSection();
+  }
+  const renderReport = renderMyPage;
   const shuffle = (arr) => {
     const a = [...arr];
     for (let i = a.length - 1; i > 0; i--) {
@@ -1074,6 +1422,16 @@
         });
         return { title: "⚡️ 弱点集中特訓", queue: sorted.slice(0, 10) };
       }
+      case "favorites": {
+        const pool = (state.favorites || []).map((f) => ({
+          ...f,
+          pattern: f.pattern || window.PATTERNS.find((p) => p.id === f.patternId) || { id: f.patternId || 1, en: f.patternEn || "構文", ja: f.patternJa || "" },
+        }));
+        return {
+          title: `⭐ お気に入り特訓（${Math.min(pool.length, 20)}問）`,
+          queue: shuffle(pool).slice(0, 20),
+        };
+      }
       case "rally": {
         const presets = (window.RALLY_PRESETS || []).map((r) => ({
           ...r,
@@ -1098,7 +1456,13 @@
   function startSession(mode) {
     const { title, queue } = buildQueue(mode);
     if (!queue.length) {
-      alert(mode.type === "weak" ? "苦手な例文はありません。この調子！" : "出題できる例文がありません。");
+      if (mode.type === "favorites") {
+        alert("⭐ お気に入りのフレーズがまだありません。練習カードや構文一覧の★を押して登録してください。");
+      } else if (mode.type === "weak") {
+        alert("苦手な例文はありません。この調子！");
+      } else {
+        alert("出題できる例文がありません。");
+      }
       return;
     }
     session = {
@@ -1115,12 +1479,14 @@
     clearTimeout(timerId);
     stopAudio();
     session = null;
+    checkStudyTimeActive();
   }
 
   function showCard() {
     const card = session.queue[session.index];
     const s = state.settings;
     session.revealed = false;
+    updateCardFavButton(card);
 
     const fc = $("#flashcard");
     if (fc) {
@@ -2718,6 +3084,37 @@
 
   // ---------- イベント ----------
   $("#start-daily").addEventListener("click", () => startSession({ type: "daily" }));
+  $("#start-favorites-btn")?.addEventListener("click", () => startSession({ type: "favorites" }));
+  $("#card-fav-btn")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (session && session.queue && session.queue[session.index]) {
+      toggleCardFavorite(session.queue[session.index]);
+    }
+  });
+  $("#listening-fav-btn")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (listening && listening.queue && listening.queue[listening.index]) {
+      toggleCardFavorite(listening.queue[listening.index]);
+    }
+  });
+  document.querySelectorAll(".mypage-tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".mypage-tab-btn").forEach((b) => {
+        b.classList.remove("active");
+        b.setAttribute("aria-selected", "false");
+      });
+      btn.classList.add("active");
+      btn.setAttribute("aria-selected", "true");
+
+      const tab = btn.dataset.mypageTab;
+      const favSec = $("#mypage-section-favorites");
+      const anaSec = $("#mypage-section-analysis");
+      const cusSec = $("#mypage-section-custom");
+      if (favSec) favSec.hidden = (tab !== "favorites");
+      if (anaSec) anaSec.hidden = (tab !== "analysis");
+      if (cusSec) cusSec.hidden = (tab !== "custom");
+    });
+  });
   $("#start-rally-btn")?.addEventListener("click", () => startSession({ type: "rally" }));
   $("#start-weak").addEventListener("click", () => startSession({ type: "weak" }));
   $("#start-random").addEventListener("click", () => startSession({ type: "random" }));
@@ -3948,6 +4345,7 @@ ${targetPatterns}
 
   function renderListeningCard(card, showAnswer = false) {
     if (!card) return;
+    updateListeningFavButton(card);
     const chip = $("#listening-pattern-chip");
     if (chip) {
       const tagText = card.tag ? ` [${card.tag}]` : "";
@@ -4144,6 +4542,7 @@ ${targetPatterns}
     updateSoundwave(false);
     updateListeningControlsUI();
     stopSilentBgAudio();
+    checkStudyTimeActive();
     if ("mediaSession" in navigator) {
       try { navigator.mediaSession.playbackState = "paused"; } catch (e) {}
     }
@@ -4156,6 +4555,7 @@ ${targetPatterns}
     listening.playing = true;
     updateListeningControlsUI();
     ensureSilentBgAudio();
+    checkStudyTimeActive();
     if ("mediaSession" in navigator) {
       try { navigator.mediaSession.playbackState = "playing"; } catch (e) {}
     }
@@ -4189,6 +4589,7 @@ ${targetPatterns}
   function stopListening() {
     pauseListening();
     listening.active = false;
+    checkStudyTimeActive();
   }
 
   // Setup Listening UI event listeners

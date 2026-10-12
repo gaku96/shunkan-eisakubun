@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=47">
+  <link rel="stylesheet" href="style.css?v=48">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -208,6 +208,24 @@
       <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       <line x1="12" y1="17" x2="12.01" y2="17" stroke="var(--icon-pop, #f97316)" stroke-width="2.5" stroke-linecap="round"/>
     </symbol>
+    <symbol id="icon-user" viewBox="0 0 24 24">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+    </symbol>
+    <symbol id="icon-star" viewBox="0 0 24 24">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-star-filled" viewBox="0 0 24 24">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#f59e0b" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="icon-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+      <polyline points="12 6 12 12 16 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24">
+      <polyline points="3 6 5 6 21 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
   </defs>
 </svg>
   <header class="app-header">
@@ -372,6 +390,11 @@
           </button>
         </div>
 
+        <!-- お気に入りフレーズがある場合のボタン -->
+        <button type="button" class="btn wide" id="start-favorites-btn" hidden style="margin-top: 4px; border: 1.5px solid #f59e0b; background: color-mix(in srgb, #f59e0b 10%, var(--surface));">
+          <svg class="ui-icon" aria-hidden="true"><use href="#icon-star-filled"></use></svg> お気に入りフレーズを特訓 <span class="pill" id="fav-count-pill" style="background:#f59e0b; color:#fff;">0</span>
+        </button>
+
         <!-- カスタム例文がある場合のボタン -->
         <button type="button" class="btn wide" id="start-custom" hidden style="margin-top: 4px;">
           <svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg> 保存したAIカスタム例文を練習 <span class="pill" id="custom-count">0</span>
@@ -435,6 +458,11 @@
       <progress id="session-progress" max="10" value="0" aria-label="セッションの進捗"></progress>
 
       <article class="flashcard" id="flashcard">
+        <!-- ★ お気に入りボタン -->
+        <button type="button" class="card-fav-btn" id="card-fav-btn" aria-label="お気に入りに追加" title="お気に入りに保存">
+          <svg class="ui-icon" aria-hidden="true"><use href="#icon-star"></use></svg>
+        </button>
+
         <!-- スワイプ判定スタンプ (Tinder / Anki風) -->
         <div class="swipe-badge swipe-badge-good" id="swipe-badge-good">
           <svg class="ui-icon" aria-hidden="true"><use href="#icon-check"></use></svg>
@@ -612,73 +640,140 @@
       <div id="pattern-list"></div>
     </section>
 
-    <!-- 弱点分析レポート -->
+    <!-- 👤 マイページ（総学習時間・お気に入り・弱点分析・自作ラリー） -->
     <section id="view-report" class="view" hidden aria-labelledby="report-title">
-      <div class="practice-top">
-        <button type="button" class="btn ghost small" data-nav="home">← 戻る</button>
-        <h1 id="report-title" class="practice-title"><svg class="ui-icon" aria-hidden="true"><use href="#icon-chart"></use></svg> 弱点分析レポート</h1>
+      <div class="practice-top" style="margin-bottom:12px;">
+        <button type="button" class="btn ghost small" data-nav="home">← ホーム</button>
+        <h1 id="report-title" class="practice-title" style="display:flex; align-items:center; gap:6px;">
+          <svg class="ui-icon" aria-hidden="true"><use href="#icon-user"></use></svg> マイページ
+        </h1>
         <span></span>
       </div>
 
-      <!-- 総合サマリーカード -->
-      <div class="card report-overview-card">
-        <div class="report-overview-grid">
-          <div class="report-metric">
-            <span class="report-metric-num" id="rep-accuracy">--%</span>
-            <span class="report-metric-label">総合正答率</span>
-          </div>
-          <div class="report-metric">
-            <span class="report-metric-num" id="rep-mastered">0<small>/30</small></span>
-            <span class="report-metric-label">定着構文</span>
-          </div>
-          <div class="report-metric">
-            <span class="report-metric-num alert" id="rep-weak-count">0</span>
-            <span class="report-metric-label">要注意構文</span>
-          </div>
-          <div class="report-metric">
-            <span class="report-metric-num" id="rep-total-answered">0</span>
-            <span class="report-metric-label">総解答数</span>
-          </div>
+      <!-- 👑 マイステータス・ダッシュボード（総学習時間・お気に入り・総解答数・連続学習） -->
+      <div class="stats-grid mypage-hero-grid" style="margin-bottom: 16px;">
+        <div class="stat-card">
+          <p class="stat-label">⏱️ 総学習時間</p>
+          <p class="stat-value" id="mypage-study-time">--</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">⭐ お気に入り</p>
+          <p class="stat-value"><span id="mypage-fav-count">0</span><small>問</small></p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">📚 総解答数</p>
+          <p class="stat-value"><span id="mypage-total-answered">0</span><small>問</small></p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">🔥 連続学習</p>
+          <p class="stat-value"><span id="mypage-streak">0</span><small>日</small></p>
         </div>
       </div>
 
-      <!-- コーチのアドバイスカード -->
-      <div class="card report-coach-card">
-        <div class="coach-head">
-          <span class="coach-avatar"><svg class="ui-icon icon-lg" aria-hidden="true"><use href="#icon-lightbulb"></use></svg></span>
-          <h3>AI弱点診断・学習アドバイス</h3>
+      <!-- 📑 マイページ内セグメントタブ切り替え -->
+      <div class="mypage-nav-tabs" role="tablist" aria-label="マイページ内メニュー">
+        <button type="button" class="mypage-tab-btn active" data-mypage-tab="favorites" role="tab" aria-selected="true">
+          <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-star-filled"></use></svg>
+          <span>お気に入り (<span id="mypage-tab-fav-badge">0</span>)</span>
+        </button>
+        <button type="button" class="mypage-tab-btn" data-mypage-tab="analysis" role="tab" aria-selected="false">
+          <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-chart"></use></svg>
+          <span>弱点・学習分析</span>
+        </button>
+        <button type="button" class="mypage-tab-btn" data-mypage-tab="custom" role="tab" aria-selected="false">
+          <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-sparkle"></use></svg>
+          <span>AI自作・ラリー (<span id="mypage-tab-custom-badge">0</span>)</span>
+        </button>
+      </div>
+
+      <!-- セクション 1: ★ お気に入りフレーズ帳 -->
+      <div id="mypage-section-favorites" class="mypage-section">
+        <!-- お気に入り特訓CTA -->
+        <div class="card fav-cta-card" style="margin-bottom:14px; background:linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.02)); border:1.5px solid #f59e0b;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div>
+              <h2 style="font-size:1rem; margin:0 0 4px; display:flex; align-items:center; gap:6px;">
+                <svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-star-filled"></use></svg> お気に入りフレーズ特訓
+              </h2>
+              <p class="card-subtext" style="margin:0;">あなたがストックした自分専用の表現だけを集中的に瞬間英作文します。</p>
+            </div>
+            <button type="button" class="btn primary" id="start-fav-drill" style="min-width:160px; background:#f59e0b; border-color:#f59e0b;">
+              <svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-bolt"></use></svg> 特訓をはじめる
+            </button>
+          </div>
         </div>
-        <p class="coach-message" id="rep-coach-text">データを分析しています...</p>
+
+        <!-- お気に入りフレーズ一覧 -->
+        <div id="mypage-fav-list" class="fav-list-container"></div>
       </div>
 
-      <!-- 弱点集中特訓CTA -->
-      <div class="card report-cta-card">
-        <button type="button" class="btn primary big wide" id="start-weak-drill"><svg class="ui-icon" aria-hidden="true"><use href="#icon-bolt"></use></svg> 苦手な構文をまとめて特訓する（10問）</button>
-      </div>
-
-      <!-- ⚠️ 苦手構文ランキング -->
-      <div class="card">
-        <div class="card-head-row">
-          <h2><svg class="ui-icon" aria-hidden="true"><use href="#icon-warning"></use></svg> 苦手構文ランキング</h2>
-          <small class="text-muted">ミス率の高い順</small>
+      <!-- セクション 2: 📊 弱点・学習分析 -->
+      <div id="mypage-section-analysis" class="mypage-section" hidden>
+        <!-- 総合サマリーカード -->
+        <div class="card report-overview-card">
+          <div class="report-overview-grid">
+            <div class="report-metric">
+              <span class="report-metric-num" id="rep-accuracy">--%</span>
+              <span class="report-metric-label">総合正答率</span>
+            </div>
+            <div class="report-metric">
+              <span class="report-metric-num" id="rep-mastered">0<small>/30</small></span>
+              <span class="report-metric-label">定着構文</span>
+            </div>
+            <div class="report-metric">
+              <span class="report-metric-num alert" id="rep-weak-count">0</span>
+              <span class="report-metric-label">要注意構文</span>
+            </div>
+            <div class="report-metric">
+              <span class="report-metric-num" id="rep-total-answered">0</span>
+              <span class="report-metric-label">総解答数</span>
+            </div>
+          </div>
         </div>
-        <p class="card-subtext">特に復習が必要な構文です。ボタンからその構文をピンポイントで練習できます。</p>
-        <div class="weak-ranking-list" id="rep-ranking-list"></div>
+
+        <!-- コーチのアドバイスカード -->
+        <div class="card report-coach-card">
+          <div class="coach-head">
+            <span class="coach-avatar"><svg class="ui-icon icon-lg" aria-hidden="true"><use href="#icon-lightbulb"></use></svg></span>
+            <h3>AI弱点診断・学習アドバイス</h3>
+          </div>
+          <p class="coach-message" id="rep-coach-text">データを分析しています...</p>
+        </div>
+
+        <!-- 弱点集中特訓CTA -->
+        <div class="card report-cta-card">
+          <button type="button" class="btn primary big wide" id="start-weak-drill"><svg class="ui-icon" aria-hidden="true"><use href="#icon-bolt"></use></svg> 苦手な構文をまとめて特訓する（10問）</button>
+        </div>
+
+        <!-- ⚠️ 苦手構文ランキング -->
+        <div class="card">
+          <div class="card-head-row">
+            <h2><svg class="ui-icon" aria-hidden="true"><use href="#icon-warning"></use></svg> 苦手構文ランキング</h2>
+            <small class="text-muted">ミス率の高い順</small>
+          </div>
+          <p class="card-subtext">特に復習が必要な構文です。ボタンからその構文をピンポイントで練習できます。</p>
+          <div class="weak-ranking-list" id="rep-ranking-list"></div>
+        </div>
+
+        <!-- 📈 Part別習得バランス -->
+        <div class="card">
+          <h2><svg class="ui-icon" aria-hidden="true"><use href="#icon-trending-up"></use></svg> パート・場面別の習得状況</h2>
+          <p class="card-subtext">各パートの定着度と正答率のバランスです。</p>
+          <div class="part-report-list" id="rep-part-list"></div>
+        </div>
+
+        <!-- 全構文の成績一覧（折りたたみ/展開） -->
+        <div class="card">
+          <details class="all-patterns-details">
+            <summary><strong>全構文の成績一覧を見る（タップで展開）</strong></summary>
+            <div class="all-patterns-matrix" id="rep-all-matrix"></div>
+          </details>
+        </div>
       </div>
 
-      <!-- 📈 Part別習得バランス -->
-      <div class="card">
-        <h2><svg class="ui-icon" aria-hidden="true"><use href="#icon-trending-up"></use></svg> パート・場面別の習得状況</h2>
-        <p class="card-subtext">各パートの定着度と正答率のバランスです。</p>
-        <div class="part-report-list" id="rep-part-list"></div>
-      </div>
-
-      <!-- 全構文の成績一覧（折りたたみ/展開） -->
-      <div class="card">
-        <details class="all-patterns-details">
-          <summary><strong>全構文の成績一覧を見る（タップで展開）</strong></summary>
-          <div class="all-patterns-matrix" id="rep-all-matrix"></div>
-        </details>
+      <!-- セクション 3: 🤖 AI自作・ラリー -->
+      <div id="mypage-section-custom" class="mypage-section" hidden>
+        <div id="mypage-custom-list" class="fav-list-container"></div>
       </div>
     </section>
 
@@ -720,9 +815,14 @@
       <article class="listening-deck-card" id="listening-deck-card">
         <div class="listening-deck-head">
           <span class="pattern-chip" id="listening-pattern-chip">Part 1 / 型01: I'd say ~</span>
-          <div class="listening-step-pill step-ready" id="listening-step-pill">
-            <span class="listening-step-dot"></span>
-            <span id="listening-step-text">▶ 再生ボタンを押して開始</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button type="button" class="listening-fav-btn icon-btn" id="listening-fav-btn" aria-label="お気に入りに追加" title="お気に入りに保存" style="width:32px; height:32px; border-radius:50%;">
+              <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-star"></use></svg>
+            </button>
+            <div class="listening-step-pill step-ready" id="listening-step-pill">
+              <span class="listening-step-dot"></span>
+              <span id="listening-step-text">▶ 再生ボタンを押して開始</span>
+            </div>
           </div>
         </div>
 
@@ -826,9 +926,9 @@
       <span class="nav-tab-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-book"></use></svg></span>
       <span class="nav-tab-label">構文一覧</span>
     </button>
-    <button type="button" class="nav-tab" data-nav="report" aria-label="弱点分析">
-      <span class="nav-tab-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-chart"></use></svg></span>
-      <span class="nav-tab-label">弱点分析</span>
+    <button type="button" class="nav-tab" data-nav="report" aria-label="マイページ">
+      <span class="nav-tab-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-user"></use></svg></span>
+      <span class="nav-tab-label">マイページ</span>
     </button>
   </nav>
 
@@ -1312,8 +1412,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=47"></script>
-  <script src="app.js?v=47"></script>
+  <script src="data.js?v=48"></script>
+  <script src="app.js?v=48"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
