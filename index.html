@@ -15,12 +15,12 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="瞬間パターントレーニング | 実戦英会話・口語70構文">
   <meta name="twitter:description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターントレーニング。スワイプ操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
-  <meta name="twitter:image" content="icon-512.png">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: data:; connect-src 'self' https://generativelanguage.googleapis.com;">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=53">
+  <link rel="stylesheet" href="style.css?v=54">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -284,7 +284,7 @@
         </div>
         <div class="stat-card">
           <p class="stat-label">習得した例文</p>
-          <p class="stat-value"><span id="stat-mastered">0</span><small id="stat-total">/120</small></p>
+          <p class="stat-value"><span id="stat-mastered">0</span><small id="stat-total">/267</small></p>
         </div>
       </div>
 
@@ -705,7 +705,7 @@
               <span class="report-metric-label">総合正答率</span>
             </div>
             <div class="report-metric">
-              <span class="report-metric-num" id="rep-mastered">0<small>/30</small></span>
+              <span class="report-metric-num" id="rep-mastered">0<small>/70</small></span>
               <span class="report-metric-label">定着構文</span>
             </div>
             <div class="report-metric">
@@ -770,7 +770,7 @@
       <div class="practice-top">
         <button type="button" class="btn ghost small" id="quit-listening"><svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-close"></use></svg> やめる</button>
         <h1 id="listening-title" class="practice-title"><svg class="ui-icon" aria-hidden="true"><use href="#icon-headphones"></use></svg> 聞き流し・耳トレ</h1>
-        <span id="listening-counter" style="font-weight:700; color:var(--accent);">1 / 120</span>
+        <span id="listening-counter" style="font-weight:700; color:var(--accent);">1 / 267</span>
       </div>
 
       <!-- 🔄 耳トレ コース切り替え -->
@@ -949,7 +949,7 @@
       <fieldset class="settings-group">
         <legend>音声設定</legend>
         <div class="audio-status-banner">
-          <span>✅ <strong>日本語・英語 全720問の自然な音声を同梱済み</strong></span>
+          <span>✅ <strong>日本語・英語 全問題の高音質音声を同梱済み</strong></span>
           <small>追加費用0円・APIキー不要・オフラインで高音質な日本語ナレーター＆ネイティブ英語音声がそのまま再生されます。</small>
           <small style="opacity: 0.9; display:block; margin-top:4px;">※ iPhoneで音が出ない場合: 本体のマナーモード（消音スイッチ）をOFFにしてください。</small>
         </div>
@@ -1307,6 +1307,12 @@
           ・TED / GRIT編の構文・フレーズは、アンジェラ・リー・ダックワース氏のTED Talk「Grit: the power of passion and perseverance」の学術的理念に敬意を表し、クリエイティブ・コモンズ（CC BY-NC-ND 4.0）の非営利・教育的趣旨に基づき作成・引用されています。TED® はTED Conferences LLCの登録商標であり、本アプリは同社と提携または推薦されたものではありません。<br>
           ・「瞬間英作文」はベレ出版および森沢洋介氏の登録商標、「パタプラ」は株式会社パタプライングリッシュの登録商標です。本アプリはこれらと提携関係はなく、独自の反復パターントレーニングメソッドを採用した独立した学習ツールです。
         </p>
+
+        <h4 style="margin: 6px 0 2px; font-size: 0.92rem; color: var(--accent);">5. お問い合わせ・不具合のご報告</h4>
+        <p style="margin: 0 0 10px; color: var(--muted);">
+          本アプリに関するご意見、ご感想、不具合のご報告、新機能のご要望は、<a href="https://github.com/gaku96/shunkan-eisakubun/issues" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:underline;">GitHub Issues</a> より受け付けております。<br>
+          ※ データの引き継ぎや設定でお困りの場合は、設定画面内の「データの引き継ぎ・バックアップ」機能をご活用ください。
+        </p>
       </div>
       <button type="button" class="btn primary big" id="legal-dialog-ok-btn" style="margin-top: 14px;">閉じる</button>
     </div>
@@ -1389,8 +1395,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=53"></script>
-  <script src="app.js?v=53"></script>
+  <script src="data.js?v=54"></script>
+  <script src="app.js?v=54"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

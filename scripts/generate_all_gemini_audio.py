@@ -16,6 +16,8 @@ import re
 import sys
 import time
 import urllib.request
+import urllib.error
+import socket
 import struct
 import subprocess
 
@@ -98,7 +100,7 @@ def call_gemini_tts(text: str, api_key: str, model: str = "gemini-3.8-flash-tts"
         headers={"Content-Type": "application/json"}
     )
 
-    with urllib.request.urlopen(req) as response:
+    with urllib.request.urlopen(req, timeout=30) as response:
         res_data = json.loads(response.read().decode("utf-8"))
 
     candidate = res_data.get("candidates", [{}])[0]

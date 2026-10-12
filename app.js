@@ -439,6 +439,16 @@
     }, 3800);
   }
 
+  function escapeHtml(str) {
+    if (str == null) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   const getActiveCourse = () => state.activeCourse || "conversation";
   const getActiveParts = () => (getActiveCourse() === "grit" ? (window.GRIT_PARTS || []) : window.PARTS);
   const getActivePatterns = () => (getActiveCourse() === "grit" ? (window.GRIT_PATTERNS || []) : window.PATTERNS);
@@ -1069,7 +1079,7 @@
     const accEl = $("#rep-accuracy");
     if (accEl) accEl.textContent = overallAcc !== null ? `${overallAcc}%` : "--%";
     const mastEl = $("#rep-mastered");
-    if (mastEl) mastEl.innerHTML = `${masteredPatterns}<small>/30</small>`;
+    if (mastEl) mastEl.innerHTML = `${masteredPatterns}<small>/${getActivePatterns().length}</small>`;
     const weakEl = $("#rep-weak-count");
     if (weakEl) weakEl.textContent = weakCount;
     const totalAnsweredAll = Object.values(state.history || {}).reduce((a, b) => a + (b.answered || 0), 0);
@@ -1088,7 +1098,7 @@
       } else {
         const worst = sortedWeak[0];
         const worstPartObj = getActiveParts().find((pt) => pt.id === worst.pattern.part);
-        coachEl.innerHTML = `⚠️ 現在最もミスが出やすいのは <strong>${worstPartObj ? worstPartObj.name : ''}</strong> の <strong>「${worst.pattern.en}」</strong>（ミス ${worst.wrong}回）です。<br>「${worst.pattern.note || ''}」を意識して、下の特訓ボタンからピンポイントで復習しましょう！`;
+        coachEl.innerHTML = `⚠️ 現在最もミスが出やすいのは <strong>${escapeHtml(worstPartObj ? worstPartObj.name : '')}</strong> の <strong>「${escapeHtml(worst.pattern.en)}」</strong>（ミス ${worst.wrong}回）です。<br>「${escapeHtml(worst.pattern.note || '')}」を意識して、下の特訓ボタンからピンポイントで復習しましょう！`;
       }
     }
 
@@ -1230,7 +1240,7 @@
       div.className = "fav-card-item";
       div.innerHTML = `
         <div class="fav-card-head">
-          <span class="fav-card-pattern" style="background:rgba(239, 68, 68, 0.12); color:#dc2626;">🥊 AIラリー: ${r.category || "即答ラリー"}</span>
+          <span class="fav-card-pattern" style="background:rgba(239, 68, 68, 0.12); color:#dc2626;">🥊 AIラリー: ${escapeHtml(r.category || "即答ラリー")}</span>
           <div class="fav-card-actions">
             <button type="button" class="btn small ghost custom-play-btn" style="padding: 4px 8px;">
               <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-speaker"></use></svg> 聴く
@@ -1241,10 +1251,10 @@
           </div>
         </div>
         <div style="font-size:0.8rem; color:var(--muted); font-weight:700;">
-          ${r.partner?.avatar || "🧑‍💼"} ${r.partner?.name || "Partner"}: 「${r.partner?.en || ""}」
+          ${escapeHtml(r.partner?.avatar || "🧑‍💼")} ${escapeHtml(r.partner?.name || "Partner")}: 「${escapeHtml(r.partner?.en || "")}」
         </div>
-        <div class="fav-card-ja">🎯 ${r.mission?.prompt || r.ja}</div>
-        <div class="fav-card-en">↳ 模範: ${r.en}</div>
+        <div class="fav-card-ja">🎯 ${escapeHtml(r.mission?.prompt || r.ja)}</div>
+        <div class="fav-card-en">↳ 模範: ${escapeHtml(r.en)}</div>
       `;
       div.querySelector(".custom-play-btn")?.addEventListener("click", () => {
         speakBrowser(r.en);
@@ -1264,7 +1274,7 @@
       div.className = "fav-card-item";
       div.innerHTML = `
         <div class="fav-card-head">
-          <span class="fav-card-pattern">🤖 AI例文: ${c.theme || "オリジナル"}</span>
+          <span class="fav-card-pattern">🤖 AI例文: ${escapeHtml(c.theme || "オリジナル")}</span>
           <div class="fav-card-actions">
             <button type="button" class="btn small ghost custom-play-btn" style="padding: 4px 8px;">
               <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-speaker"></use></svg> 聴く
@@ -1274,8 +1284,8 @@
             </button>
           </div>
         </div>
-        <div class="fav-card-ja">🇯🇵 ${c.ja}</div>
-        <div class="fav-card-en">🇺🇸 ${c.en}</div>
+        <div class="fav-card-ja">🇯🇵 ${escapeHtml(c.ja)}</div>
+        <div class="fav-card-en">🇺🇸 ${escapeHtml(c.en)}</div>
       `;
       div.querySelector(".custom-play-btn")?.addEventListener("click", () => {
         speakBrowser(c.en);
@@ -2693,9 +2703,9 @@
       tier: "diamond",
       icon: "🌌",
       name: "全問制覇",
-      desc: "全120問の例文をマスターする",
-      check: (ctx) => ctx.masteredCount >= 120,
-      progress: (ctx) => ({ current: Math.min(ctx.masteredCount, 120), target: 120, text: `${Math.min(ctx.masteredCount, 120)} / 120問` })
+      desc: "コース内のすべての例文をマスターする",
+      check: (ctx) => ctx.masteredCount >= (ctx.totalCards || 267),
+      progress: (ctx) => ({ current: Math.min(ctx.masteredCount, ctx.totalCards || 267), target: ctx.totalCards || 267, text: `${Math.min(ctx.masteredCount, ctx.totalCards || 267)} / ${ctx.totalCards || 267}問` })
     },
 
     // 特殊・チャレンジ
@@ -2846,6 +2856,7 @@
       metToday: dayMet(todayKey()),
       totalAnswered: total,
       masteredCount: mastered,
+      totalCards: CARDS.length,
       customCount: (state.customCards || []).length,
       hour: hour,
       listeningCount: state.listeningCount || 0,
@@ -4244,9 +4255,9 @@ ${targetPatterns}
         const item = document.createElement("div");
         item.className = "preview-item";
         item.innerHTML = `
-          <div class="preview-item-pattern">${pat.en} (${pat.ja})</div>
-          <div class="preview-item-ja">${card.ja}</div>
-          <div class="preview-item-en">${card.en}</div>
+          <div class="preview-item-pattern">${escapeHtml(pat.en)} (${escapeHtml(pat.ja)})</div>
+          <div class="preview-item-ja">${escapeHtml(card.ja)}</div>
+          <div class="preview-item-en">${escapeHtml(card.en)}</div>
         `;
         previewList.appendChild(item);
       });
