@@ -197,7 +197,7 @@ html, body {
 main {
   max-width: 720px;
   margin: 0 auto;
-  padding: 20px 16px max(84px, calc(env(safe-area-inset-bottom) + 68px));
+  padding: 20px 16px max(96px, calc(env(safe-area-inset-bottom) + 84px));
 }
 .view { display: flex; flex-direction: column; gap: 16px; }
 .view[hidden] { display: none; }
@@ -684,54 +684,119 @@ progress.done::-moz-progress-bar { background: var(--good); }
   font-weight: 500;
 }
 
-/* Bottom Navigation */
+/* Bottom Navigation (Floating Glass Pill & Sliding Indicator) */
 .bottom-nav {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: max(16px, env(safe-area-inset-bottom, 16px));
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid var(--border);
-  padding: 8px 12px max(8px, env(safe-area-inset-bottom));
-  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.05);
+  justify-content: space-between;
+  width: calc(100% - 32px);
+  max-width: 440px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 9999px;
+  padding: 5px;
+  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.12),
+              0 2px 8px rgba(0, 0, 0, 0.04),
+              0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+  transition: transform 0.25s ease, opacity 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
 }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .bottom-nav {
+    background: rgba(26, 29, 41, 0.82);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 14px 40px -4px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  }
+}
+
+:root[data-theme="dark"] .bottom-nav {
+  background: rgba(26, 29, 41, 0.82);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 14px 40px -4px rgba(0, 0, 0, 0.5),
+              0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+}
+
 .bottom-nav[hidden] {
   display: none !important;
 }
+
+/* スライドするアクティブ選択インジケーター（ピル型背景） */
+.nav-indicator {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 0;
+  width: 0;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  pointer-events: none;
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.3, 1),
+              width 0.3s cubic-bezier(0.25, 1, 0.3, 1),
+              opacity 0.2s ease;
+  z-index: 1;
+  opacity: 0;
+  will-change: transform, width;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .nav-indicator {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+}
+
+:root[data-theme="dark"] .nav-indicator {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
 .nav-tab {
   all: unset;
+  position: relative;
+  z-index: 2;
   flex: 1;
-  max-width: 90px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 3px;
   cursor: pointer;
-  padding: 6px 0 4px;
-  border-radius: 12px;
+  padding: 7px 4px 6px;
+  border-radius: 9999px;
   color: var(--muted);
-  transition: color 0.15s ease, transform 0.1s ease;
+  transition: color 0.2s ease, transform 0.12s ease;
   -webkit-tap-highlight-color: transparent;
 }
+.nav-tab:hover {
+  color: var(--text);
+}
 .nav-tab:active {
-  transform: scale(0.92);
+  transform: scale(0.93);
 }
 .nav-tab-icon {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  transition: transform 0.15s ease;
+  width: 24px;
+  height: 24px;
+  transition: transform 0.25s cubic-bezier(0.25, 1, 0.3, 1), color 0.2s ease;
 }
 .nav-tab-icon .ui-icon {
   width: 1.35rem;
@@ -740,14 +805,20 @@ progress.done::-moz-progress-bar { background: var(--good); }
 }
 .nav-tab-label {
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.2px;
+  white-space: nowrap;
+  transition: font-weight 0.2s ease, color 0.2s ease;
 }
 .nav-tab.active {
   color: var(--accent);
 }
 .nav-tab.active .nav-tab-icon {
-  transform: translateY(-2px);
+  transform: translateY(-1px) scale(1.1);
+}
+.nav-tab.active .nav-tab-label {
+  font-weight: 700;
+  color: var(--accent);
 }
 
 /* Practice */

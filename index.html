@@ -6,21 +6,21 @@
   <meta name="theme-color" content="#4f46e5">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="瞬間パターンプラクティス">
-  <meta name="description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターンプラクティス。スワイプ操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
-  <meta property="og:title" content="瞬間パターンプラクティス | 実戦英会話・口語70構文">
-  <meta property="og:description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターンプラクティス。スワイプ操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
+  <meta name="apple-mobile-web-app-title" content="瞬間パターントレーニング">
+  <meta name="description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターントレーニング。スワイプ操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
+  <meta property="og:title" content="瞬間パターントレーニング | 実戦英会話・口語70構文">
+  <meta property="og:description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターントレーニング。スワイプ操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
   <meta property="og:type" content="website">
   <meta property="og:image" content="icon-512.png">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="瞬間パターンプラクティス | 実戦英会話・口語70構文">
-  <meta name="twitter:description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターンプラクティス。スワイプ操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
+  <meta name="twitter:title" content="瞬間パターントレーニング | 実戦英会話・口語70構文">
+  <meta name="twitter:description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターントレーニング。スワイプ操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
   <meta name="twitter:image" content="icon-512.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
-  <title>瞬間パターンプラクティス | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=37">
+  <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
+  <link rel="stylesheet" href="style.css?v=38">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -210,7 +210,7 @@
       <div class="brand-icon-wrap">
         <img src="apple-touch-icon.png" alt="" class="brand-icon-img" width="32" height="32">
       </div>
-      <span class="brand-title">瞬間パターンプラクティス</span>
+      <span class="brand-title">瞬間パターントレーニング</span>
       <span class="brand-course-badge" id="brand-sub">口語 70</span>
     </button>
     <div class="header-actions">
@@ -711,8 +711,9 @@
     </section>
   </main>
 
-  <!-- 📱 ボトムナビゲーションバー（アプリ風固定タブ） -->
+  <!-- 📱 フローティング・ガラス透過ボトムナビゲーションバー -->
   <nav class="bottom-nav" id="bottom-nav" aria-label="メインナビゲーション">
+    <div class="nav-indicator" id="nav-indicator" aria-hidden="true"></div>
     <button type="button" class="nav-tab active" data-nav="home" aria-label="ホーム">
       <span class="nav-tab-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-home"></use></svg></span>
       <span class="nav-tab-label">ホーム</span>
@@ -1061,7 +1062,7 @@
       </div>
       <div class="legal-scroll-body" style="max-height: 58vh; overflow-y: auto; padding: 6px 2px; font-size: 0.82rem; line-height: 1.6; color: var(--text);">
         <h4 style="margin: 6px 0 2px; font-size: 0.92rem; color: var(--accent);">1. サービスについて</h4>
-        <p style="margin: 0 0 10px; color: var(--muted);">「瞬間パターンプラクティス」は、英語の瞬発力と構文運用力を高めるための無料学習Webアプリケーション（PWA）です。</p>
+        <p style="margin: 0 0 10px; color: var(--muted);">「瞬間パターントレーニング」は、英語の瞬発力と構文運用力を高めるための無料学習Webアプリケーション（PWA）です。</p>
 
         <h4 style="margin: 6px 0 2px; font-size: 0.92rem; color: var(--accent);">2. プライバシー & データの保護方針</h4>
         <p style="margin: 0 0 10px; color: var(--muted);">・本アプリはユーザー登録不要でご利用いただけます。<br>・学習進捗、設定、および入力されたGemini APIキーは、お客様の端末（ブラウザのLocalStorage / IndexedDB）内にのみ安全に保存され、外部サーバーへ無断送信されることは一切ありません。</p>
@@ -1073,7 +1074,7 @@
         <p style="margin: 0 0 6px; color: var(--muted);">
           ・口語編の70構文および練習用例文・解説は、日常・ビジネスで頻出する実戦英語パターンを独自に分類・体系化したオリジナル教材です。<br>
           ・TED / GRIT編の構文・フレーズは、アンジェラ・リー・ダックワース氏のTED Talk「Grit: the power of passion and perseverance」の学術的理念に敬意を表し、クリエイティブ・コモンズ（CC BY-NC-ND 4.0）の非営利・教育的趣旨に基づき作成・引用されています。TED® はTED Conferences LLCの登録商標であり、本アプリは同社と提携または推薦されたものではありません。<br>
-          ・「瞬間英作文」はベレ出版および森沢洋介氏の登録商標です。本アプリは独自の型反復・パターンプラクティスメソッドを採用した独立した学習ツールです。
+          ・「瞬間英作文」はベレ出版および森沢洋介氏の登録商標、「パタプラ」は株式会社パタプライングリッシュの登録商標です。本アプリはこれらと提携関係はなく、独自の反復パターントレーニングメソッドを採用した独立した学習ツールです。
         </p>
       </div>
       <button type="button" class="btn primary big" id="legal-dialog-ok-btn" style="margin-top: 14px;">閉じる</button>
@@ -1126,8 +1127,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=37"></script>
-  <script src="app.js?v=37"></script>
+  <script src="data.js?v=38"></script>
+  <script src="app.js?v=38"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

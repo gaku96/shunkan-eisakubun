@@ -524,6 +524,28 @@
     report: $("#view-report"),
     listening: $("#view-listening"),
   };
+  function updateNavIndicator() {
+    const bNav = $("#bottom-nav");
+    if (!bNav || bNav.hidden) return;
+    const activeTab = bNav.querySelector(".nav-tab.active");
+    const indicator = $("#nav-indicator");
+    if (indicator) {
+      if (activeTab) {
+        const navRect = bNav.getBoundingClientRect();
+        const tabRect = activeTab.getBoundingClientRect();
+        if (tabRect.width > 0) {
+          const left = tabRect.left - navRect.left;
+          indicator.style.width = `${tabRect.width}px`;
+          indicator.style.transform = `translateX(${left}px)`;
+          indicator.style.opacity = "1";
+          return;
+        }
+      }
+      indicator.style.opacity = "0";
+    }
+  }
+  window.addEventListener("resize", updateNavIndicator);
+
   function showView(name) {
     if (name !== "listening" && typeof stopListening === "function" && listening && listening.active) {
       stopListening();
@@ -537,6 +559,8 @@
       tabs.forEach((tab) => {
         tab.classList.toggle("active", tab.dataset.nav === name);
       });
+      requestAnimationFrame(updateNavIndicator);
+      setTimeout(updateNavIndicator, 60);
     }
 
     if (name === "home") renderHome();
@@ -1401,11 +1425,11 @@
     const streak = currentStreak();
     const courseName = getActiveCourse() === "grit" ? "TED・知的思考GRIT編" : "日常・口語編";
     const summaryText = $("#result-summary")?.textContent || "今日の学習完了！";
-    const text = `【瞬間パターンプラクティス】\n今日の練習を完了！🔥 連続${streak}日目達成（${courseName}）\n${summaryText}\n#瞬間パターンプラクティス #英語学習 #英会話`;
+    const text = `【瞬間パターントレーニング】\n今日の練習を完了！🔥 連続${streak}日目達成（${courseName}）\n${summaryText}\n#瞬間パターントレーニング #英語学習 #英会話`;
     const url = window.location.href.split("#")[0];
 
     if (navigator.share) {
-      navigator.share({ title: "瞬間パターンプラクティス", text, url }).catch(() => {});
+      navigator.share({ title: "瞬間パターントレーニング", text, url }).catch(() => {});
     } else {
       const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
       window.open(tweetUrl, "_blank", "noopener,noreferrer");
@@ -2019,7 +2043,7 @@
       tier: "bronze",
       icon: "🎯",
       name: "ウォーミングアップ",
-      desc: "累計10問の瞬間パターンプラクティスを解答する",
+      desc: "累計10問の瞬間パターントレーニングを解答する",
       check: (ctx) => ctx.totalAnswered >= 10,
       progress: (ctx) => ({ current: Math.min(ctx.totalAnswered, 10), target: 10, text: `${Math.min(ctx.totalAnswered, 10)} / 10問` })
     },
@@ -2028,7 +2052,7 @@
       tier: "silver",
       icon: "🏃‍♂️",
       name: "実践ランナー",
-      desc: "累計50問の瞬間パターンプラクティスを解答する",
+      desc: "累計50問の瞬間パターントレーニングを解答する",
       check: (ctx) => ctx.totalAnswered >= 50,
       progress: (ctx) => ({ current: Math.min(ctx.totalAnswered, 50), target: 50, text: `${Math.min(ctx.totalAnswered, 50)} / 50問` })
     },
@@ -2037,7 +2061,7 @@
       tier: "gold",
       icon: "⚔️",
       name: "百問錬磨",
-      desc: "累計100問の瞬間パターンプラクティスを解答する",
+      desc: "累計100問の瞬間パターントレーニングを解答する",
       check: (ctx) => ctx.totalAnswered >= 100,
       progress: (ctx) => ({ current: Math.min(ctx.totalAnswered, 100), target: 100, text: `${Math.min(ctx.totalAnswered, 100)} / 100問` })
     },
@@ -2045,8 +2069,8 @@
       id: "count_300",
       tier: "diamond",
       icon: "🏆",
-      name: "パターンプラクティスマスター",
-      desc: "累計300問の瞬間パターンプラクティスを解答する",
+      name: "パターントレーニングマスター",
+      desc: "累計300問の瞬間パターントレーニングを解答する",
       check: (ctx) => ctx.totalAnswered >= 300,
       progress: (ctx) => ({ current: Math.min(ctx.totalAnswered, 300), target: 300, text: `${Math.min(ctx.totalAnswered, 300)} / 300問` })
     },
@@ -3305,7 +3329,7 @@
       return `${id}: ${p.en} (${p.ja})`;
     }).join("\n");
 
-    const prompt = `あなたはプロの英語ネイティブ講師です。以下のテーマに合わせて、指定された英語構文を使った瞬間パターンプラクティスの練習用オリジナル例文を作成してください。
+    const prompt = `あなたはプロの英語ネイティブ講師です。以下のテーマに合わせて、指定された英語構文を使った瞬間パターントレーニングの練習用オリジナル例文を作成してください。
 
 【テーマ・シチュエーション】
 ${theme}
@@ -3746,7 +3770,7 @@ ${targetPatterns}
       navigator.mediaSession.metadata = new MediaMetadata({
         title: card.ja,
         artist: stepSub || card.en,
-        album: `瞬間パターンプラクティス - ${card.pattern.en}`,
+        album: `瞬間パターントレーニング - ${card.pattern.en}`,
         artwork: [
           { src: "icon-192.png", sizes: "192x192", type: "image/png" },
           { src: "icon-512.png", sizes: "512x512", type: "image/png" }

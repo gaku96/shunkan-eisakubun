@@ -1,7 +1,7 @@
 {
-  "name": "瞬間パターンプラクティス - 実戦英会話70構文",
-  "short_name": "パターンプラクティス",
-  "description": "ネイティブが日常・ビジネスで使う実戦英会話70構文で瞬間パターンプラクティス",
+  "name": "瞬間パターントレーニング - 実戦英会話70構文",
+  "short_name": "瞬トレ",
+  "description": "ネイティブが日常・ビジネスで使う実戦英会話70構文で瞬間パターントレーニング",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#12131a",
