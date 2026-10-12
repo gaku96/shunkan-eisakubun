@@ -174,6 +174,31 @@ def main():
     success_count = 0
     start_time = time.time()
 
+    def generate_single_file(text, lang, eff_accent, target_mp3, tag_name):
+        max_retries = 6
+        for attempt in range(max_retries):
+            try:
+                temp_wav = os.path.join(output_dir, f"_temp_{cid}_{lang}.wav")
+                wav_bytes = call_gemini_tts(text, args.api_key, args.model, args.voice, lang, eff_accent)
+                with open(temp_wav, "wb") as f:
+                    f.write(wav_bytes)
+                subprocess.run(["lame", "-b", "64", "-m", "m", temp_wav, target_mp3], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                if os.path.exists(temp_wav):
+                    os.remove(temp_wav)
+                print(f"  ✓ {tag_name} created: {os.path.basename(target_mp3)} ({os.path.getsize(target_mp3)} bytes)")
+                time.sleep(2.5)  # 15 RPM limit safety spacing (~12 requests/min)
+                return True
+            except Exception as e:
+                err_str = str(e)
+                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                    wait_sec = 12 * (attempt + 1)
+                    print(f"  ⏳ [429 API制限検知] {wait_sec}秒待機して再試行します... (試行 {attempt + 1}/{max_retries})")
+                    time.sleep(wait_sec)
+                else:
+                    print(f"  ❌ Error {tag_name}: {e}")
+                    time.sleep(3)
+        return False
+
     for idx, card in enumerate(cards, 1):
         cid = card["id"]
         course_tag = "GRIT" if card["course"] == "grit" else "口語"
@@ -192,43 +217,15 @@ def main():
 
         # 1. English
         if en_needed:
-            try:
-                wav_bytes = call_gemini_tts(card["en"], args.api_key, args.model, args.voice, "en", eff_accent)
-                temp_wav = os.path.join(output_dir, f"_temp_{cid}.wav")
-                with open(temp_wav, "wb") as f:
-                    f.write(wav_bytes)
-                subprocess.run(["lame", "-b", "64", "-m", "m", temp_wav, en_mp3], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                if os.path.exists(temp_wav):
-                    os.remove(temp_wav)
-                success_count += 1
-                print(f"  ✓ EN created: {os.path.basename(en_mp3)} ({os.path.getsize(en_mp3)} bytes)")
-                time.sleep(0.8)
-            except Exception as e:
-                print(f"  ❌ Error EN: {e}")
-                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                    print("  ⏳ 429 Rate limit encountered, pausing 10s...")
-                    time.sleep(10)
+            ok = generate_single_file(card["en"], "en", eff_accent, en_mp3, "EN")
+            if ok: success_count += 1
         else:
             success_count += 1
 
         # 2. Japanese
         if ja_needed:
-            try:
-                wav_bytes = call_gemini_tts(card["ja"], args.api_key, args.model, args.voice, "ja")
-                temp_wav = os.path.join(output_dir, f"_temp_{cid}_ja.wav")
-                with open(temp_wav, "wb") as f:
-                    f.write(wav_bytes)
-                subprocess.run(["lame", "-b", "64", "-m", "m", temp_wav, ja_mp3], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                if os.path.exists(temp_wav):
-                    os.remove(temp_wav)
-                success_count += 1
-                print(f"  ✓ JA created: {os.path.basename(ja_mp3)} ({os.path.getsize(ja_mp3)} bytes)")
-                time.sleep(0.8)
-            except Exception as e:
-                print(f"  ❌ Error JA: {e}")
-                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                    print("  ⏳ 429 Rate limit encountered, pausing 10s...")
-                    time.sleep(10)
+            ok = generate_single_file(card["ja"], "ja", "us", ja_mp3, "JA")
+            if ok: success_count += 1
         else:
             success_count += 1
 
