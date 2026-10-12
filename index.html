@@ -8,19 +8,25 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="瞬間パターントレーニング">
   <meta name="description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターントレーニング。快適操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
+  <link rel="canonical" href="https://gaku96.github.io/shunkan-eisakubun/">
   <meta property="og:title" content="瞬間パターントレーニング | 実戦英会話・口語70構文">
   <meta property="og:description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターントレーニング。快適操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="icon-512.png">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:url" content="https://gaku96.github.io/shunkan-eisakubun/">
+  <meta property="og:image" content="https://gaku96.github.io/shunkan-eisakubun/ogp.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:site_name" content="瞬間パターントレーニング">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="瞬間パターントレーニング | 実戦英会話・口語70構文">
   <meta name="twitter:description" content="ネイティブが日常・ビジネスで使う実戦英語70構文＋知的思考GRITで瞬間パターントレーニング。快適操作・完全オフライン音声・聞き流し・ストリーク保護対応の無料PWA英語アプリ。">
+  <meta name="twitter:image" content="https://gaku96.github.io/shunkan-eisakubun/ogp.png">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: data:; connect-src 'self' https://generativelanguage.googleapis.com;">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=68">
+  <link rel="stylesheet" href="style.css?v=69">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -949,16 +955,16 @@
       <fieldset class="settings-group">
         <legend>音声設定</legend>
         <div class="audio-status-banner">
-          <span>✅ <strong>日本語・英語 全問題の高音質音声を同梱済み</strong></span>
-          <small>追加費用0円・APIキー不要・オフラインで高音質な日本語ナレーター＆ネイティブ英語音声がそのまま再生されます。</small>
+          <span>✅ <strong>日本語・英語 全問の高音質音声を同梱済み</strong></span>
+          <small>追加費用0円・APIキー不要。通信環境があれば<strong>事前保存なしでもそのまま自動で高音質再生</strong>されます。</small>
           <small style="opacity: 0.9; display:block; margin-top:4px;">※ iPhoneで音が出ない場合: 本体のマナーモード（消音スイッチ）をOFFにしてください。</small>
         </div>
         <div class="bulk-download-section">
           <div>
-            <span style="font-weight:600; font-size:0.84rem; display:flex; align-items:center; gap:4px;"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-download"></use></svg> 全音声の一括保存（完全オフライン化）</span>
-            <small style="color:var(--muted); font-size:0.75rem; display:block; margin-top:2px;">地下鉄や機内など圏外でも全音声（約18MB）が途切れません。</small>
+            <span style="font-weight:600; font-size:0.84rem; display:flex; align-items:center; gap:4px;"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-download"></use></svg> オフライン用の音声一括保存（任意）</span>
+            <small style="color:var(--muted); font-size:0.75rem; display:block; margin-top:2px;">※ 通常利用時は保存不要です。地下鉄や機内など圏外環境でも音声を途切れず使いたい場合のみ保存してください（約18MB）。</small>
           </div>
-          <button type="button" class="btn small primary-ghost" id="bulk-download-btn" style="width:100%; margin-top:8px; text-align:center;">一括保存 (18MB)</button>
+          <button type="button" class="btn small primary-ghost" id="bulk-download-btn" style="width:100%; margin-top:8px; text-align:center;">オフライン用に一括保存 (18MB)</button>
           <div id="bulk-download-box" hidden style="margin-top: 8px;">
             <progress id="bulk-download-progress" max="100" value="0" style="margin: 4px 0; height: 6px; width:100%;"></progress>
             <div id="bulk-download-status" style="font-size: 0.76rem; color: var(--accent); font-weight:600;">準備中...</div>
@@ -1406,8 +1412,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=68"></script>
-  <script src="app.js?v=68"></script>
+  <script src="data.js?v=69"></script>
+  <script src="app.js?v=69"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

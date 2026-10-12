@@ -1992,13 +1992,13 @@
     const streak = currentStreak();
     const courseName = getActiveCourse() === "grit" ? "TED・知的思考GRIT編" : "日常・口語編";
     const summaryText = $("#result-summary")?.textContent || "今日の学習完了！";
-    const text = `【瞬間パターントレーニング】\n今日の練習を完了！🔥 連続${streak}日目達成（${courseName}）\n${summaryText}\n#瞬間パターントレーニング #英語学習 #英会話`;
-    const url = window.location.href.split("#")[0];
+    const text = `【瞬間パターントレーニング】\n今日の練習を完了！🔥 連続${streak}日目（${courseName}）\n${summaryText}\n#瞬間パターントレーニング #英語学習 #英会話`;
+    const shareUrl = "https://gaku96.github.io/shunkan-eisakubun/";
 
     if (navigator.share) {
-      navigator.share({ title: "瞬間パターントレーニング", text, url }).catch(() => {});
+      navigator.share({ title: "瞬間パターントレーニング", text, url: shareUrl }).catch(() => {});
     } else {
-      const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+      const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
       window.open(tweetUrl, "_blank", "noopener,noreferrer");
     }
   }
