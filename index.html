@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=56">
+  <link rel="stylesheet" href="style.css?v=57">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -803,14 +803,15 @@
       <article class="listening-deck-card" id="listening-deck-card">
         <div class="listening-deck-head">
           <span class="pattern-chip" id="listening-pattern-chip">Part 1 / 型01: I'd say ~</span>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <button type="button" class="listening-fav-btn icon-btn" id="listening-fav-btn" aria-label="お気に入りに追加" title="お気に入りに保存" style="width:32px; height:32px; border-radius:50%;">
-              <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-star"></use></svg>
-            </button>
-            <div class="listening-step-pill step-ready" id="listening-step-pill">
-              <span class="listening-step-dot"></span>
-              <span id="listening-step-text">▶ 再生ボタンを押して開始</span>
-            </div>
+          <button type="button" class="listening-fav-btn icon-btn" id="listening-fav-btn" aria-label="お気に入りに追加" title="お気に入りに保存">
+            <svg class="ui-icon icon-xs" aria-hidden="true"><use href="#icon-star"></use></svg>
+          </button>
+        </div>
+
+        <div class="listening-step-row">
+          <div class="listening-step-pill step-ready" id="listening-step-pill">
+            <span class="listening-step-dot"></span>
+            <span id="listening-step-text">▶ 再生ボタンを押して開始</span>
           </div>
         </div>
 
@@ -1396,8 +1397,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=56"></script>
-  <script src="app.js?v=56"></script>
+  <script src="data.js?v=57"></script>
+  <script src="app.js?v=57"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

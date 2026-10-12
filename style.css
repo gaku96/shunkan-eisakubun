@@ -2205,20 +2205,52 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  width: 100%;
+}
+.listening-deck-head .pattern-chip {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  line-height: 1.4;
+}
+.listening-deck-head .listening-fav-btn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.listening-step-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: -2px 0 2px;
 }
 .listening-step-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  font-size: .82rem;
+  font-size: .84rem;
   font-weight: 700;
-  padding: 5px 14px;
+  padding: 6px 18px;
   border-radius: 999px;
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   color: var(--text);
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
   transition: all .2s ease;
+  max-width: 100%;
 }
 .listening-step-dot {
   width: 8px;
