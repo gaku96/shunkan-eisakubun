@@ -1,15 +1,16 @@
-const CACHE_NAME = "shunkan-eisakubun-v57";
+const CACHE_NAME = "shunkan-eisakubun-v58";
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=57",
-  "./app.js?v=57",
-  "./data.js?v=57",
+  "./style.css?v=58",
+  "./app.js?v=58",
+  "./data.js?v=58",
   "./manifest.json",
   "./icon.png",
   "./icon-192.png",
   "./icon-512.png",
-  "./apple-touch-icon.png"
+  "./apple-touch-icon.png",
+  "./audio/silence.mp3"
 ];
 
 self.addEventListener("install", (e) => {
@@ -51,19 +52,52 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // Audio files: cache-first with dynamic caching
+  // Audio files: cache-first with dynamic caching and iOS Safari 206 Partial Content support
   if (e.request.url.includes("/audio/")) {
     e.respondWith(
-      caches.match(e.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(e.request).then((res) => {
-          if (res && res.ok) {
-            const clone = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+      (async () => {
+        const cache = await caches.open(CACHE_NAME);
+        const match = (await cache.match(e.request, { ignoreSearch: true })) || (await cache.match(e.request.url));
+
+        if (!match) {
+          try {
+            const networkRes = await fetch(e.request);
+            if (networkRes && networkRes.ok && networkRes.status === 200) {
+              cache.put(e.request.url, networkRes.clone()).catch(() => {});
+            }
+            return networkRes;
+          } catch (err) {
+            return new Response("", { status: 404, statusText: "Not Found" });
           }
-          return res;
-        });
-      })
+        }
+
+        const rangeHeader = e.request.headers.get("range");
+        if (!rangeHeader) {
+          return match;
+        }
+
+        // Handle iOS Safari Range Request for cached Audio (AVPlayer requires 206 Partial Content)
+        const arrayBuffer = await match.arrayBuffer();
+        const byteLength = arrayBuffer.byteLength;
+        const rangeMatch = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+        if (rangeMatch) {
+          const start = parseInt(rangeMatch[1], 10);
+          const end = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : byteLength - 1;
+          const chunk = arrayBuffer.slice(start, end + 1);
+
+          return new Response(chunk, {
+            status: 206,
+            statusText: "Partial Content",
+            headers: {
+              "Content-Type": match.headers.get("Content-Type") || "audio/mpeg",
+              "Content-Range": `bytes ${start}-${end}/${byteLength}`,
+              "Content-Length": chunk.byteLength,
+              "Accept-Ranges": "bytes"
+            }
+          });
+        }
+        return match;
+      })()
     );
     return;
   }

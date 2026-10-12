@@ -4329,15 +4329,16 @@ ${targetPatterns}
   let silentBgAudio = null;
   function ensureSilentBgAudio() {
     if (!silentBgAudio) {
-      silentBgAudio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==");
+      silentBgAudio = new Audio("audio/silence.mp3");
       silentBgAudio.loop = true;
-      silentBgAudio.volume = 0.01;
+      silentBgAudio.volume = 0.001; // Inaudible, keeps iOS audio session and timers alive in background
     }
     silentBgAudio.play().catch(() => {});
   }
   function stopSilentBgAudio() {
     if (silentBgAudio) {
       silentBgAudio.pause();
+      silentBgAudio.currentTime = 0;
     }
   }
 
@@ -5142,8 +5143,11 @@ ${targetPatterns}
       const audioKey = card.audioId || getCustomAudioId(card) || card.id;
       if (audioKey && !audioKey.startsWith("c_")) {
         audioUrls.add(`audio/${audioKey}.mp3`);
+        audioUrls.add(`audio/${audioKey}_ja.mp3`);
       }
     }
+    audioUrls.add("audio/silence.mp3");
+
     const urls = Array.from(audioUrls);
     let completed = 0;
     const total = urls.length;
@@ -5153,6 +5157,10 @@ ${targetPatterns}
     }
 
     try {
+      const cacheKeys = ("caches" in window) ? await caches.keys() : [];
+      const currentCacheName = cacheKeys.find(k => k.startsWith("shunkan-eisakubun-")) || "shunkan-eisakubun-v58";
+      const cache = ("caches" in window) ? await caches.open(currentCacheName) : null;
+
       const concurrency = 6;
       let currentIndex = 0;
 
@@ -5161,13 +5169,16 @@ ${targetPatterns}
           const idx = currentIndex++;
           const url = urls[idx];
           try {
-            await fetch(url, { cache: "force-cache" });
+            const res = await fetch(url);
+            if (res && res.ok && cache) {
+              await cache.put(url, res.clone());
+            }
           } catch (e) {
             // スキップ
           }
           completed++;
           if (progress) progress.value = completed;
-          if (status) status.textContent = `保存中... ${completed} / ${total} 問 (${Math.round((completed / total) * 100)}%)`;
+          if (status) status.textContent = `保存中... ${completed} / ${total} ファイル (${Math.round((completed / total) * 100)}%)`;
         }
       };
 
@@ -5175,12 +5186,12 @@ ${targetPatterns}
       for (let i = 0; i < concurrency; i++) workers.push(worker());
       await Promise.all(workers);
 
-      if (status) status.textContent = `✅ 全${total}問の音声を保存しました！オフラインで利用可能です。`;
+      if (status) status.textContent = `✅ 全${total}件の音声ファイル（日・英）を端末に保存しました！`;
       if (btn) {
         btn.textContent = "保存完了 ✓";
         btn.disabled = false;
       }
-      showToast("✅ 全音声の一括保存が完了しました！");
+      showToast("✅ 全音声（日本語・英語）の一括保存が完了しました！");
     } catch (err) {
       if (status) status.textContent = `⚠️ エラー: ${err.message}`;
       if (btn) btn.disabled = false;
