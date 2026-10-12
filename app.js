@@ -372,10 +372,60 @@
       hasSeenCoachTour: false,
     };
   }
-  let state = loadState();
-  const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  async function backupStateToIDB(stateObj) {
+    try {
+      const db = await getDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(DB_STORE, "readwrite");
+        tx.objectStore(DB_STORE).put(JSON.stringify(stateObj), "__STATE_BACKUP__");
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+      });
+    } catch {}
+  }
 
-  // 🔒 iOS Safari ITP / Android 自動削除対策（ストレージ永続化要請）
+  async function loadStateBackupFromIDB() {
+    try {
+      const db = await getDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(DB_STORE, "readonly");
+        const req = tx.objectStore(DB_STORE).get("__STATE_BACKUP__");
+        req.onsuccess = () => {
+          if (req.result) {
+            try {
+              const parsed = JSON.parse(req.result);
+              resolve(parsed);
+              return;
+            } catch {}
+          }
+          resolve(null);
+        };
+        req.onerror = () => resolve(null);
+      });
+    } catch { return null; }
+  }
+
+  let state = loadState();
+  const save = () => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.warn("LocalStorage save failed:", e);
+    }
+    backupStateToIDB(state).catch(() => {});
+  };
+
+  // 🔒 iOS Safari ITP / Android 自動削除対策（IndexedDBバックアップからの自動復旧＆永続化要請）
+  loadStateBackupFromIDB().then((backup) => {
+    if (backup && Object.keys(state.cards).length === 0 && Object.keys(backup.cards || {}).length > 0) {
+      console.log("Restored state from IndexedDB backup!");
+      state = { ...state, ...backup };
+      save();
+      if (!views.home.hidden) renderHome();
+      renderHeaderStreak();
+    }
+  }).catch(() => {});
+
   if (navigator.storage && navigator.storage.persist) {
     navigator.storage.persist().then((persisted) => {
       if (persisted) console.log("Storage persistence enabled.");
@@ -640,13 +690,9 @@
   }
 
   function updateHomeFavoritesPill() {
-    const favBtn = $("#start-favorites-btn");
     const favCountPill = $("#fav-count-pill");
     const count = (state.favorites || []).length;
-    if (favBtn) {
-      favBtn.hidden = count === 0;
-      if (favCountPill) favCountPill.textContent = count;
-    }
+    if (favCountPill) favCountPill.textContent = count;
   }
 
   function updateNavIndicator() {
@@ -741,14 +787,6 @@
     $("#start-daily").textContent = metToday ? "さらに練習する" : "今日の練習をはじめる";
 
     $("#weak-count").textContent = weakCards().length;
-
-    const customCount = (state.customCards || []).length;
-    const startCustomBtn = $("#start-custom");
-    if (startCustomBtn) {
-      startCustomBtn.hidden = customCount === 0;
-      const countEl = $("#custom-count");
-      if (countEl) countEl.textContent = customCount;
-    }
 
     updateHomeFavoritesPill();
 
@@ -3591,6 +3629,109 @@
       window.location.replace(cleanUrl);
     });
   }
+
+  // ---------- 引き継ぎコード（Safari ➔ ホーム画面アプリ） ----------
+  const copyTransferCodeBtn = $("#copy-transfer-code-btn");
+  const pasteTransferCodeBtn = $("#paste-transfer-code-btn");
+
+  function generateTransferCode() {
+    saveCurrentSettingsFromForm();
+    const payload = {
+      app: "shunkan-eisakubun",
+      ver: 1,
+      exportedAt: Date.now(),
+      state: {
+        activeCourse: state.activeCourse,
+        settings: state.settings,
+        cards: state.cards,
+        history: state.history,
+        favorites: state.favorites,
+        totalStudySeconds: state.totalStudySeconds,
+        achievements: state.achievements,
+        listeningCount: state.listeningCount,
+        streakShields: state.streakShields,
+        shieldUsedDates: state.shieldUsedDates,
+        shieldAwardedMilestones: state.shieldAwardedMilestones,
+      }
+    };
+    const json = JSON.stringify(payload);
+    return btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode("0x" + p1)));
+  }
+
+  function restoreFromTransferCode(codeStr) {
+    if (!codeStr || typeof codeStr !== "string") throw new Error("コードが入力されていません。");
+    const trimmed = codeStr.trim();
+    let json = "";
+    try {
+      json = decodeURIComponent(atob(trimmed).split("").map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join(""));
+    } catch {
+      json = trimmed;
+    }
+    const data = JSON.parse(json);
+    if (!data || (data.app !== "shunkan-eisakubun" && !data.state)) {
+      throw new Error("無効な引き継ぎコードです。");
+    }
+    const incomingState = data.state || data;
+    state = {
+      ...state,
+      ...incomingState,
+      cards: { ...state.cards, ...(incomingState.cards || {}) },
+      history: { ...state.history, ...(incomingState.history || {}) },
+      favorites: [...new Set([...(state.favorites || []), ...(incomingState.favorites || [])])],
+      totalStudySeconds: Math.max(state.totalStudySeconds || 0, incomingState.totalStudySeconds || 0),
+      settings: { ...state.settings, ...(incomingState.settings || {}) },
+    };
+    if (typeof state.streakShields !== "number") state.streakShields = 1;
+    if (!Array.isArray(state.shieldUsedDates)) state.shieldUsedDates = [];
+    if (!Array.isArray(state.shieldAwardedMilestones)) state.shieldAwardedMilestones = [];
+    save();
+    if (!views.home.hidden) renderHome();
+    renderHeaderStreak();
+    return state;
+  }
+
+  copyTransferCodeBtn?.addEventListener("click", async () => {
+    try {
+      const code = generateTransferCode();
+      let copied = false;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(code);
+          copied = true;
+        } catch {}
+      }
+      if (!copied) {
+        prompt("以下の引き継ぎコードを全選択してコピーしてください：", code);
+      } else {
+        showToast("📋 引き継ぎコードをコピーしました！");
+        alert("📋 引き継ぎコードをコピーしました！\n\nホーム画面に追加したアプリを開き、「設定 ➔ コードから復元」を押して貼り付けてください。");
+      }
+    } catch (err) {
+      alert("コードの作成に失敗しました: " + err.message);
+    }
+  });
+
+  pasteTransferCodeBtn?.addEventListener("click", async () => {
+    let code = "";
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      try {
+        code = await navigator.clipboard.readText();
+      } catch {}
+    }
+    if (!code || !code.trim()) {
+      code = prompt("Safari等でコピーした引き継ぎコードを貼り付けてください：");
+    }
+    if (!code || !code.trim()) return;
+
+    try {
+      const restored = restoreFromTransferCode(code);
+      const m = Object.values(restored.cards || {}).filter((c) => c.level >= MASTERED_LEVEL).length;
+      alert(`🎉 データの引き継ぎが完了しました！\n\n・習得済み: ${m}問\n・ストリーク: ${currentStreak()}日\n・総学習時間: ${formatStudyTime(restored.totalStudySeconds || 0)}\n\n引き続き学習をお楽しみください！`);
+      dialog?.close();
+    } catch (err) {
+      alert("引き継ぎに失敗しました: " + err.message);
+    }
+  });
 
   // ---------- 端末間同期・バックアップ（PC ⇄ iPhone） ----------
   const exportSyncBtn = $("#export-sync-btn");

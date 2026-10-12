@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=50">
+  <link rel="stylesheet" href="style.css?v=51">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -375,44 +375,32 @@
             </div>
           </button>
 
-          <!-- 🥊 場面別ラリー集 -->
-          <button type="button" class="quick-action-tile" id="open-rally-quick-tile">
-            <div class="quick-tile-icon-wrap ai" style="background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(234, 88, 12, 0.25) 100%);">
-              <span class="quick-tile-icon" style="color: #ea580c;"><svg class="ui-icon" aria-hidden="true"><use href="#icon-speech"></use></svg></span>
+          <!-- ⭐ お気に入り特訓 -->
+          <button type="button" class="quick-action-tile" id="start-favorites-btn">
+            <div class="quick-tile-icon-wrap" style="background: rgba(245, 158, 11, 0.15);">
+              <span class="quick-tile-icon" style="color: #f59e0b;"><svg class="ui-icon" aria-hidden="true"><use href="#icon-star-filled"></use></svg></span>
             </div>
             <div class="quick-tile-body">
               <div class="quick-tile-title-row">
-                <span class="quick-tile-title">場面別ラリー</span>
-                <span class="quick-tile-badge ai" style="background: #ea580c; color: #fff;">厳選</span>
+                <span class="quick-tile-title">お気に入り</span>
+                <span class="pill" id="fav-count-pill" style="background: #f59e0b; color: #fff;">0</span>
               </div>
-              <p class="quick-tile-desc">日常・仕事・旅行の即答特訓</p>
+              <p class="quick-tile-desc">保存した重要フレーズ</p>
             </div>
           </button>
         </div>
 
-        <!-- お気に入りフレーズがある場合のボタン -->
-        <button type="button" class="btn wide" id="start-favorites-btn" hidden style="margin-top: 4px; border: 1.5px solid #f59e0b; background: color-mix(in srgb, #f59e0b 10%, var(--surface));">
-          <svg class="ui-icon" aria-hidden="true"><use href="#icon-star-filled"></use></svg> お気に入りフレーズを特訓 <span class="pill" id="fav-count-pill" style="background:#f59e0b; color:#fff;">0</span>
-        </button>
-
-        <!-- カスタム例文がある場合のボタン -->
-        <button type="button" class="btn wide" id="start-custom" hidden style="margin-top: 4px;">
-          <svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg> 保存したAIカスタム例文を練習 <span class="pill" id="custom-count">0</span>
-        </button>
-
-        <!-- パート別アコーディオン -->
-        <details class="part-accordion">
-          <summary class="part-accordion-summary">
-            <span class="part-acc-left">
-              <span class="part-acc-icon"><svg class="ui-icon" aria-hidden="true"><use href="#icon-book"></use></svg></span>
-              <span>パート・場面別に練習（Part 1〜9）</span>
+        <!-- 📖 パート・構文別に集中特訓 -->
+        <div class="part-select-section" style="margin-top: 6px; border-top: 1px solid var(--border); padding-top: 14px;">
+          <div class="part-select-title-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+            <span style="font-size: 0.88rem; font-weight: 700; color: var(--text); display:inline-flex; align-items:center; gap:6px;">
+              <svg class="ui-icon icon-sm" aria-hidden="true" style="color:var(--accent);"><use href="#icon-book"></use></svg>
+              パート・構文別に練習
             </span>
-            <span class="part-acc-arrow">▾</span>
-          </summary>
-          <div class="part-accordion-content">
-            <div class="menu-grid" id="part-buttons"></div>
+            <span style="font-size: 0.78rem; color: var(--muted); font-weight: 600;">Part 1〜9</span>
           </div>
-        </details>
+          <div class="menu-grid" id="part-buttons"></div>
+        </div>
       </div>
 
       <!-- 🗓️ 月間学習カレンダー -->
@@ -1069,13 +1057,26 @@
       </fieldset>
 
       <div class="sync-section" style="margin: 16px 0; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;">
-        <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; display:inline-flex; align-items:center; gap:5px;"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-device"></use></svg> 端末間データ同期（PC ⇄ iPhone）</div>
-        <div style="color: var(--muted); font-size: 0.78rem; margin-bottom: 10px; line-height: 1.4;">
-          設定・APIキー・学習記録・生成済み音声を1ファイルに書き出し、AirDrop等でiPhoneに送って丸ごと復元・同期できます。
+        <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; display:inline-flex; align-items:center; gap:5px;">
+          <svg class="ui-icon icon-sm" aria-hidden="true" style="color:var(--accent);"><use href="#icon-device"></use></svg>
+          データの引き継ぎ・バックアップ
         </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="button" class="btn small" id="export-sync-btn"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-upload"></use></svg> データを書き出す (PC)</button>
-          <button type="button" class="btn small ghost" id="import-sync-btn"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-download"></use></svg> データを復元 (iPhone)</button>
+        <div style="color: var(--muted); font-size: 0.78rem; margin-bottom: 10px; line-height: 1.45;">
+          💡 <strong>iPhoneのホーム画面に追加された方へ</strong><br>
+          Appleの仕様により、Safariとホーム画面アプリは別々の保存場所になります。<br>
+          Safariで学習していたデータは「引き継ぎコード」で一瞬で復元・移行できます。
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+          <button type="button" class="btn small primary" id="copy-transfer-code-btn">
+            <svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-share"></use></svg> 引き継ぎコードをコピー
+          </button>
+          <button type="button" class="btn small ghost" id="paste-transfer-code-btn">
+            <svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-download"></use></svg> コードから復元
+          </button>
+        </div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <button type="button" class="btn small ghost" id="export-sync-btn" style="font-size:0.75rem; padding: 4px 8px;">ファイル書き出し</button>
+          <button type="button" class="btn small ghost" id="import-sync-btn" style="font-size:0.75rem; padding: 4px 8px;">ファイルから復元</button>
           <input type="file" id="sync-file-input" accept=".json" hidden>
         </div>
         <div id="sync-status" class="status-msg" style="display:none; margin-top: 8px; font-size: 0.8rem;"></div>
@@ -1095,9 +1096,19 @@
         <a href="https://github.com/gaku96/shunkan-eisakubun/issues" target="_blank" rel="noopener noreferrer" class="btn small ghost" style="flex:1; min-width:140px; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">💬 不具合・改善要望</a>
       </div>
 
+      <!-- 危険ゾーン（誤タップ防止のため明確に分離） -->
+      <div style="margin: 20px 0 12px; padding: 10px 12px; border: 1px dashed color-mix(in srgb, var(--again) 35%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--again) 4%, transparent);">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <div>
+            <span style="font-size:0.82rem; font-weight:700; color:var(--again);">学習記録の初期化</span>
+            <small style="display:block; font-size:0.72rem; color:var(--muted);">習得レベルやストリークをリセット</small>
+          </div>
+          <button type="button" class="btn danger small" id="reset-data">初期化</button>
+        </div>
+      </div>
+
       <div class="dialog-actions">
-        <button type="button" class="btn danger small" id="reset-data">学習データをリセット</button>
-        <button type="submit" class="btn primary" value="save">保存</button>
+        <button type="submit" class="btn primary big" value="save" style="width:100%;">設定を保存する</button>
       </div>
     </form>
   </dialog>
@@ -1351,6 +1362,9 @@
             <li>メニューをスクロールして <strong>「ホーム画面に追加」</strong> を選択</li>
             <li>右上の <strong>「追加」</strong> をタップすると、ホーム画面に専用アイコンが作成されます！</li>
           </ol>
+          <div style="margin-top: 8px; padding: 6px 10px; background: color-mix(in srgb, var(--accent) 10%, transparent); border-radius: 8px; font-size: 0.75rem; color: var(--text);">
+            💡 <strong>データ引き継ぎ</strong>: Appleの仕様上、ホーム画面アプリ追加後は「⚙️設定 ➔ 引き継ぎコードから復元」でSafariの学習履歴をそのまま移行できます。
+          </div>
         </div>
         <div style="padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;">
           <strong style="color: var(--accent); display:block; margin-bottom: 4px;">🤖 Android (Chrome) の場合:</strong>
@@ -1382,8 +1396,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=50"></script>
-  <script src="app.js?v=50"></script>
+  <script src="data.js?v=51"></script>
+  <script src="app.js?v=51"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
