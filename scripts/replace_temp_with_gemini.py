@@ -2,7 +2,12 @@
 """
 Replace temporarily generated audio files with Gemini 3.8 Flash TTS.
 Reads target cards from scripts/temp_audio_cards.json.
-Respects Gemini 3.8 Flash TTS rate limits (10 RPM / 100 RPD).
+
+Designed for Paid Tier (従量課金/有料枠):
+- Features exponential backoff & auto-retry on HTTP 429 (Rate Limit) / 503 / 500
+- Gentle pacing (default 2.0s delay = ~30 RPM) to prevent burst rate limit errors
+- Real-time progress saving (updates temp_audio_cards.json after every successful card)
+- Processes all remaining cards in a single seamless run by default
 """
 
 import argparse
@@ -29,7 +34,7 @@ def pcm_to_wav(pcm_data: bytes, sample_rate: int = 24000, num_channels: int = 1,
     )
     return bytes(header) + pcm_data
 
-def call_gemini_tts(text: str, api_key: str, model: str = "gemini-3.8-flash-tts", voice: str = "Kore", lang: str = "en") -> bytes:
+def call_gemini_tts_with_retry(text: str, api_key: str, model: str = "gemini-3.8-flash-tts", voice: str = "Kore", lang: str = "en", max_retries: int = 5) -> bytes:
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     style_prompt = (
         "natural, clear, polite and warm Japanese narration by a native speaker with authentic standard Tokyo intonation"
@@ -52,43 +57,63 @@ def call_gemini_tts(text: str, api_key: str, model: str = "gemini-3.8-flash-tts"
         }
     }
 
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"}
-    )
+    req_data = json.dumps(payload).encode("utf-8")
 
-    try:
-        with urllib.request.urlopen(req, timeout=30) as response:
-            res_data = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode("utf-8", errors="replace")
+    for attempt in range(1, max_retries + 1):
+        req = urllib.request.Request(
+            url,
+            data=req_data,
+            headers={"Content-Type": "application/json"}
+        )
+
         try:
-            err_json = json.loads(error_body)
-            detail = err_json.get("error", {}).get("message", error_body)
-        except Exception:
-            detail = error_body
-        raise RuntimeError(f"HTTP {e.code} ({e.reason}): {detail}")
+            with urllib.request.urlopen(req, timeout=35) as response:
+                res_data = json.loads(response.read().decode("utf-8"))
 
-    candidate = res_data.get("candidates", [{}])[0]
-    part = candidate.get("content", {}).get("parts", [{}])[0]
-    inline = part.get("inlineData", {})
-    b64_data = inline.get("data")
-    if not b64_data:
-        raise ValueError("No audio data returned from Gemini API")
+            candidate = res_data.get("candidates", [{}])[0]
+            part = candidate.get("content", {}).get("parts", [{}])[0]
+            inline = part.get("inlineData", {})
+            b64_data = inline.get("data")
+            if not b64_data:
+                raise ValueError("No audio data returned in Gemini response")
 
-    raw_bytes = base64.b64decode(b64_data)
-    mime = inline.get("mimeType", "audio/wav")
-    if "pcm" in mime or "raw" in mime or not mime.startswith("audio/"):
-        return pcm_to_wav(raw_bytes, sample_rate=24000)
-    return raw_bytes
+            raw_bytes = base64.b64decode(b64_data)
+            mime = inline.get("mimeType", "audio/wav")
+            if "pcm" in mime or "raw" in mime or not mime.startswith("audio/"):
+                return pcm_to_wav(raw_bytes, sample_rate=24000)
+            return raw_bytes
+
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode("utf-8", errors="replace")
+            try:
+                err_json = json.loads(error_body)
+                detail = err_json.get("error", {}).get("message", error_body)
+            except Exception:
+                detail = error_body
+
+            if e.code in (429, 500, 503):
+                wait_sec = attempt * 12  # 12s, 24s, 36s, 48s, 60s
+                print(f"\n  ⚠️ 一時的リミット/サーバー待機 (HTTP {e.code}: {detail[:80]}) - {wait_sec}秒待機して再試行 ({attempt}/{max_retries})...")
+                time.sleep(wait_sec)
+                continue
+            else:
+                raise RuntimeError(f"HTTP {e.code} ({e.reason}): {detail}")
+
+        except (urllib.error.URLError, TimeoutError) as e:
+            wait_sec = attempt * 8
+            print(f"\n  ⚠️ ネットワーク接続再試行 - {wait_sec}秒待機 ({attempt}/{max_retries})...")
+            time.sleep(wait_sec)
+            continue
+
+    raise RuntimeError(f"最大試行回数（{max_retries}回）を超過しました。")
 
 def main():
-    parser = argparse.ArgumentParser(description="Replace temporary audio with Gemini TTS")
+    parser = argparse.ArgumentParser(description="Replace temporary audio with Gemini 3.8 Flash TTS (Paid Tier Safe)")
     parser.add_argument("--api-key", default=None, help="Gemini API Key")
     parser.add_argument("--model", default="gemini-3.8-flash-tts", help="Gemini model")
     parser.add_argument("--voice", default="Kore", help="Voice name (Kore)")
-    parser.add_argument("--limit", type=int, default=50, help="Max cards to process in this run (default: 50, to stay within 100 RPD)")
+    parser.add_argument("--limit", type=int, default=None, help="Max cards to process (default: all remaining cards)")
+    parser.add_argument("--delay", type=float, default=2.0, help="Delay between requests in seconds (default: 2.0s = ~30 RPM safe pace)")
     args = parser.parse_args()
 
     api_key = args.api_key or os.environ.get("GEMINI_API_KEY")
@@ -115,8 +140,7 @@ def main():
         print("🎉 すべてのカードがすでに Gemini TTS に置き換え済みです！")
         sys.exit(0)
 
-    # Load card text
-    import subprocess
+    # Load card definitions
     cmd = [
         "node", "-e",
         """
@@ -133,63 +157,71 @@ console.log(JSON.stringify(cards));
     ]
     all_cards = {c["id"]: c for c in json.loads(subprocess.check_output(cmd, encoding="utf-8"))}
 
-    to_process = target_ids[:args.limit]
-    remaining = target_ids[args.limit:]
+    to_process = target_ids[:args.limit] if args.limit else target_ids
 
-    print(f"一時生成カードの残り: {len(target_ids)} 件")
-    print(f"今回の処理予定: {len(to_process)} 件 (英語+日本語 = {len(to_process)*2} リクエスト)")
-    print(f"※ Gemini 3.8 Flash TTS の 1日100回制限を守るため、安全なペース（毎分8回以下）で置換します。")
-    print("=" * 60)
+    print("=" * 65)
+    print("💎 Gemini 3.8 Flash TTS 音声置換ツール（有料枠・安定バースト制御）")
+    print("=" * 65)
+    print(f"・残り一時カード総数 : {len(target_ids)} 件")
+    print(f"・今回処理予定件数   : {len(to_process)} 件 (英語+日本語 = {len(to_process)*2} リクエスト)")
+    print(f"・リクエスト間隔     : {args.delay} 秒 (瞬間リミット429完全回避)")
+    print(f"・自動リトライ機能   : 有効 (最大5回バックオフ待機)")
+    print(f"・進捗保存           : 1件ごとに即時ファイル更新（中断・再開可能）")
+    print("=" * 65)
 
-    replaced_successfully = []
+    replaced_count = 0
 
     for idx, cid in enumerate(to_process, 1):
         if cid not in all_cards:
             continue
         card = all_cards[cid]
-        print(f"[{idx}/{len(to_process)}] 置換中: {cid} ({card['en'][:30]}...)")
+        print(f"[{idx}/{len(to_process)}] 🎙️ 置換中: {cid} | \"{card['en'][:35]}...\"")
 
         en_mp3 = os.path.join(audio_dir, f"{cid}.mp3")
         ja_mp3 = os.path.join(audio_dir, f"{cid}_ja.mp3")
 
         try:
             # 1. EN
-            wav_bytes = call_gemini_tts(card["en"], api_key, args.model, args.voice, "en")
+            wav_bytes = call_gemini_tts_with_retry(card["en"], api_key, args.model, args.voice, "en")
             temp_wav = en_mp3 + ".temp.wav"
             with open(temp_wav, "wb") as f:
                 f.write(wav_bytes)
             subprocess.run(["lame", "-b", "64", "-m", "m", temp_wav, en_mp3], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             if os.path.exists(temp_wav): os.remove(temp_wav)
-            print("  ✓ EN 置換完了")
-            time.sleep(7) # Keep under 10 RPM (approx 8.5 RPM)
+            print("  ✓ EN 音声完了")
+            time.sleep(args.delay)
 
             # 2. JA
-            wav_bytes = call_gemini_tts(card["ja"], api_key, args.model, args.voice, "ja")
+            wav_bytes = call_gemini_tts_with_retry(card["ja"], api_key, args.model, args.voice, "ja")
             temp_wav = ja_mp3 + ".temp.wav"
             with open(temp_wav, "wb") as f:
                 f.write(wav_bytes)
             subprocess.run(["lame", "-b", "64", "-m", "m", temp_wav, ja_mp3], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             if os.path.exists(temp_wav): os.remove(temp_wav)
-            print("  ✓ JA 置換完了")
-            time.sleep(7)
+            print("  ✓ JA 音声完了")
+            time.sleep(args.delay)
 
-            replaced_successfully.append(cid)
+            replaced_count += 1
+
+            # 即時進捗保存（temp_audio_cards.json から完了したIDを即時除外）
+            if cid in target_ids:
+                target_ids.remove(cid)
+                with open(tracking_file, "w", encoding="utf-8") as f:
+                    json.dump(target_ids, f, ensure_ascii=False, indent=2)
+
         except Exception as e:
-            print(f"  ❌ エラー発生のため中断します: {e}")
+            print(f"\n❌ エラーが発生したため中断しました: {e}")
+            print(f"※ 直前のカード（{cid}）まで安全に保存されています。")
             break
 
-    # Update tracking file with what remains
-    unreplaced = [cid for cid in target_ids if cid not in replaced_successfully]
-    with open(tracking_file, "w", encoding="utf-8") as f:
-        json.dump(unreplaced, f, ensure_ascii=False, indent=2)
-
-    print("=" * 60)
-    print(f"🎉 今回の置換完了: {len(replaced_successfully)} 件")
-    print(f"残りの一時カード: {len(unreplaced)} 件")
-    if unreplaced:
-        print("💡 次回（明日など制限リセット後）に再度実行すれば、残りのカードを続きから置換できます。")
+    print("=" * 65)
+    print(f"🎉 今回の置換完了: {replaced_count} 件")
+    print(f"残りの一時カード: {len(target_ids)} 件")
+    if len(target_ids) == 0:
+        print("🌟 すべてのカードが Gemini 3.8 Flash TTS（高音質）に統一されました！")
     else:
-        print("🌟 全カードが Gemini 3.8 Flash TTS の音声に統一されました！")
+        print("💡 次回コマンドを実行すれば、残りのカードからそのまま継続します。")
+    print("=" * 65)
 
 if __name__ == "__main__":
     main()
