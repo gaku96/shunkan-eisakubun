@@ -1644,6 +1644,12 @@
     $("#type-result").hidden = true;
     if (s.typingMode) input.focus();
 
+    // 英語音声をバックグラウンド先読み（ユーザーが考えている間に生成完了し0ms再生）
+    prefetchCardSpeech(card);
+    if (session && session.queue) {
+      prefetchNextCards(session.queue, session.index);
+    }
+
     // 制限時間バー
     clearTimeout(timerId);
     const timer = $("#timer");
@@ -2222,6 +2228,41 @@
     }
   }
 
+  // ---------- 音声バックグラウンド先読み（ゼロ遅延再生） ----------
+  const prefetchingKeys = new Set();
+
+  async function prefetchCardSpeech(card) {
+    if (!card || !card.en) return;
+    const s = state.settings;
+    if (s.ttsEngine === "browser" || s.ttsEngine === "bundled" || !s.geminiApiKey) return;
+
+    const effectiveAccent = getEffectiveAccent(card, s.geminiAccent || "us");
+    const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}_${effectiveAccent}`;
+
+    if (prefetchingKeys.has(cacheKey)) return;
+
+    try {
+      const cached = await findCachedAudio(card.id, false, s.geminiModel, s.geminiVoice, effectiveAccent);
+      if (!cached) {
+        prefetchingKeys.add(cacheKey);
+        const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice, "en", effectiveAccent);
+        await setCachedAudio(cacheKey, blob);
+      }
+    } catch (e) {
+      // バックグラウンド先読みエラーは握りつぶす
+    } finally {
+      prefetchingKeys.delete(cacheKey);
+    }
+  }
+
+  function prefetchNextCards(queue, currentIndex) {
+    if (!queue || !Array.isArray(queue)) return;
+    const nextCards = queue.slice(currentIndex, currentIndex + 2);
+    for (const c of nextCards) {
+      if (c) prefetchCardSpeech(c);
+    }
+  }
+
   async function speakJapanesePromise(cardOrText, rate = 1.0) {
     let card = null;
     let text = "";
@@ -2237,6 +2278,12 @@
     const badge = $("#listening-ja-source");
     const cardId = card ? card.id : null;
     const audioKey = card ? (card.audioId || getCustomAudioId(card) || card.id) : null;
+    // 0. 同梱音声が明示的に選択されている場合
+    if (s.ttsEngine === "bundled" && audioKey) {
+      if (badge) badge.textContent = "✨ 日本語音声（同梱）";
+      const ok = await playAudioUrlPromise(`audio/${audioKey}_ja.mp3`, rate);
+      if (ok) return true;
+    }
 
     // 1. Gemini TTS（IndexedDBキャッシュを最優先再生。APIキー未入力でもオフラインでも再生可能）
     if (s.ttsEngine !== "browser") {
@@ -2432,6 +2479,16 @@
     const s = state.settings;
     const badge = $("#listening-tts-source");
     const audioKey = card.audioId || getCustomAudioId(card) || card.id;
+    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
+
+    // 0. 同梱音声が明示的に選択されている場合
+    if (s.ttsEngine === "bundled" && isBundled) {
+      if (badge && !badge.textContent.startsWith("⚠️")) {
+        badge.textContent = "✨ 英語 (同梱音声)";
+      }
+      const ok = await playAudioUrlPromise(`audio/${audioKey}.mp3`, rate);
+      if (ok) return;
+    }
 
     // 1. Gemini 音声（IndexedDBキャッシュまたはAPI生成を最優先再生）
     if (s.ttsEngine !== "browser") {
@@ -2472,7 +2529,6 @@
     }
 
     // 2. 同梱のローカル音声フォールバック
-    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
     if (isBundled) {
       if (badge && !badge.textContent.startsWith("⚠️")) {
         badge.textContent = "✨ 英語 (同梱音声)";
@@ -2580,10 +2636,24 @@
       return;
     }
 
+    // 2. 同梱音声が明示的に選択されている場合
+    const audioKey = card.audioId || getCustomAudioId(card) || card.id;
+    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
+
+    if (s.ttsEngine === "bundled" && isBundled) {
+      const playedLocal = await tryPlayLocalAudio(audioKey, rate);
+      if (playedLocal) {
+        badge.textContent = "✨ 英語音声（同梱）";
+        badge.className = "tts-badge";
+        badge.style.cursor = "default";
+        return;
+      }
+    }
+
     const effectiveAccent = getEffectiveAccent(card, s.geminiAccent || "us");
     const accentInfo = ACCENT_LABELS[effectiveAccent] || ACCENT_LABELS.us;
 
-    // 2. まず IndexedDB に保存された Gemini キャッシュ音声があるか確認（APIキー未入力・オフラインでも再生可能！）
+    // 3. まず IndexedDB に保存された Gemini キャッシュ音声があるか確認（APIキー未入力・オフラインでも再生可能！）
     const cachedItem = await findCachedAudio(card.id, false, s.geminiModel, s.geminiVoice, effectiveAccent);
     if (cachedItem && cachedItem.blob) {
       const parts = cachedItem.key.split("_");
@@ -2637,9 +2707,6 @@
     }
 
     // 4. 同梱のローカル音声フォールバック
-    const audioKey = card.audioId || getCustomAudioId(card) || card.id;
-    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
-
     if (isBundled) {
       const playedLocal = await tryPlayLocalAudio(audioKey, rate);
       if (playedLocal) {
@@ -4712,6 +4779,10 @@ ${targetPatterns}
       setListeningStep("ja", "🇯🇵 日本語を聞く", "ja");
       updateSoundwave(true);
       updateMediaSession(card, "🇯🇵 日本語", card.ja);
+
+      // 英語の解答音声を裏で先行生成（ポーズ中に生成完了させ0ms再生）
+      prefetchCardSpeech(card);
+      prefetchNextCards(listening.queue, listening.index);
 
       await speakJapanesePromise(card);
       updateSoundwave(false);

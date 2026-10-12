@@ -1102,8 +1102,8 @@ progress.done::-moz-progress-bar { background: var(--good); }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 10px 4px 8px;
+  gap: 2px;
+  padding: 12px 6px 10px;
   border-radius: 14px;
   text-align: center;
   box-sizing: border-box;
