@@ -1506,6 +1506,7 @@
   let timerId = null;
 
   function startSession(mode) {
+    unlockAudio();
     const { title, queue } = buildQueue(mode);
     if (!queue.length) {
       if (mode.type === "favorites") {
@@ -1751,6 +1752,7 @@
   }
 
   function reveal() {
+    unlockAudio();
     if (!session || session.revealed) return;
     session.revealed = true;
     clearTimeout(timerId);
@@ -2082,14 +2084,31 @@
   }
 
   // ---------- 音声再生エンジン ----------
+  let sharedAudio = null;
+  function getSharedAudio() {
+    if (!sharedAudio) {
+      sharedAudio = new Audio();
+      sharedAudio.preload = "auto";
+      sharedAudio.playsInline = true;
+      sharedAudio.setAttribute("playsinline", "");
+      sharedAudio.setAttribute("webkit-playsinline", "");
+    }
+    return sharedAudio;
+  }
+
   let currentAudio = null;
   let browserVoice = null;
   let browserJaVoice = null;
 
   function stopAudio() {
     if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
+      try {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio.onended = null;
+        currentAudio.onerror = null;
+        currentAudio.onplay = null;
+      } catch (e) {}
       currentAudio = null;
     }
     if ("speechSynthesis" in window) speechSynthesis.cancel();
@@ -2101,25 +2120,27 @@
     try {
       const safeBlob = (blob instanceof Blob && blob.type) ? blob : new Blob([blob], { type: "audio/wav" });
       const url = URL.createObjectURL(safeBlob);
-      const audio = new Audio();
+      const audio = getSharedAudio();
       currentAudio = audio;
-      audio.src = url;
       const speed = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
+
+      audio.loop = false;
+      audio.src = url;
       audio.playbackRate = speed;
       audio.defaultPlaybackRate = speed;
-      audio.onplay = () => { audio.playbackRate = speed; };
-      audio.load();
-      audio.playbackRate = speed;
+
       audio.onended = () => {
         URL.revokeObjectURL(url);
         if (currentAudio === audio) currentAudio = null;
       };
       audio.onerror = (e) => {
-        console.warn("playBlob audio error:", e, audio.error);
+        console.warn("playBlob audio error:", e);
         URL.revokeObjectURL(url);
         if (currentAudio === audio) currentAudio = null;
       };
+
       await audio.play();
+      audio.playbackRate = speed;
       return true;
     } catch (err) {
       console.warn("playBlob play() rejected:", err);
@@ -2289,23 +2310,44 @@
   function playAudioUrlPromise(url, rate = null) {
     return new Promise((resolve) => {
       stopAudio();
-      const audio = new Audio(url);
+      const audio = getSharedAudio();
       currentAudio = audio;
       const speed = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
-      audio.playbackRate = speed;
-      audio.defaultPlaybackRate = speed;
-      audio.onplay = () => { audio.playbackRate = speed; };
+
       let finished = false;
+      const cleanup = () => {
+        audio.onended = null;
+        audio.onerror = null;
+      };
       const done = (result) => {
         if (!finished) {
           finished = true;
+          cleanup();
           if (currentAudio === audio) currentAudio = null;
           resolve(result);
         }
       };
+
       audio.onended = () => done(true);
-      audio.onerror = () => done(false);
-      audio.play().catch(() => done(false));
+      audio.onerror = (e) => {
+        console.warn("playAudioUrlPromise error:", url, e);
+        done(false);
+      };
+
+      audio.loop = false;
+      audio.src = url;
+      audio.playbackRate = speed;
+      audio.defaultPlaybackRate = speed;
+
+      const p = audio.play();
+      if (p !== undefined) {
+        p.then(() => {
+          audio.playbackRate = speed;
+        }).catch((err) => {
+          console.warn("playAudioUrlPromise play() rejected:", url, err);
+          done(false);
+        });
+      }
     });
   }
 
@@ -2316,33 +2358,45 @@
       try {
         const safeBlob = (blob instanceof Blob && blob.type) ? blob : new Blob([blob], { type: "audio/wav" });
         const url = URL.createObjectURL(safeBlob);
-        const audio = new Audio();
+        const audio = getSharedAudio();
         currentAudio = audio;
-        audio.src = url;
         const speed = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
-        audio.playbackRate = speed;
-        audio.defaultPlaybackRate = speed;
-        audio.onplay = () => { audio.playbackRate = speed; };
+
         let finished = false;
+        const cleanup = () => {
+          audio.onended = null;
+          audio.onerror = null;
+          URL.revokeObjectURL(url);
+        };
         const done = (result) => {
           if (!finished) {
             finished = true;
-            URL.revokeObjectURL(url);
+            cleanup();
             if (currentAudio === audio) currentAudio = null;
             resolve(result);
           }
         };
+
         audio.onended = () => done(true);
         audio.onerror = (e) => {
-          console.warn("playBlobPromise audio error:", e, audio.error);
+          console.warn("playBlobPromise error:", e);
           done(false);
         };
-        audio.load();
+
+        audio.loop = false;
+        audio.src = url;
         audio.playbackRate = speed;
-        audio.play().catch((err) => {
-          console.warn("playBlobPromise audio.play() catch:", err);
-          done(false);
-        });
+        audio.defaultPlaybackRate = speed;
+
+        const p = audio.play();
+        if (p !== undefined) {
+          p.then(() => {
+            audio.playbackRate = speed;
+          }).catch((err) => {
+            console.warn("playBlobPromise play() rejected:", err);
+            done(false);
+          });
+        }
       } catch (e) {
         console.warn("playBlobPromise exception:", e);
         resolve(false);
@@ -2434,44 +2488,67 @@
   // iOS Safari用: 最初のタップ時にAudioオブジェクトとSpeechSynthesisの自動再生制限を解除
   let audioUnlocked = false;
   function unlockAudio() {
-    if (audioUnlocked) return;
-    audioUnlocked = true;
-    const dummy = new Audio("audio/1-0.mp3");
-    dummy.volume = 0.01;
-    dummy.play().then(() => {
-      dummy.pause();
-      dummy.currentTime = 0;
-    }).catch(() => {});
-    if ("speechSynthesis" in window) {
-      const u = new SpeechSynthesisUtterance(" ");
-      u.volume = 0.01;
-      speechSynthesis.speak(u);
+    if ("audioSession" in navigator) {
+      try { navigator.audioSession.type = "playback"; } catch (e) {}
+    }
+    const audio = getSharedAudio();
+    if (!audioUnlocked) {
+      audioUnlocked = true;
+      audio.src = "audio/silence.mp3";
+      audio.volume = 0.001;
+      audio.play().then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = 1.0;
+      }).catch(() => {});
+      if ("speechSynthesis" in window) {
+        const u = new SpeechSynthesisUtterance(" ");
+        u.volume = 0.01;
+        speechSynthesis.speak(u);
+      }
     }
   }
-  document.addEventListener("touchstart", unlockAudio, { once: true, passive: true });
-  document.addEventListener("click", unlockAudio, { once: true });
+  document.addEventListener("touchstart", unlockAudio, { passive: true });
+  document.addEventListener("click", unlockAudio);
 
   function tryPlayLocalAudio(cardId, rate = null) {
     return new Promise((resolve) => {
       stopAudio();
-      const audio = new Audio(`audio/${cardId}.mp3`);
+      const audio = getSharedAudio();
+      currentAudio = audio;
       const speed = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
-      audio.playbackRate = speed;
-      audio.defaultPlaybackRate = speed;
+
       let done = false;
+      const cleanup = () => {
+        audio.onplay = null;
+        audio.onerror = null;
+      };
+      const finish = (result) => {
+        if (!done) {
+          done = true;
+          cleanup();
+          resolve(result);
+        }
+      };
+
       audio.onplay = () => {
         audio.playbackRate = speed;
-        if (!done) { done = true; currentAudio = audio; resolve(true); }
+        finish(true);
       };
-      audio.onerror = () => {
-        if (!done) { done = true; resolve(false); }
-      };
-      audio.play().then(() => {
-        audio.playbackRate = speed;
-        if (!done) { done = true; currentAudio = audio; resolve(true); }
-      }).catch(() => {
-        if (!done) { done = true; resolve(false); }
-      });
+      audio.onerror = () => finish(false);
+
+      audio.loop = false;
+      audio.src = `audio/${cardId}.mp3`;
+      audio.playbackRate = speed;
+      audio.defaultPlaybackRate = speed;
+
+      const p = audio.play();
+      if (p !== undefined) {
+        p.then(() => {
+          audio.playbackRate = speed;
+          finish(true);
+        }).catch(() => finish(false));
+      }
     });
   }
 
@@ -4332,19 +4409,23 @@ ${targetPatterns}
     currentSleepReject: null,
   };
 
-  let silentBgAudio = null;
-  function ensureSilentBgAudio() {
-    if (!silentBgAudio) {
-      silentBgAudio = new Audio("audio/silence.mp3");
-      silentBgAudio.loop = true;
-      silentBgAudio.volume = 0.001; // Inaudible, keeps iOS audio session and timers alive in background
-    }
-    silentBgAudio.play().catch(() => {});
+  function playSilenceKeeper() {
+    if (!listening.playing) return;
+    try {
+      const audio = getSharedAudio();
+      audio.loop = true;
+      audio.src = "audio/silence.mp3";
+      audio.volume = 0.001;
+      audio.playbackRate = 1.0;
+      audio.play().catch(() => {});
+    } catch (e) {}
   }
-  function stopSilentBgAudio() {
-    if (silentBgAudio) {
-      silentBgAudio.pause();
-      silentBgAudio.currentTime = 0;
+  function stopSilenceKeeper() {
+    if (sharedAudio && sharedAudio.src && sharedAudio.src.includes("silence.mp3")) {
+      try {
+        sharedAudio.pause();
+        sharedAudio.currentTime = 0;
+      } catch (e) {}
     }
   }
 
@@ -4597,6 +4678,7 @@ ${targetPatterns}
       updateSoundwave(false);
       if (listening.runId !== currentRunId || !listening.playing) return;
 
+      playSilenceKeeper();
       try { await cancellableSleep(400); } catch (e) { return; }
       if (listening.runId !== currentRunId || !listening.playing) return;
 
@@ -4626,6 +4708,7 @@ ${targetPatterns}
       if (listening.runId !== currentRunId || !listening.playing) return;
 
       if (listening.enRepeats === 2) {
+        playSilenceKeeper();
         setListeningStep("en", "🔁 もう一度...", "en");
         try { await cancellableSleep(1350); } catch (e) { return; }
         if (listening.runId !== currentRunId || !listening.playing) return;
@@ -4636,6 +4719,7 @@ ${targetPatterns}
         if (listening.runId !== currentRunId || !listening.playing) return;
       }
 
+      playSilenceKeeper();
       setListeningStep("repeat", `🗣️ 声に出してリピート！ (${listening.repeatSec}s)`, "repeat");
       animatePhaseBar(listening.repeatSec * 1000);
       try {
@@ -4670,9 +4754,9 @@ ${targetPatterns}
     abortCurrentSleep();
     resetPhaseBar();
     stopAudio();
+    stopSilenceKeeper();
     updateSoundwave(false);
     updateListeningControlsUI();
-    stopSilentBgAudio();
     checkStudyTimeActive();
     if ("mediaSession" in navigator) {
       try { navigator.mediaSession.playbackState = "paused"; } catch (e) {}
@@ -4680,12 +4764,13 @@ ${targetPatterns}
   }
 
   function resumeListening() {
+    unlockAudio();
     if (!listening.queue.length) {
       loadListeningQueue(listening.range);
     }
     listening.playing = true;
     updateListeningControlsUI();
-    ensureSilentBgAudio();
+    playSilenceKeeper();
     checkStudyTimeActive();
     if ("mediaSession" in navigator) {
       try { navigator.mediaSession.playbackState = "playing"; } catch (e) {}

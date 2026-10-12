@@ -1,10 +1,10 @@
-const CACHE_NAME = "shunkan-eisakubun-v59";
+const CACHE_NAME = "shunkan-eisakubun-v60";
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=59",
-  "./app.js?v=59",
-  "./data.js?v=59",
+  "./style.css?v=60",
+  "./app.js?v=60",
+  "./data.js?v=60",
   "./manifest.json",
   "./icon.png",
   "./icon-192.png",
@@ -56,47 +56,58 @@ self.addEventListener("fetch", (e) => {
   if (e.request.url.includes("/audio/")) {
     e.respondWith(
       (async () => {
-        const cache = await caches.open(CACHE_NAME);
-        const match = (await cache.match(e.request, { ignoreSearch: true })) || (await cache.match(e.request.url));
+        try {
+          const cache = await caches.open(CACHE_NAME);
+          const match = (await cache.match(e.request, { ignoreSearch: true })) || (await cache.match(e.request.url));
 
-        if (!match) {
-          try {
-            const networkRes = await fetch(e.request);
-            if (networkRes && networkRes.ok && networkRes.status === 200) {
-              cache.put(e.request.url, networkRes.clone()).catch(() => {});
+          if (!match) {
+            try {
+              const networkRes = await fetch(e.request);
+              if (networkRes && networkRes.ok && networkRes.status === 200) {
+                cache.put(e.request.url, networkRes.clone()).catch(() => {});
+              }
+              return networkRes;
+            } catch (err) {
+              return new Response("", { status: 404, statusText: "Not Found" });
             }
-            return networkRes;
-          } catch (err) {
-            return new Response("", { status: 404, statusText: "Not Found" });
           }
-        }
 
-        const rangeHeader = e.request.headers.get("range");
-        if (!rangeHeader) {
-          return match;
-        }
+          const rangeHeader = e.request.headers.get("range");
+          if (!rangeHeader) {
+            return match;
+          }
 
-        // Handle iOS Safari Range Request for cached Audio (AVPlayer requires 206 Partial Content)
-        const arrayBuffer = await match.arrayBuffer();
-        const byteLength = arrayBuffer.byteLength;
-        const rangeMatch = rangeHeader.match(/bytes=(\d+)-(\d*)/);
-        if (rangeMatch) {
-          const start = parseInt(rangeMatch[1], 10);
-          const end = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : byteLength - 1;
-          const chunk = arrayBuffer.slice(start, end + 1);
-
-          return new Response(chunk, {
-            status: 206,
-            statusText: "Partial Content",
-            headers: {
-              "Content-Type": match.headers.get("Content-Type") || "audio/mpeg",
-              "Content-Range": `bytes ${start}-${end}/${byteLength}`,
-              "Content-Length": chunk.byteLength,
-              "Accept-Ranges": "bytes"
+          // Handle iOS Safari Range Request for cached Audio (AVPlayer requires 206 Partial Content)
+          const arrayBuffer = await match.arrayBuffer();
+          const byteLength = arrayBuffer.byteLength;
+          const rangeMatch = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+          if (rangeMatch) {
+            let start = parseInt(rangeMatch[1], 10) || 0;
+            let end = rangeMatch[2] ? parseInt(rangeMatch[2], 10) : byteLength - 1;
+            if (end >= byteLength) end = byteLength - 1;
+            if (start > end || start >= byteLength) {
+              return new Response("", {
+                status: 416,
+                headers: { "Content-Range": `bytes */${byteLength}` }
+              });
             }
-          });
+            const chunk = arrayBuffer.slice(start, end + 1);
+
+            return new Response(chunk, {
+              status: 206,
+              statusText: "Partial Content",
+              headers: {
+                "Content-Type": match.headers.get("Content-Type") || "audio/mp3",
+                "Content-Range": `bytes ${start}-${end}/${byteLength}`,
+                "Content-Length": String(chunk.byteLength),
+                "Accept-Ranges": "bytes"
+              }
+            });
+          }
+          return match;
+        } catch (err) {
+          return fetch(e.request).catch(() => new Response("", { status: 404, statusText: "Not Found" }));
         }
-        return match;
       })()
     );
     return;
