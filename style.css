@@ -2359,12 +2359,17 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
 }
 .listening-en-head {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
+  margin-bottom: 4px;
 }
 .listening-tts-source {
   font-size: .75rem;
+  font-weight: 700;
   color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 .listening-answer-en {
   margin: 0;

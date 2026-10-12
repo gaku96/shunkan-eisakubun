@@ -1961,31 +1961,38 @@
     // 1. Gemini 音声（IndexedDBキャッシュを最優先再生。APIキー未入力でもオフラインでも再生可能）
     if (s.ttsEngine !== "browser") {
       const effectiveAccent = getEffectiveAccent(card, s.geminiAccent || "us");
-      const accentInfo = ACCENT_LABELS[effectiveAccent] || ACCENT_LABELS.us;
       const cachedItem = await findCachedAudio(card.id, false, s.geminiModel, s.geminiVoice, effectiveAccent);
       if (cachedItem && cachedItem.blob) {
         const parts = cachedItem.key.split("_");
         const voiceLabel = parts[2] || s.geminiVoice || "Gemini 3.8";
-        if (badge) badge.textContent = `✨ Gemini 3.8 (${voiceLabel}・${accentInfo.flag} ${accentInfo.name})`;
+        // 実際に再生されるキャッシュキーのアクセントを正確に取得
+        let actualAccent = "us";
+        if (cachedItem.key.endsWith("_uk")) actualAccent = "uk";
+        else if (cachedItem.key.endsWith("_in")) actualAccent = "in";
+        else if (cachedItem.key.endsWith("_au")) actualAccent = "au";
+        else actualAccent = effectiveAccent;
+        const actualAccentInfo = ACCENT_LABELS[actualAccent] || ACCENT_LABELS.us;
+        if (badge) badge.textContent = `✨ 英語 (Gemini 3.8・${voiceLabel}・${actualAccentInfo.flag} ${actualAccentInfo.name})`;
         const ok = await playBlobPromise(cachedItem.blob, rate);
         if (ok) return;
       }
 
       // キャッシュ未生成でAPIキーがある場合は生成
       if (s.geminiApiKey) {
+        const accentInfo = ACCENT_LABELS[effectiveAccent] || ACCENT_LABELS.us;
         try {
-          if (badge) badge.textContent = `✨ Gemini 3.8 (${accentInfo.flag} ${accentInfo.name}生成中...)`;
+          if (badge) badge.textContent = `✨ 英語 (Gemini 3.8・${accentInfo.flag} ${accentInfo.name}生成中...)`;
           const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice, "en", effectiveAccent);
           const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}_${effectiveAccent}`;
           await setCachedAudio(cacheKey, blob);
-          if (badge) badge.textContent = `✨ Gemini 3.8 (${s.geminiVoice}・${accentInfo.flag} ${accentInfo.name})`;
+          if (badge) badge.textContent = `✨ 英語 (Gemini 3.8・${s.geminiVoice}・${accentInfo.flag} ${accentInfo.name})`;
           const ok = await playBlobPromise(blob, rate);
           if (ok) return;
         } catch (err) {
           console.warn("Gemini English TTS error, fallback to bundled audio:", err);
           const msg = String(err.message || err);
           const isQuota = msg.includes("429") || msg.includes("quota") || msg.includes("ResourceExhausted");
-          if (badge) badge.textContent = `⚠️ ${isQuota ? "API制限(429)" : "Geminiエラー"} → 同梱音声`;
+          if (badge) badge.textContent = `⚠️ 英語 (${isQuota ? "API制限(429)" : "Geminiエラー"} → 同梱音声)`;
         }
       }
     }
@@ -1994,14 +2001,14 @@
     const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
     if (isBundled) {
       if (badge && !badge.textContent.startsWith("⚠️")) {
-        badge.textContent = "✨ リアル口語ネイティブ（崩し・同梱）";
+        badge.textContent = "✨ 英語 (ネイティブ・同梱)";
       }
       const ok = await playAudioUrlPromise(`audio/${audioKey}.mp3`, rate);
       if (ok) return;
     }
 
     // 3. ブラウザ標準音声
-    if (badge && !badge.textContent.startsWith("⚠️")) badge.textContent = "ブラウザ音声";
+    if (badge && !badge.textContent.startsWith("⚠️")) badge.textContent = "🔊 英語 (ブラウザ音声)";
     await speakBrowserPromise(card.en, rate);
   }
 
@@ -2083,7 +2090,13 @@
     if (cachedItem && cachedItem.blob) {
       const parts = cachedItem.key.split("_");
       const voiceLabel = parts[2] || s.geminiVoice || "Gemini 3.8";
-      badge.textContent = `✨ Gemini 3.8 (${voiceLabel}・${accentInfo.flag} ${accentInfo.name})`;
+      let actualAccent = "us";
+      if (cachedItem.key.endsWith("_uk")) actualAccent = "uk";
+      else if (cachedItem.key.endsWith("_in")) actualAccent = "in";
+      else if (cachedItem.key.endsWith("_au")) actualAccent = "au";
+      else actualAccent = effectiveAccent;
+      const actualAccentInfo = ACCENT_LABELS[actualAccent] || ACCENT_LABELS.us;
+      badge.textContent = `✨ Gemini 3.8 (${voiceLabel}・${actualAccentInfo.flag} ${actualAccentInfo.name})`;
       badge.className = "tts-badge";
       badge.style.cursor = "default";
       const played = await playBlob(cachedItem.blob, rate);
@@ -3918,9 +3931,14 @@ ${targetPatterns}
     if (promptJa) promptJa.textContent = card.ja;
     const enLabel = $("#listening-en-label");
     if (enLabel) {
+      enLabel.textContent = "";
+      enLabel.hidden = true;
+    }
+    const badge = $("#listening-tts-source");
+    if (badge) {
       const effectiveAccent = getEffectiveAccent(card, state.settings.geminiAccent || "us");
       const accentInfo = ACCENT_LABELS[effectiveAccent] || ACCENT_LABELS.us;
-      enLabel.textContent = `${accentInfo.flag} 英語 (${accentInfo.name})`;
+      badge.textContent = `✨ 英語 (${accentInfo.flag} ${accentInfo.name})`;
     }
     const enEl = $("#listening-answer-en");
     if (enEl) {
@@ -4040,17 +4058,14 @@ ${targetPatterns}
       resetPhaseBar();
       if (listening.runId !== currentRunId || !listening.playing) return;
 
-      const effectiveAccent = getEffectiveAccent(card, state.settings.geminiAccent || "us");
-      const accentInfo = ACCENT_LABELS[effectiveAccent] || ACCENT_LABELS.us;
-
-      setListeningStep("en", `${accentInfo.flag} 英語の解答 (${accentInfo.name})`, "en");
+      setListeningStep("en", "英語の解答を聞く", "en");
       const enEl = $("#listening-answer-en");
       if (enEl) {
         enEl.classList.remove("blurred");
         enEl.classList.add("revealed");
       }
       updateSoundwave(true);
-      updateMediaSession(card, `${accentInfo.flag} 英語 (${accentInfo.name})`, card.en);
+      updateMediaSession(card, "英語の解答", card.en);
 
       await playEnglishCardPromise(card, listening.speed);
       updateSoundwave(false);
@@ -4059,7 +4074,7 @@ ${targetPatterns}
       if (listening.enRepeats === 2) {
         try { await cancellableSleep(600); } catch (e) { return; }
         if (listening.runId !== currentRunId || !listening.playing) return;
-        setListeningStep("en", `🔁 もう一度聞く (${accentInfo.flag} ${accentInfo.name})`, "en");
+        setListeningStep("en", "🔁 もう一度聞く", "en");
         updateSoundwave(true);
         await playEnglishCardPromise(card, listening.speed);
         updateSoundwave(false);
