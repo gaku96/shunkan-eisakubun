@@ -2107,16 +2107,23 @@
   let browserVoice = null;
   let browserJaVoice = null;
 
+  let activeComposedUrl = null;
+
   function stopAudio() {
     if (currentAudio) {
       try {
         currentAudio.pause();
         currentAudio.currentTime = 0;
+        currentAudio.ontimeupdate = null;
         currentAudio.onended = null;
         currentAudio.onerror = null;
         currentAudio.onplay = null;
       } catch (e) {}
       currentAudio = null;
+    }
+    if (activeComposedUrl) {
+      try { URL.revokeObjectURL(activeComposedUrl); } catch (e) {}
+      activeComposedUrl = null;
     }
     if ("speechSynthesis" in window) speechSynthesis.cancel();
   }
@@ -2542,6 +2549,20 @@
     await speakBrowserPromise(card.en, rate);
   }
 
+  let sharedAudioCtx = null;
+  function getAudioContext() {
+    if (!sharedAudioCtx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        sharedAudioCtx = new AudioCtx();
+      }
+    }
+    if (sharedAudioCtx && sharedAudioCtx.state === "suspended") {
+      sharedAudioCtx.resume().catch(() => {});
+    }
+    return sharedAudioCtx;
+  }
+
   // iOS Safari用: 最初のタップ時にAudioオブジェクトとSpeechSynthesisの自動再生制限を解除
   let audioUnlocked = false;
   function unlockAudio() {
@@ -2563,6 +2584,10 @@
         u.volume = 0.01;
         speechSynthesis.speak(u);
       }
+    }
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === "suspended") {
+      ctx.resume().catch(() => {});
     }
   }
   document.addEventListener("touchstart", unlockAudio, { passive: true });
@@ -3534,6 +3559,7 @@
     const h = state.history[todayKey()];
     if (h) h.goal = state.settings.dailyGoal;
     save();
+    if (typeof composedCardCache !== "undefined") composedCardCache.clear();
     initSwipeCard();
   }
 
@@ -4767,82 +4793,431 @@ ${targetPatterns}
     checkAchievements(false);
   }
 
+  // ---------- 耳トレ用: 途切れない単一オーディオストリーム合成エンジン ----------
+  // iOS Safari / WebKit では無音やsetTimeoutの隙間でJS実行が停止するため、
+  // 1枚のカード（日本語 + シンキング無音 + 英語解答 + リピート無音）を1本の連続WAVとして動的合成し、
+  // 単一のネイティブオーディオとして再生します。これによりiOSのバックグラウンド停止を根絶します。
+
+  function encodeWavBlob(samples, sampleRate) {
+    const buffer = new ArrayBuffer(44 + samples.length * 2);
+    const view = new DataView(buffer);
+    const writeString = (offset, string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+    writeString(0, "RIFF");
+    view.setUint32(4, 36 + samples.length * 2, true);
+    writeString(8, "WAVE");
+    writeString(12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); // PCM
+    view.setUint16(22, 1, true); // Mono
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, "data");
+    view.setUint32(40, samples.length * 2, true);
+    let offset = 44;
+    for (let i = 0; i < samples.length; i++, offset += 2) {
+      const s = Math.max(-1, Math.min(1, samples[i]));
+      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    }
+    return new Blob([buffer], { type: "audio/wav" });
+  }
+
+  function getMonoData(audioBuffer) {
+    if (audioBuffer.numberOfChannels === 1) {
+      return audioBuffer.getChannelData(0);
+    }
+    const c0 = audioBuffer.getChannelData(0);
+    const c1 = audioBuffer.getChannelData(1);
+    const out = new Float32Array(audioBuffer.length);
+    for (let i = 0; i < audioBuffer.length; i++) {
+      out[i] = (c0[i] + c1[i]) * 0.5;
+    }
+    return out;
+  }
+
+  function decodeAudioDataSafe(audioCtx, arrayBuffer) {
+    return new Promise((resolve, reject) => {
+      const copy = arrayBuffer.slice(0);
+      try {
+        const p = audioCtx.decodeAudioData(copy, (buf) => resolve(buf), (err) => reject(err));
+        if (p && typeof p.then === "function") {
+          p.then(resolve).catch(reject);
+        }
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+
+  async function getJapaneseAudioBuffer(card, audioCtx) {
+    if (!card || !audioCtx) return null;
+    const s = state.settings;
+    const cardId = card.id;
+    const audioKey = card.audioId || getCustomAudioId(card) || card.id;
+
+    // 1. 同梱音声優先
+    if (s.ttsEngine === "bundled" && audioKey) {
+      try {
+        const res = await fetch(`audio/${audioKey}_ja.mp3`);
+        if (res.ok) {
+          const ab = await res.arrayBuffer();
+          return await decodeAudioDataSafe(audioCtx, ab);
+        }
+      } catch (e) {}
+    }
+
+    // 2. Gemini キャッシュ
+    if (s.ttsEngine !== "browser") {
+      let cachedItem = null;
+      if (cardId) {
+        cachedItem = await findCachedAudio(cardId, true, s.geminiModel, s.geminiVoice);
+      }
+      if (!cachedItem && card.ja) {
+        const textKey = `ja_${card.ja}_${s.geminiModel}_${s.geminiVoice}`;
+        const blob = await getCachedAudio(textKey);
+        if (blob) cachedItem = { blob, key: textKey };
+      }
+      if (cachedItem && cachedItem.blob) {
+        try {
+          const ab = await cachedItem.blob.arrayBuffer();
+          return await decodeAudioDataSafe(audioCtx, ab);
+        } catch (e) {}
+      }
+
+      if (s.geminiApiKey) {
+        try {
+          const blob = await generateGeminiSpeech(card.ja, s.geminiApiKey, s.geminiModel, s.geminiVoice, "ja");
+          const cacheKey = `ja_${cardId || card.ja}_${s.geminiModel}_${s.geminiVoice}`;
+          await setCachedAudio(cacheKey, blob);
+          const ab = await blob.arrayBuffer();
+          return await decodeAudioDataSafe(audioCtx, ab);
+        } catch (e) {}
+      }
+    }
+
+    // 3. 同梱フォールバック
+    if (audioKey) {
+      try {
+        const res = await fetch(`audio/${audioKey}_ja.mp3`);
+        if (res.ok) {
+          const ab = await res.arrayBuffer();
+          return await decodeAudioDataSafe(audioCtx, ab);
+        }
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  async function getEnglishAudioBuffer(card, audioCtx) {
+    if (!card || !audioCtx) return null;
+    const s = state.settings;
+    const audioKey = card.audioId || getCustomAudioId(card) || card.id;
+    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
+
+    // 1. 同梱音声優先
+    if (s.ttsEngine === "bundled" && isBundled) {
+      try {
+        const res = await fetch(`audio/${audioKey}.mp3`);
+        if (res.ok) {
+          const ab = await res.arrayBuffer();
+          return await decodeAudioDataSafe(audioCtx, ab);
+        }
+      } catch (e) {}
+    }
+
+    // 2. Gemini キャッシュ
+    if (s.ttsEngine !== "browser") {
+      const effectiveAccent = getEffectiveAccent(card, s.geminiAccent || "us");
+      const cachedItem = await findCachedAudio(card.id, false, s.geminiModel, s.geminiVoice, effectiveAccent);
+      if (cachedItem && cachedItem.blob) {
+        try {
+          const ab = await cachedItem.blob.arrayBuffer();
+          return await decodeAudioDataSafe(audioCtx, ab);
+        } catch (e) {}
+      }
+
+      if (s.geminiApiKey) {
+        try {
+          const blob = await generateGeminiSpeech(card.en, s.geminiApiKey, s.geminiModel, s.geminiVoice, "en", effectiveAccent);
+          const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}_${effectiveAccent}`;
+          await setCachedAudio(cacheKey, blob);
+          const ab = await blob.arrayBuffer();
+          return await decodeAudioDataSafe(audioCtx, ab);
+        } catch (e) {}
+      }
+    }
+
+    // 3. 同梱フォールバック
+    if (isBundled) {
+      try {
+        const res = await fetch(`audio/${audioKey}.mp3`);
+        if (res.ok) {
+          const ab = await res.arrayBuffer();
+          return await decodeAudioDataSafe(audioCtx, ab);
+        }
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  const composedCardCache = new Map();
+
+  async function prepareComposedCard(card) {
+    if (!card) return null;
+    const audioCtx = getAudioContext();
+    if (!audioCtx) return null;
+
+    const s = state.settings;
+    const effectiveAccent = getEffectiveAccent(card, s.geminiAccent || "us");
+    const cacheKey = `${card.id}_th${listening.thinkSec}_rp${listening.repeatSec}_rep${listening.enRepeats}_${s.ttsEngine}_${s.geminiVoice}_${effectiveAccent}`;
+
+    if (composedCardCache.has(cacheKey)) {
+      return composedCardCache.get(cacheKey);
+    }
+
+    try {
+      const [bufferJa, bufferEn] = await Promise.all([
+        getJapaneseAudioBuffer(card, audioCtx),
+        getEnglishAudioBuffer(card, audioCtx)
+      ]);
+
+      if (!bufferJa || !bufferEn) return null;
+
+      const jaData = getMonoData(bufferJa);
+      const enData = getMonoData(bufferEn);
+      const sr = audioCtx.sampleRate;
+      const thinkSamples = Math.round(Math.max(0.4, listening.thinkSec) * sr);
+      const repeatSamples = Math.round(Math.max(0.5, listening.repeatSec) * sr);
+
+      let totalSamples;
+      let en1Start = jaData.length + thinkSamples;
+      let en2Start = -1;
+
+      if (listening.enRepeats === 2) {
+        const pauseBetweenEn = Math.round(1.25 * sr);
+        en2Start = en1Start + enData.length + pauseBetweenEn;
+        totalSamples = en2Start + enData.length + repeatSamples;
+      } else {
+        totalSamples = en1Start + enData.length + repeatSamples;
+      }
+
+      const combined = new Float32Array(totalSamples);
+      combined.set(jaData, 0);
+      combined.set(enData, en1Start);
+      if (en2Start > 0) {
+        combined.set(enData, en2Start);
+      }
+
+      const wavBlob = encodeWavBlob(combined, sr);
+      const url = URL.createObjectURL(wavBlob);
+
+      const composed = {
+        url,
+        blob: wavBlob,
+        tJaEnd: jaData.length / sr,
+        tThinkEnd: en1Start / sr,
+        tEnEnd: (en2Start > 0 ? (en2Start + enData.length) : (en1Start + enData.length)) / sr,
+        tTotal: totalSamples / sr,
+      };
+
+      if (composedCardCache.size >= 8) {
+        const oldestKey = composedCardCache.keys().next().value;
+        const oldItem = composedCardCache.get(oldestKey);
+        if (oldItem && oldItem.url !== activeComposedUrl) {
+          try { URL.revokeObjectURL(oldItem.url); } catch (e) {}
+        }
+        composedCardCache.delete(oldestKey);
+      }
+
+      composedCardCache.set(cacheKey, composed);
+      return composed;
+    } catch (err) {
+      console.warn("Failed to compose card audio:", err);
+      return null;
+    }
+  }
+
+  function prefetchNextComposedCard(index) {
+    if (!listening.queue || index >= listening.queue.length) return;
+    const nextCard = listening.queue[index];
+    if (nextCard) {
+      prepareComposedCard(nextCard).catch(() => {});
+    }
+  }
+
+  function playComposedCard(card, composed, onFinished) {
+    const audio = getSharedAudio();
+    stopAudio();
+    currentAudio = audio;
+    activeComposedUrl = composed.url;
+
+    audio.loop = false;
+    audio.src = composed.url;
+    const speed = Number(listening.speed) || 1.15;
+    audio.playbackRate = speed;
+    audio.defaultPlaybackRate = speed;
+
+    renderListeningCard(card, false);
+    setListeningStep("ja", "🇯🇵 日本語を聞く", "ja");
+    updateSoundwave(true);
+    updateMediaSession(card, "🇯🇵 日本語", card.ja);
+    resetPhaseBar();
+
+    let lastPhase = "ja";
+
+    audio.ontimeupdate = () => {
+      if (!listening.playing || currentAudio !== audio) return;
+      const t = audio.currentTime;
+
+      if (t < composed.tJaEnd) {
+        if (lastPhase !== "ja") {
+          lastPhase = "ja";
+          setListeningStep("ja", "🇯🇵 日本語を聞く", "ja");
+          updateSoundwave(true);
+          resetPhaseBar();
+          updateMediaSession(card, "🇯🇵 日本語", card.ja);
+        }
+      } else if (t < composed.tThinkEnd) {
+        if (lastPhase !== "think") {
+          lastPhase = "think";
+          setListeningStep("think", `🤔 英語を思い浮かべよう (${listening.thinkSec}s)`, "think");
+          updateSoundwave(false);
+          const thinkDurMs = ((composed.tThinkEnd - composed.tJaEnd) / (audio.playbackRate || 1)) * 1000;
+          animatePhaseBar(thinkDurMs);
+          updateMediaSession(card, "🤔 英語を思い浮かべよう", card.ja);
+        }
+      } else if (t < composed.tEnEnd) {
+        if (lastPhase !== "en") {
+          lastPhase = "en";
+          setListeningStep("en", "英語の解答を聞く", "en");
+          const enEl = $("#listening-answer-en");
+          if (enEl) {
+            enEl.classList.remove("blurred");
+            enEl.classList.add("revealed");
+          }
+          updateSoundwave(true);
+          resetPhaseBar();
+          updateMediaSession(card, "英語の解答", card.en);
+        }
+      } else {
+        if (lastPhase !== "repeat") {
+          lastPhase = "repeat";
+          setListeningStep("repeat", `🗣️ 声に出してリピート！ (${listening.repeatSec}s)`, "repeat");
+          updateSoundwave(false);
+          const repeatDurMs = ((composed.tTotal - composed.tEnEnd) / (audio.playbackRate || 1)) * 1000;
+          animatePhaseBar(repeatDurMs);
+          updateMediaSession(card, "🗣️ 声に出してリピート！", card.en);
+        }
+      }
+    };
+
+    audio.onended = () => {
+      audio.ontimeupdate = null;
+      audio.onended = null;
+      audio.onerror = null;
+      resetPhaseBar();
+      updateSoundwave(false);
+      recordListeningProgress(card);
+      onFinished();
+    };
+
+    audio.onerror = (e) => {
+      console.warn("Composed audio playback error:", e);
+      audio.ontimeupdate = null;
+      audio.onended = null;
+      audio.onerror = null;
+      resetPhaseBar();
+      updateSoundwave(false);
+      onFinished();
+    };
+
+    const p = audio.play();
+    if (p !== undefined) {
+      p.then(() => {
+        audio.playbackRate = speed;
+      }).catch((err) => {
+        console.warn("Composed audio play() rejected:", err);
+      });
+    }
+  }
+
+  async function playSingleCardSequential(card, runId) {
+    if (listening.runId !== runId || !listening.playing) return;
+    renderListeningCard(card, false);
+    setListeningStep("ja", "🇯🇵 日本語を聞く", "ja");
+    updateSoundwave(true);
+    updateMediaSession(card, "🇯🇵 日本語", card.ja);
+
+    await speakJapanesePromise(card);
+    updateSoundwave(false);
+    if (listening.runId !== runId || !listening.playing) return;
+
+    playSilenceKeeper();
+    try { await cancellableSleep(350); } catch (e) { return; }
+    if (listening.runId !== runId || !listening.playing) return;
+
+    setListeningStep("think", `🤔 英語を思い浮かべよう (${listening.thinkSec}s)`, "think");
+    updateMediaSession(card, "🤔 英語を思い浮かべよう", card.ja);
+    animatePhaseBar(listening.thinkSec * 1000);
+    try {
+      await cancellableSleep(listening.thinkSec * 1000);
+    } catch (e) {
+      resetPhaseBar();
+      return;
+    }
+    resetPhaseBar();
+    if (listening.runId !== runId || !listening.playing) return;
+
+    setListeningStep("en", "英語の解答を聞く", "en");
+    const enEl = $("#listening-answer-en");
+    if (enEl) {
+      enEl.classList.remove("blurred");
+      enEl.classList.add("revealed");
+    }
+    updateSoundwave(true);
+    updateMediaSession(card, "英語の解答", card.en);
+
+    await playEnglishCardPromise(card, listening.speed);
+    updateSoundwave(false);
+    if (listening.runId !== runId || !listening.playing) return;
+
+    if (listening.enRepeats === 2) {
+      playSilenceKeeper();
+      setListeningStep("en", "🔁 もう一度...", "en");
+      try { await cancellableSleep(1350); } catch (e) { return; }
+      if (listening.runId !== runId || !listening.playing) return;
+      setListeningStep("en", "🔁 もう一度聞く", "en");
+      updateSoundwave(true);
+      await playEnglishCardPromise(card, listening.speed);
+      updateSoundwave(false);
+      if (listening.runId !== runId || !listening.playing) return;
+    }
+
+    playSilenceKeeper();
+    setListeningStep("repeat", `🗣️ 声に出してリピート！ (${listening.repeatSec}s)`, "repeat");
+    animatePhaseBar(listening.repeatSec * 1000);
+    try {
+      await cancellableSleep(listening.repeatSec * 1000);
+    } catch (e) {
+      resetPhaseBar();
+      return;
+    }
+    resetPhaseBar();
+    if (listening.runId !== runId || !listening.playing) return;
+
+    recordListeningProgress(card);
+  }
+
   async function runListeningLoop() {
     const currentRunId = ++listening.runId;
 
-    while (listening.playing && listening.index < listening.queue.length) {
+    async function playStep() {
       if (listening.runId !== currentRunId || !listening.playing) return;
-      const card = listening.queue[listening.index];
-      if (!card) break;
-
-      renderListeningCard(card, false);
-      setListeningStep("ja", "🇯🇵 日本語を聞く", "ja");
-      updateSoundwave(true);
-      updateMediaSession(card, "🇯🇵 日本語", card.ja);
-
-      // 英語の解答音声を裏で先行生成（ポーズ中に生成完了させ0ms再生）
-      prefetchCardSpeech(card);
-      prefetchNextCards(listening.queue, listening.index);
-
-      await speakJapanesePromise(card);
-      updateSoundwave(false);
-      if (listening.runId !== currentRunId || !listening.playing) return;
-
-      playSilenceKeeper();
-      try { await cancellableSleep(400); } catch (e) { return; }
-      if (listening.runId !== currentRunId || !listening.playing) return;
-
-      setListeningStep("think", `🤔 英語を思い浮かべよう (${listening.thinkSec}s)`, "think");
-      updateMediaSession(card, "🤔 英語を思い浮かべよう", card.ja);
-      animatePhaseBar(listening.thinkSec * 1000);
-      try {
-        await cancellableSleep(listening.thinkSec * 1000);
-      } catch (e) {
-        resetPhaseBar();
-        return;
-      }
-      resetPhaseBar();
-      if (listening.runId !== currentRunId || !listening.playing) return;
-
-      setListeningStep("en", "英語の解答を聞く", "en");
-      const enEl = $("#listening-answer-en");
-      if (enEl) {
-        enEl.classList.remove("blurred");
-        enEl.classList.add("revealed");
-      }
-      updateSoundwave(true);
-      updateMediaSession(card, "英語の解答", card.en);
-
-      await playEnglishCardPromise(card, listening.speed);
-      updateSoundwave(false);
-      if (listening.runId !== currentRunId || !listening.playing) return;
-
-      if (listening.enRepeats === 2) {
-        playSilenceKeeper();
-        setListeningStep("en", "🔁 もう一度...", "en");
-        try { await cancellableSleep(1350); } catch (e) { return; }
-        if (listening.runId !== currentRunId || !listening.playing) return;
-        setListeningStep("en", "🔁 もう一度聞く", "en");
-        updateSoundwave(true);
-        await playEnglishCardPromise(card, listening.speed);
-        updateSoundwave(false);
-        if (listening.runId !== currentRunId || !listening.playing) return;
-      }
-
-      playSilenceKeeper();
-      setListeningStep("repeat", `🗣️ 声に出してリピート！ (${listening.repeatSec}s)`, "repeat");
-      animatePhaseBar(listening.repeatSec * 1000);
-      try {
-        await cancellableSleep(listening.repeatSec * 1000);
-      } catch (e) {
-        resetPhaseBar();
-        return;
-      }
-      resetPhaseBar();
-      if (listening.runId !== currentRunId || !listening.playing) return;
-
-      recordListeningProgress(card);
-      listening.index++;
 
       if (listening.index >= listening.queue.length) {
         if (listening.loop) {
@@ -4853,10 +5228,35 @@ ${targetPatterns}
         } else {
           pauseListening();
           setListeningStep("done", "🎉 1周完了！お疲れ様でした", "en");
-          break;
+          return;
         }
       }
+
+      const card = listening.queue[listening.index];
+      if (!card) return;
+
+      // 次のカードも先行合成して待機
+      prefetchNextComposedCard(listening.index + 1);
+
+      // 現在のカードの音声を準備（すでに先読みされていれば即座に返る）
+      const composed = await prepareComposedCard(card);
+      if (listening.runId !== currentRunId || !listening.playing) return;
+
+      if (composed) {
+        playComposedCard(card, composed, () => {
+          if (listening.runId !== currentRunId || !listening.playing) return;
+          listening.index++;
+          playStep();
+        });
+      } else {
+        await playSingleCardSequential(card, currentRunId);
+        if (listening.runId !== currentRunId || !listening.playing) return;
+        listening.index++;
+        playStep();
+      }
     }
+
+    playStep();
   }
 
   function pauseListening() {
@@ -4974,18 +5374,24 @@ ${targetPatterns}
     const btn = e.target.closest(".btn-toggle");
     if (!btn) return;
     listening.thinkSec = Number(btn.dataset.val) || 3;
+    composedCardCache.clear();
     updateListeningControlsUI();
   });
   $("#l-repeat-toggles")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".btn-toggle");
     if (!btn) return;
     listening.enRepeats = Number(btn.dataset.val) || 1;
+    composedCardCache.clear();
     updateListeningControlsUI();
   });
   $("#l-speed-toggles")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".btn-toggle");
     if (!btn) return;
     listening.speed = Number(btn.dataset.val) || 1.15;
+    if (currentAudio) {
+      currentAudio.playbackRate = listening.speed;
+      currentAudio.defaultPlaybackRate = listening.speed;
+    }
     updateListeningControlsUI();
   });
   $("#l-toggle-show-en")?.addEventListener("click", () => {
