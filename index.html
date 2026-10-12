@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=39">
+  <link rel="stylesheet" href="style.css?v=40">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -451,20 +451,33 @@
         </div>
       </article>
 
-      <!-- スワイプ操作ガイド -->
-      <div class="swipe-guide-strip" id="swipe-guide-strip">
-        <span class="guide-item again"><span class="guide-arrow">←</span> ✕ 言えなかった</span>
-        <span class="guide-item hard" id="guide-hard-item">↑ △ あやしい</span>
-        <span class="guide-item good">◯ 言えた <span class="guide-arrow">→</span></span>
-      </div>
-
+      <!-- 答えを見る（問題フェーズ） -->
       <div class="actions" id="reveal-actions">
         <button type="button" class="btn primary big" id="reveal-btn">答えを見る <kbd>Space</kbd></button>
       </div>
-      <div class="actions grade" id="grade-actions" hidden>
-        <button type="button" class="btn grade-again" data-grade="again">✕ 言えなかった <kbd>1</kbd></button>
-        <button type="button" class="btn grade-hard" data-grade="hard">△ あやしい <kbd>2</kbd></button>
-        <button type="button" class="btn grade-good" data-grade="good">◯ 言えた <kbd>3</kbd></button>
+
+      <!-- 自己評価エリア（解答フェーズ：ボタンタップ または カードスワイプ） -->
+      <div class="grade-container" id="grade-container" hidden>
+        <div class="grade-hint-bar">
+          <span>👆 ボタンをタップ または カードをスワイプ</span>
+        </div>
+        <div class="actions grade" id="grade-actions">
+          <button type="button" class="btn grade-again" data-grade="again" aria-label="左スワイプまたはタップ：言えなかった">
+            <span class="grade-btn-dir">← スワイプ</span>
+            <span class="grade-btn-label">✕ 言えなかった</span>
+            <kbd>1</kbd>
+          </button>
+          <button type="button" class="btn grade-hard" data-grade="hard" aria-label="上スワイプまたはタップ：あやしい">
+            <span class="grade-btn-dir">↑ スワイプ</span>
+            <span class="grade-btn-label">△ あやしい</span>
+            <kbd>2</kbd>
+          </button>
+          <button type="button" class="btn grade-good" data-grade="good" aria-label="右スワイプまたはタップ：言えた">
+            <span class="grade-btn-dir">スワイプ →</span>
+            <span class="grade-btn-label">◯ 言えた</span>
+            <kbd>3</kbd>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -1127,8 +1140,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=39"></script>
-  <script src="app.js?v=39"></script>
+  <script src="data.js?v=40"></script>
+  <script src="app.js?v=40"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

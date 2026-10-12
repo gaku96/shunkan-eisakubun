@@ -935,33 +935,31 @@ progress.done::-moz-progress-bar { background: var(--good); }
   display: none;
 }
 
-/* Swipe Guide Strip */
-.swipe-guide-strip {
+/* Grade Container & Hint */
+.grade-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.grade-container[hidden] {
+  display: none !important;
+}
+
+.grade-hint-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 14px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--surface) 75%, transparent);
-  border: 1px dashed var(--border);
+  justify-content: center;
+  gap: 6px;
   font-size: 0.76rem;
   font-weight: 600;
   color: var(--muted);
-  margin-top: -6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  border: 1px dashed var(--border);
   user-select: none;
-}
-.swipe-guide-strip .guide-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  transition: opacity 0.15s ease;
-}
-.swipe-guide-strip .guide-item.again { color: var(--again); }
-.swipe-guide-strip .guide-item.good { color: var(--good); }
-.swipe-guide-strip .guide-item.hard { color: var(--hard); }
-.guide-arrow {
-  font-size: 0.88rem;
-  font-weight: 800;
+  -webkit-user-select: none;
 }
 .pattern-chip {
   margin: 0; font-size: .8rem; font-weight: 700; color: var(--accent);
@@ -1052,7 +1050,47 @@ progress.done::-moz-progress-bar { background: var(--good); }
 
 .actions { display: flex; gap: 10px; }
 .actions[hidden] { display: none; }
-.actions.grade .btn { flex: 1; flex-direction: column; gap: 2px; padding: 14px 8px; }
+.actions.grade {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+.actions.grade .btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 4px 8px;
+  border-radius: 14px;
+  text-align: center;
+  box-sizing: border-box;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.actions.grade .btn:active {
+  transform: scale(0.94);
+}
+.grade-btn-dir {
+  font-size: 0.68rem;
+  font-weight: 700;
+  opacity: 0.72;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+.grade-btn-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap; /* 🔥 絶対に2行に改行させない */
+  letter-spacing: -0.3px;
+}
+.actions.grade .btn kbd {
+  font-size: 0.65rem;
+  opacity: 0.55;
+  margin-top: 1px;
+}
 .grade-again { color: var(--again); border-color: color-mix(in srgb, var(--again) 40%, transparent); }
 .grade-hard  { color: var(--hard);  border-color: color-mix(in srgb, var(--hard) 40%, transparent); }
 .grade-good  { color: var(--good);  border-color: color-mix(in srgb, var(--good) 40%, transparent); }

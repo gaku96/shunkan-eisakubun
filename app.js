@@ -1138,7 +1138,8 @@
       : (card.tag ? `🎓 TED・GRIT [${card.tag}] | ${card.pattern.en}：${card.pattern.ja}` : `${card.pattern.en}：${card.pattern.ja}`);
     $("#answer").hidden = true;
     $("#reveal-actions").hidden = false;
-    $("#grade-actions").hidden = true;
+    const gc = $("#grade-container") || $("#grade-actions");
+    if (gc) gc.hidden = true;
     $("#tts-source").textContent = "";
     $("#tts-source").className = "tts-badge";
     const nuanceEl = $("#card-nuance-text");
@@ -1327,7 +1328,8 @@
 
     $("#answer").hidden = false;
     $("#reveal-actions").hidden = true;
-    $("#grade-actions").hidden = false;
+    const gc = $("#grade-container") || $("#grade-actions");
+    if (gc) gc.hidden = false;
     if (state.settings.autoSpeak) speakCard(card);
   }
 
