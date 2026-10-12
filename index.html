@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=65">
+  <link rel="stylesheet" href="style.css?v=66">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -930,11 +930,11 @@
       
       <fieldset class="settings-group">
         <legend>学習</legend>
-        <label class="field">
+        <label class="field field-row">
           <span>1日の目標（問）</span>
           <input type="number" name="dailyGoal" min="1" max="100" step="1" required>
         </label>
-        <label class="field">
+        <label class="field field-row">
           <span>制限時間（秒・0でオフ）</span>
           <input type="number" name="timerSec" min="0" max="30" step="1" required>
         </label>
@@ -1021,37 +1021,49 @@
             <span id="cache-count">キャッシュ: 0件</span>
             <button type="button" class="btn small ghost" id="clear-cache-btn">消去</button>
           </div>
-          <div class="batch-cache-box" style="margin-top: 12px; padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px dashed var(--accent);">
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
-              <span style="font-size: .84rem; font-weight: 700; display:inline-flex; align-items:center; gap:4px;"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-bolt"></use></svg> Gemini一括キャッシュ</span>
-              <button type="button" class="btn small primary" id="batch-cache-btn" style="width:100%; margin-top:6px;">全357問 一括生成を開始</button>
+          <div class="batch-cache-box" style="margin-top: 12px; padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px dashed var(--accent); width:100%; box-sizing:border-box;">
+            <div style="font-size: .84rem; font-weight: 700; display:flex; align-items:center; gap:4px; margin-bottom:8px;">
+              <svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-bolt"></use></svg> Gemini一括キャッシュ
             </div>
-            <div style="display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap;">
-              <span style="font-size: .78rem; color: var(--muted); white-space:nowrap;">生成範囲:</span>
-              <select id="batch-cache-scope" style="font-size: .8rem; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--fg); flex: 1; min-width:0; max-width:100%;">
+            <div style="margin-bottom:8px; width:100%;">
+              <span style="font-size: .78rem; color: var(--muted); display:block; margin-bottom:4px;">生成範囲:</span>
+              <select id="batch-cache-scope" style="font-size: .8rem; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--fg); width: 100%; box-sizing: border-box; text-overflow:ellipsis;">
                 <option value="all">全357問（口語編＋GRIT編 / 計714ファイル）</option>
                 <option value="conv">口語編のみ（267問 / 計534ファイル）</option>
                 <option value="grit">GRIT編のみ（90問 / 計180ファイル）</option>
               </select>
             </div>
-            <p style="font-size: .74rem; color: var(--muted); margin: 6px 0 0; word-break: break-word;">※従量課金APIキーで選択範囲の音声を自動生成・端末保存（所要時間は1問あたり数秒）。生成中は画面スリープを防止します。</p>
+            <button type="button" class="btn small primary" id="batch-cache-btn" style="width:100%; box-sizing:border-box; text-align:center;">全357問 一括生成を開始</button>
+            <p style="font-size: .74rem; color: var(--muted); margin: 6px 0 0; word-break: break-all;">※従量課金APIキーで選択範囲の音声を自動生成・端末保存（所要時間は1問あたり数秒）。生成中は画面スリープを防止します。</p>
             <div id="batch-cache-progress" hidden style="margin-top: 8px; font-size: .8rem; color: var(--accent); font-weight:600;"></div>
           </div>
         </div>
 
-        <div class="speech-rate-control" style="margin-top: 14px; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+        <div class="speech-rate-control" style="margin-top: 14px; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; width:100%; box-sizing:border-box;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px; width:100%; box-sizing:border-box;">
             <span style="font-weight:600; font-size:0.88rem; display:inline-flex; align-items:center; gap:4px;"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-bolt"></use></svg> 音声読み上げ速度</span>
             <span id="speech-rate-val" style="font-weight:700; color:var(--accent); font-size:0.95rem;">1.15x</span>
           </div>
-          <input type="range" name="speechRate" id="speech-rate-input" min="0.7" max="1.5" step="0.05" value="1.15" style="width:100%; accent-color:var(--accent); cursor:pointer;">
-          <div class="btn-toggle-group" id="speech-speed-presets" style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 6px; width:100%; margin-top:10px;">
-            <button type="button" class="btn-toggle" data-speed="1.0" style="text-align:center;">1.0x (ゆったり)</button>
-            <button type="button" class="btn-toggle" data-speed="1.1" style="text-align:center;">1.1x (口語)</button>
-            <button type="button" class="btn-toggle active" data-speed="1.15" style="text-align:center;">1.15x (標準)</button>
-            <button type="button" class="btn-toggle" data-speed="1.25" style="text-align:center;">1.25x (実戦)</button>
+          <input type="range" name="speechRate" id="speech-rate-input" min="0.7" max="1.5" step="0.05" value="1.15" style="width:100%; max-width:100%; box-sizing:border-box; accent-color:var(--accent); cursor:pointer;">
+          <div id="speech-speed-presets">
+            <button type="button" class="btn-toggle" data-speed="1.0">
+              <span class="speed-num">1.0x</span>
+              <span class="speed-sub">ゆったり</span>
+            </button>
+            <button type="button" class="btn-toggle" data-speed="1.1">
+              <span class="speed-num">1.1x</span>
+              <span class="speed-sub">口語</span>
+            </button>
+            <button type="button" class="btn-toggle active" data-speed="1.15">
+              <span class="speed-num">1.15x</span>
+              <span class="speed-sub">標準</span>
+            </button>
+            <button type="button" class="btn-toggle" data-speed="1.25">
+              <span class="speed-num">1.25x</span>
+              <span class="speed-sub">実戦</span>
+            </button>
           </div>
-          <small style="color:var(--muted); font-size:0.75rem; display:block; margin-top:8px; line-height:1.4;">
+          <small style="color:var(--muted); font-size:0.75rem; display:block; margin-top:8px; line-height:1.4; word-break:break-all;">
             ※Gemini音声・同梱音声・ブラウザ標準音声のすべてに即座に反映されます（音程は自動補正されピッチが狂うことはありません）。
           </small>
         </div>
@@ -1394,8 +1406,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=65"></script>
-  <script src="app.js?v=65"></script>
+  <script src="data.js?v=66"></script>
+  <script src="app.js?v=66"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

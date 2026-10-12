@@ -1229,12 +1229,13 @@ dialog::backdrop { background: rgb(0 0 0 / .45); backdrop-filter: blur(2px); }
 dialog h2 { margin-top: 0; margin-bottom: 12px; }
 
 #settings-dialog {
-  width: min(480px, calc(100vw - 20px));
-  max-width: calc(100vw - 20px) !important;
+  width: min(460px, calc(100vw - 16px));
+  max-width: calc(100vw - 16px) !important;
+  padding: 16px 12px !important;
 }
 #settings-dialog * {
-  box-sizing: border-box;
-  max-width: 100%;
+  box-sizing: border-box !important;
+  max-width: 100% !important;
 }
 #settings-form {
   width: 100% !important;
@@ -1268,14 +1269,14 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
-  word-break: break-word !important;
-  overflow-wrap: break-word !important;
+  word-break: break-all !important;
+  overflow-wrap: anywhere !important;
 }
 .audio-status-banner span,
 .audio-status-banner small {
   display: block;
-  word-break: break-word !important;
-  overflow-wrap: break-word !important;
+  word-break: break-all !important;
+  overflow-wrap: anywhere !important;
   max-width: 100%;
 }
 .audio-status-banner small {
@@ -1298,81 +1299,132 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
 }
 .bulk-download-section span,
 .bulk-download-section small {
-  word-break: break-word !important;
-  overflow-wrap: break-word !important;
+  word-break: break-all !important;
+  overflow-wrap: anywhere !important;
 }
 
-.field {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
+/* Fields in Settings Form: stacked by default, row only for small number inputs */
+#settings-form .field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  margin-bottom: 12px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+#settings-form .field.field-row {
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+#settings-form .field.field-row span {
+  flex: 1 1 auto !important;
+  width: auto !important;
+}
+#settings-form .field.field-row input {
+  width: 80px !important;
+  flex: 0 0 80px !important;
+}
+#settings-form .field span,
+#settings-form .field-stacked span,
+#settings-form .field-select span {
+  width: 100% !important;
+  font-size: .88rem !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
+  word-break: break-all !important;
+}
+#settings-form .field select,
+#settings-form .field input[type="number"],
+#settings-form .field input[type="text"],
+#settings-form .field input[type="password"],
+#settings-form .field-select select,
+#settings-form .field-stacked input {
+  font: inherit;
+  font-size: .9rem;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
   box-sizing: border-box !important;
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
 }
-.field span { flex: 1 1 auto; min-width: 0; word-break: break-word; }
-.field select, .field input[type="number"], .field input[type="text"] {
-  font: inherit; font-size: .9rem; padding: 6px 10px; border-radius: 8px;
-  border: 1px solid var(--border); background: var(--bg); color: var(--text);
-  box-sizing: border-box !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-}
-.field select {
-  width: 100%;
+#settings-form select {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
 }
-.field input[type="number"] { width: 80px; }
-.field input[type="range"] { width: 140px; accent-color: var(--accent); }
 
-/* Stacked select fields for settings */
-.field:has(select),
-.field-select {
+#settings-form .field-stacked {
+  display: flex !important;
   flex-direction: column !important;
-  align-items: stretch !important;
   gap: 6px !important;
-}
-.field:has(select) span,
-.field-select span {
-  width: 100% !important;
-  font-size: .88rem;
-  font-weight: 600;
-  color: var(--text);
-}
-.field:has(select) select,
-.field-select select {
+  margin-bottom: 12px !important;
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
-  padding: 8px 10px !important;
-  font-size: .88rem !important;
+  box-sizing: border-box !important;
+}
+#settings-form .input-with-action {
+  display: flex !important;
+  gap: 8px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+#settings-form .input-with-action input {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  width: 0 !important;
+  box-sizing: border-box !important;
+}
+#settings-form .input-with-action button {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+#settings-form .field-hint {
+  font-size: .75rem;
+  color: var(--muted);
+  line-height: 1.4;
+  word-break: break-all !important;
 }
 
-.field-stacked {
-  display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;
-  width: 100% !important; max-width: 100% !important; min-width: 0 !important; box-sizing: border-box !important;
+#settings-form .test-row {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin-top: 10px !important;
 }
-.field-stacked span { font-size: .9rem; font-weight: 600; }
-.input-with-action { display: flex; gap: 8px; width: 100%; }
-.input-with-action input {
-  flex: 1; min-width: 0; font: inherit; font-size: .9rem; padding: 6px 10px; border-radius: 8px;
-  border: 1px solid var(--border); background: var(--bg); color: var(--text);
-  box-sizing: border-box;
+#settings-form .test-row button {
+  flex: 1 1 120px !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
 }
-.input-with-action input:focus { outline: 2px solid var(--accent); }
-.field-hint { font-size: .75rem; color: var(--muted); line-height: 1.4; word-break: break-word; }
-
-.test-row, .cache-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  margin-top: 10px; font-size: .85rem; flex-wrap: wrap; width: 100%;
+#settings-form .cache-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin-top: 10px !important;
+  font-size: .85rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
-.status-msg { font-size: .8rem; color: var(--muted); word-break: break-word; }
+#settings-form .status-msg {
+  font-size: .8rem;
+  color: var(--muted);
+  word-break: break-all !important;
+}
 .status-msg.error { color: var(--again); }
 .status-msg.success { color: var(--good); }
 
@@ -2725,29 +2777,49 @@ dialog h2 { margin-top: 0; margin-bottom: 12px; }
 }
 #speech-speed-presets {
   display: grid !important;
-  grid-template-columns: repeat(2, 1fr) !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 6px !important;
   width: 100% !important;
   max-width: 100% !important;
   border: none !important;
   background: transparent !important;
   box-sizing: border-box !important;
+  margin-top: 10px !important;
 }
 #speech-speed-presets .btn-toggle {
   border: 1px solid var(--border) !important;
   border-radius: 8px !important;
-  padding: 8px 4px !important;
+  padding: 6px 4px !important;
   font-size: .8rem !important;
-  background: var(--bg) !important;
+  background: var(--surface) !important;
   color: var(--text) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
   text-align: center !important;
   width: 100% !important;
+  min-width: 0 !important;
   box-sizing: border-box !important;
+  cursor: pointer;
+}
+#speech-speed-presets .btn-toggle .speed-num {
+  font-size: .88rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+#speech-speed-presets .btn-toggle .speed-sub {
+  font-size: .72rem !important;
+  color: var(--muted) !important;
+  line-height: 1.2 !important;
 }
 #speech-speed-presets .btn-toggle.active {
   background: var(--accent) !important;
   color: #fff !important;
   border-color: var(--accent) !important;
+}
+#speech-speed-presets .btn-toggle.active .speed-sub {
+  color: rgb(255 255 255 / .85) !important;
 }
 @media (max-width: 480px) {
   .l-setting-group {
