@@ -3526,16 +3526,20 @@
   }
 
   async function requestGeminiContent(prompt, apiKey) {
-    // 優先度：3.8-flash -> 1.5-flash -> 2.0-flash -> 3.5-flash-lite
-    const candidateModels = ["gemini-3.8-flash", "gemini-1.5-flash", "gemini-2.0-flash", "gemini-3.5-flash-lite"];
+    // 優先度：gemini-2.5-flash -> gemini-2.0-flash -> gemini-1.5-flash
+    const candidateModels = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
     let lastError = null;
 
     for (const model of candidateModels) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12秒タイムアウト
+
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
         const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: {
@@ -3545,10 +3549,19 @@
           }),
         });
 
+        clearTimeout(timeoutId);
+
         if (!res.ok) {
           const errJson = await res.json().catch(() => ({}));
           const msg = errJson.error?.message || `HTTP ${res.status}`;
-          if (msg.includes("no longer available") || msg.includes("not found") || msg.includes("NotFound") || res.status === 404 || res.status === 400) {
+          if (
+            msg.includes("no longer available") ||
+            msg.includes("not found") ||
+            msg.includes("NotFound") ||
+            msg.includes("deprecated") ||
+            res.status === 404 ||
+            res.status === 400
+          ) {
             console.warn(`Model ${model} unavailable (${msg}), trying next candidate...`);
             lastError = new Error(msg);
             continue;
@@ -3566,8 +3579,19 @@
         }
         return parsed;
       } catch (err) {
+        clearTimeout(timeoutId);
         lastError = err;
-        if (err.message.includes("no longer available") || err.message.includes("not found") || err.message.includes("404") || err.message.includes("400")) {
+        if (err.name === "AbortError") {
+          console.warn(`Model ${model} request timed out (12s), trying next candidate...`);
+          lastError = new Error("通信がタイムアウトしました。");
+          continue;
+        }
+        if (
+          err.message.includes("no longer available") ||
+          err.message.includes("not found") ||
+          err.message.includes("404") ||
+          err.message.includes("400")
+        ) {
           continue;
         }
         throw err;
@@ -3642,7 +3666,7 @@ ${targetPatterns}
     const hasKey = !!state.settings.geminiApiKey;
     if (hasKey) {
       aiKeyHint.className = "ai-key-hint with-key";
-      aiKeyHint.innerHTML = "✨ <strong>Gemini 3.8 Flash 連携中</strong>：あなたのテーマに合わせ、完全オリジナルの実践例文をリアルタイム自動生成します。";
+      aiKeyHint.innerHTML = "✨ <strong>Gemini Flash 連携中</strong>：あなたのテーマに合わせ、完全オリジナルの実践例文をリアルタイム自動生成します。";
     } else {
       aiKeyHint.className = "ai-key-hint no-key";
       aiKeyHint.innerHTML = "💡 <strong>0円・APIキー不要モード</strong>：上のプリセットから即座に生成できます。<br><small>完全オリジナルな自由テーマを無制限に生成したい場合は、⚙️設定で無料のGemini APIキーを登録できます。</small>";
@@ -4651,7 +4675,6 @@ ${targetPatterns}
   const rallyToneSelect = $("#rally-ai-tone");
   const rallyKeyHint = $("#rally-ai-key-hint");
   const rallyGenerateBtn = $("#rally-ai-generate-btn");
-  const rallyLoadingEl = $("#rally-ai-loading");
   const rallyPreviewEl = $("#rally-ai-preview");
   const rallyPreviewList = $("#rally-ai-preview-list");
   const rallyPreviewCount = $("#rally-ai-preview-count");
@@ -4666,7 +4689,7 @@ ${targetPatterns}
     const hasKey = !!state.settings.geminiApiKey;
     if (hasKey) {
       rallyKeyHint.className = "ai-key-hint with-key";
-      rallyKeyHint.innerHTML = "✨ <strong>Gemini 3.8 Flash 連携中</strong>：指定したシチュエーションに合わせ、臨場感あふれる即答対話ラリーをリアルタイム生成します。";
+      rallyKeyHint.innerHTML = "✨ <strong>Gemini Flash 連携中</strong>：指定したシチュエーションに合わせ、臨場感あふれる即答対話ラリーをリアルタイム生成します。";
     } else {
       rallyKeyHint.className = "ai-key-hint no-key";
       rallyKeyHint.innerHTML = "💡 <strong>0円・APIキー不要モード</strong>：おすすめシチュエーションから即座にラリーをセットアップできます。<br><small>オリジナルの場面を自由生成したい場合は、⚙️設定でGemini APIキーを登録できます。</small>";
@@ -4675,9 +4698,16 @@ ${targetPatterns}
 
   openRallyAiBtn?.addEventListener("click", () => {
     updateRallyKeyHint();
-    if (rallyLoadingEl) rallyLoadingEl.hidden = true;
     if (rallyPreviewEl) rallyPreviewEl.hidden = true;
-    if (rallyGenerateBtn) rallyGenerateBtn.disabled = false;
+    if (rallyGenerateBtn) {
+      rallyGenerateBtn.disabled = false;
+      rallyGenerateBtn.innerHTML = `<svg class="ui-icon" aria-hidden="true"><use href="#icon-sparkle"></use></svg> ラリーシナリオを生成する（5問）`;
+    }
+    const errorBox = $("#rally-ai-error-box");
+    if (errorBox) {
+      errorBox.hidden = true;
+      errorBox.textContent = "";
+    }
     currentGeneratedRallies = [];
     rallyAiDialog?.showModal();
   });
@@ -4771,21 +4801,29 @@ ${tone}
       errorBox.textContent = "";
     }
     rallyGenerateBtn.disabled = true;
-    rallyGenerateBtn.innerHTML = `<div class="spinner icon-xs" style="display:inline-block; vertical-align:middle; width:14px; height:14px; border-width:2px; margin-right:6px;"></div> シナリオを生成中...`;
-    if (rallyLoadingEl) rallyLoadingEl.hidden = false;
+    rallyGenerateBtn.innerHTML = `<span class="spinner icon-xs" style="display:inline-block; vertical-align:middle; width:14px; height:14px; border-width:2px; margin-right:6px;"></span> シナリオを生成中...`;
     if (rallyPreviewEl) rallyPreviewEl.hidden = true;
 
     try {
       if (apiKey) {
-        currentGeneratedRallies = await generateRalliesWithGemini(topic, tone, apiKey);
+        try {
+          currentGeneratedRallies = await generateRalliesWithGemini(topic, tone, apiKey);
+        } catch (apiErr) {
+          console.warn("Gemini rally generation failed, falling back to curated presets:", apiErr);
+          if (errorBox) {
+            errorBox.hidden = false;
+            errorBox.textContent = `⚠️ Gemini連携エラー (${apiErr.message})。プリセットからシナリオを展開しました。`;
+          }
+          const pool = [...(window.RALLY_PRESETS || [])];
+          currentGeneratedRallies = shuffle(pool).slice(0, 5);
+        }
       } else {
         // APIキーなし: プリセットから5件ピックアップ
-        await new Promise((r) => setTimeout(r, 600));
+        await new Promise((r) => setTimeout(r, 400));
         const pool = [...(window.RALLY_PRESETS || [])];
         currentGeneratedRallies = shuffle(pool).slice(0, 5);
       }
 
-      if (rallyLoadingEl) rallyLoadingEl.hidden = true;
       if (rallyPreviewEl) {
         rallyPreviewEl.hidden = false;
         setTimeout(() => {
@@ -4818,7 +4856,6 @@ ${tone}
         }));
       }
     } catch (err) {
-      if (rallyLoadingEl) rallyLoadingEl.hidden = true;
       console.error("Rally generation error:", err);
       if (errorBox) {
         errorBox.hidden = false;

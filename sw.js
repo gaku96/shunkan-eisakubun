@@ -1,10 +1,10 @@
-const CACHE_NAME = "shunkan-eisakubun-v46";
+const CACHE_NAME = "shunkan-eisakubun-v47";
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=46",
-  "./app.js?v=46",
-  "./data.js?v=46",
+  "./style.css?v=47",
+  "./app.js?v=47",
+  "./data.js?v=47",
   "./manifest.json",
   "./icon.png",
   "./icon-192.png",
@@ -29,6 +29,10 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
+  // Only handle same-origin GET requests; bypass external APIs (Gemini, etc.) and non-GET requests
+  if (e.request.method !== "GET" || !e.request.url.startsWith(self.location.origin)) {
+    return;
+  }
   // Navigation request (opening or reloading the app): Network-First
   // This ensures iOS PWA always gets the freshest HTML when online,
   // while smoothly falling back to cache when offline.

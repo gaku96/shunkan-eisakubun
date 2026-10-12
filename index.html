@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=46">
+  <link rel="stylesheet" href="style.css?v=47">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -1110,12 +1110,6 @@
       <!-- エラー表示領域 -->
       <div id="rally-ai-error-box" class="status-msg error" hidden style="margin-top: 10px; font-size: 0.85rem; line-height: 1.5;"></div>
 
-      <!-- ローディング表示 -->
-      <div id="rally-ai-loading" class="ai-loading" hidden>
-        <div class="spinner"></div>
-        <p id="rally-ai-loading-text">Geminiが実戦対話ラリーを生成中...</p>
-      </div>
-
       <!-- 生成結果プレビュー -->
       <div id="rally-ai-preview" class="ai-preview" hidden>
         <div class="preview-head">
@@ -1318,8 +1312,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=46"></script>
-  <script src="app.js?v=46"></script>
+  <script src="data.js?v=47"></script>
+  <script src="app.js?v=47"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
