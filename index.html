@@ -20,7 +20,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=52">
+  <link rel="stylesheet" href="style.css?v=53">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -923,7 +923,10 @@
   <!-- 設定 -->
   <dialog id="settings-dialog" closedby="any" aria-labelledby="settings-title">
     <form method="dialog" id="settings-form">
-      <h2 id="settings-title">設定</h2>
+      <div class="dialog-header">
+        <h2 id="settings-title" style="display:flex; align-items:center; gap:6px;"><svg class="ui-icon" aria-hidden="true"><use href="#icon-gear"></use></svg> 設定</h2>
+        <button type="button" class="icon-btn" id="close-settings-btn" aria-label="保存せずに閉じる" title="閉じる"><svg class="ui-icon" aria-hidden="true"><use href="#icon-close"></use></svg></button>
+      </div>
       
       <fieldset class="settings-group">
         <legend>学習</legend>
@@ -1096,19 +1099,9 @@
         <a href="https://github.com/gaku96/shunkan-eisakubun/issues" target="_blank" rel="noopener noreferrer" class="btn small ghost" style="flex:1; min-width:140px; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">💬 不具合・改善要望</a>
       </div>
 
-      <!-- 危険ゾーン（誤タップ防止のため明確に分離） -->
-      <div style="margin: 20px 0 12px; padding: 10px 12px; border: 1px dashed color-mix(in srgb, var(--again) 35%, transparent); border-radius: 10px; background: color-mix(in srgb, var(--again) 4%, transparent);">
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-          <div>
-            <span style="font-size:0.82rem; font-weight:700; color:var(--again);">学習記録の初期化</span>
-            <small style="display:block; font-size:0.72rem; color:var(--muted);">習得レベルやストリークをリセット</small>
-          </div>
-          <button type="button" class="btn danger small" id="reset-data">初期化</button>
-        </div>
-      </div>
-
-      <div class="dialog-actions">
-        <button type="submit" class="btn primary big" value="save" style="width:100%;">設定を保存する</button>
+      <div class="dialog-actions settings-actions" style="display:flex; gap:10px; margin-top:20px;">
+        <button type="button" class="btn ghost big" id="cancel-settings-btn" style="flex:1;">キャンセル</button>
+        <button type="submit" class="btn primary big" value="save" style="flex:2;">設定を保存する</button>
       </div>
     </form>
   </dialog>
@@ -1396,8 +1389,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=52"></script>
-  <script src="app.js?v=52"></script>
+  <script src="data.js?v=53"></script>
+  <script src="app.js?v=53"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

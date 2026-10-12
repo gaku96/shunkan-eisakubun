@@ -3215,8 +3215,6 @@
   speechRateInput?.addEventListener("input", () => {
     const spd = Number(speechRateInput.value) || 1.15;
     updateSpeechRateDisplay(spd);
-    state.settings.speechRate = spd;
-    save();
   });
 
   $("#speech-speed-presets")?.addEventListener("click", (e) => {
@@ -3225,8 +3223,6 @@
     const spd = Number(btn.dataset.speed) || 1.15;
     if (speechRateInput) speechRateInput.value = spd;
     updateSpeechRateDisplay(spd);
-    state.settings.speechRate = spd;
-    save();
   });
 
   function updateTtsFieldsVisibility() {
@@ -3348,26 +3344,6 @@
     save();
   }
 
-  keyInput.addEventListener("input", () => {
-    state.settings.geminiApiKey = keyInput.value.trim();
-    save();
-  });
-  form.geminiModel.addEventListener("change", () => {
-    state.settings.geminiModel = form.geminiModel.value;
-    save();
-  });
-  form.geminiVoice.addEventListener("change", () => {
-    state.settings.geminiVoice = form.geminiVoice.value;
-    save();
-  });
-  form.geminiAccent?.addEventListener("change", () => {
-    state.settings.geminiAccent = form.geminiAccent.value;
-    save();
-  });
-  ttsSelect.addEventListener("change", () => {
-    state.settings.ttsEngine = ttsSelect.value;
-    save();
-  });
 
   // 一括キャッシュ
   batchCacheBtn?.addEventListener("click", async () => {
@@ -3570,31 +3546,28 @@
     dialog.showModal();
   });
 
-  dialog?.addEventListener("close", () => {
-    saveCurrentSettingsFromForm();
-    if (!views.home.hidden) renderHome();
-    renderHeaderStreak();
+  form?.addEventListener("submit", () => {
+    dialog.returnValue = "save";
   });
 
-  $("#reset-data")?.addEventListener("click", () => {
-    if (!confirm("学習記録とストリーク、作成したカスタム例文、獲得バッジをすべて初期化します。よろしいですか？")) return;
-    state = {
-      activeCourse: "conversation",
-      settings: state.settings,
-      cards: {},
-      history: {},
-      customCards: [],
-      achievements: {},
-      listeningCount: 0,
-      streakShields: 1,
-      shieldUsedDates: [],
-      shieldAwardedMilestones: [],
-    };
-    save();
+  dialog?.addEventListener("close", () => {
+    if (dialog.returnValue === "save") {
+      saveCurrentSettingsFromForm();
+      showToast("✓ 設定を保存しました");
+      if (!views.home.hidden) renderHome();
+      renderHeaderStreak();
+    }
+  });
+
+  const closeSettingsBtn = $("#close-settings-btn");
+  const cancelSettingsBtn = $("#cancel-settings-btn");
+  closeSettingsBtn?.addEventListener("click", () => {
+    dialog.returnValue = "cancel";
     dialog.close();
-    stopSession();
-    renderHome();
-    showView("home");
+  });
+  cancelSettingsBtn?.addEventListener("click", () => {
+    dialog.returnValue = "cancel";
+    dialog.close();
   });
 
   const forceUpdateBtn = $("#force-update-btn");
