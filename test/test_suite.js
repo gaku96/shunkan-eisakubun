@@ -57,6 +57,10 @@ async function runDeviceTests(browser, deviceConfig, errors, warnings) {
     errors.push(`[${name} Page Uncaught Error] ${err.toString()}`);
   });
   page.on('requestfailed', req => {
+    // Normal browser cancellation when audio element switches tracks or pauses
+    if (req.url().startsWith('blob:') && req.failure()?.errorText === 'net::ERR_ABORTED') {
+      return;
+    }
     errors.push(`[${name} Request Failed] ${req.url()} (${req.failure()?.errorText})`);
   });
   page.on('response', resp => {

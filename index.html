@@ -26,7 +26,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=72">
+  <link rel="stylesheet" href="style.css?v=73">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -955,16 +955,16 @@
       <fieldset class="settings-group">
         <legend>音声設定</legend>
         <div class="audio-status-banner">
-          <span>✅ <strong>日本語・英語 全問の高音質音声を同梱済み</strong></span>
+          <span>✅ <strong>全問の高音質Gemini音声を同梱済み</strong></span>
           <small>追加費用0円・APIキー不要。通信環境があれば<strong>事前保存なしでもそのまま自動で高音質再生</strong>されます。</small>
           <small style="opacity: 0.9; display:block; margin-top:4px;">※ iPhoneで音が出ない場合: 本体のマナーモード（消音スイッチ）をOFFにしてください。</small>
         </div>
         <div class="bulk-download-section">
           <div>
             <span style="font-weight:600; font-size:0.84rem; display:flex; align-items:center; gap:4px;"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-download"></use></svg> オフライン用の音声一括保存（任意）</span>
-            <small style="color:var(--muted); font-size:0.75rem; display:block; margin-top:2px;">※ 通常利用時は保存不要です。地下鉄や機内など圏外環境でも音声を途切れず使いたい場合のみ保存してください（約18MB）。</small>
+            <small style="color:var(--muted); font-size:0.75rem; display:block; margin-top:2px;">※ 通常利用時は保存不要です。地下鉄や機内など圏外環境でも音声を途切れず使いたい場合のみ保存してください（約23MB）。</small>
           </div>
-          <button type="button" class="btn small primary-ghost" id="bulk-download-btn" style="width:100%; margin-top:8px; text-align:center;">オフライン用に一括保存 (18MB)</button>
+          <button type="button" class="btn small primary-ghost" id="bulk-download-btn" style="width:100%; margin-top:8px; text-align:center;">オフライン用に一括保存 (約23MB)</button>
           <div id="bulk-download-box" hidden style="margin-top: 8px;">
             <progress id="bulk-download-progress" max="100" value="0" style="margin: 4px 0; height: 6px; width:100%;"></progress>
             <div id="bulk-download-status" style="font-size: 0.76rem; color: var(--accent); font-weight:600;">準備中...</div>
@@ -973,77 +973,6 @@
         <label class="check">
           <input type="checkbox" name="autoSpeak"> 答えを表示したら自動で読み上げる
         </label>
-        <label class="field field-select">
-          <span>音声エンジン</span>
-          <select name="ttsEngine" id="tts-engine-select">
-            <option value="bundled" selected>✨ 同梱ネイティブ音声（Brian & Nanami・0円・無制限）</option>
-            <option value="gemini">✨ Gemini 3.8 TTS（Google AI・多国籍アクセント対応・要APIキー）</option>
-            <option value="browser">ブラウザ標準音声（Web Speech API）</option>
-          </select>
-        </label>
-
-        <div id="gemini-subfields" class="gemini-subfields">
-          <label class="field-stacked">
-            <span>Gemini APIキー</span>
-            <div class="input-with-action">
-              <input type="password" name="geminiApiKey" id="gemini-api-key" placeholder="AIzaSy..." autocomplete="off">
-              <button type="button" class="btn small ghost" id="toggle-key-visibility">表示</button>
-            </div>
-            <small class="field-hint">Google AI Studioで取得したキー。端末のブラウザ内にのみ保存されます。</small>
-          </label>
-          <label class="field field-select">
-            <span>モデル</span>
-            <select name="geminiModel">
-              <option value="gemini-3.8-flash-tts">Gemini 3.8 Flash TTS（高音質）</option>
-              <option value="gemini-3.8-flash-lite-tts">Gemini 3.8 Flash-Lite TTS（高速）</option>
-            </select>
-          </label>
-          <label class="field field-select">
-            <span>ボイス</span>
-            <select name="geminiVoice">
-              <option value="Kore">Kore（自然な女性）</option>
-              <option value="Puck">Puck（自然な男性）</option>
-              <option value="Aoede">Aoede（明るい女性）</option>
-              <option value="Fenrir">Fenrir（落ち着いた男性）</option>
-              <option value="Charon">Charon（深みのある男性）</option>
-            </select>
-          </label>
-          <label class="field field-select">
-            <span>英語アクセント</span>
-            <select name="geminiAccent" id="gemini-accent">
-              <option value="us">🇺🇸 アメリカ英語 (US)</option>
-              <option value="uk">🇬🇧 イギリス英語 (UK / RP)</option>
-              <option value="in">🇮🇳 インド英語 (India / Business)</option>
-              <option value="au">🇦🇺 オーストラリア英語 (Aussie)</option>
-              <option value="global">🌏 グローバル実戦ミックス (米・英・印・豪)</option>
-            </select>
-          </label>
-          <div class="test-row" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <button type="button" class="btn small" id="test-tts-btn"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-speaker"></use></svg> 英語をテスト</button>
-            <button type="button" class="btn small" id="test-tts-ja-btn">🇯🇵 日本語をテスト</button>
-            <span id="test-tts-status" class="status-msg"></span>
-          </div>
-          <div class="cache-row" style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
-            <span id="cache-count">キャッシュ: 0件</span>
-            <button type="button" class="btn small ghost" id="clear-cache-btn">消去</button>
-          </div>
-          <div class="batch-cache-box" style="margin-top: 12px; padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px dashed var(--accent); width:100%; box-sizing:border-box;">
-            <div style="font-size: .84rem; font-weight: 700; display:flex; align-items:center; gap:4px; margin-bottom:8px;">
-              <svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-bolt"></use></svg> Gemini一括キャッシュ
-            </div>
-            <div style="margin-bottom:8px; width:100%;">
-              <span style="font-size: .78rem; color: var(--muted); display:block; margin-bottom:4px;">生成範囲:</span>
-              <select id="batch-cache-scope" style="font-size: .8rem; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--fg); width: 100%; box-sizing: border-box; text-overflow:ellipsis;">
-                <option value="all">全357問（口語編＋GRIT編 / 計714ファイル）</option>
-                <option value="conv">口語編のみ（267問 / 計534ファイル）</option>
-                <option value="grit">GRIT編のみ（90問 / 計180ファイル）</option>
-              </select>
-            </div>
-            <button type="button" class="btn small primary" id="batch-cache-btn" style="width:100%; box-sizing:border-box; text-align:center;">全357問 一括生成を開始</button>
-            <p style="font-size: .74rem; color: var(--muted); margin: 6px 0 0; word-break: break-all;">※従量課金APIキーで選択範囲の音声を自動生成・端末保存（所要時間は1問あたり数秒）。生成中は画面スリープを防止します。</p>
-            <div id="batch-cache-progress" hidden style="margin-top: 8px; font-size: .8rem; color: var(--accent); font-weight:600;"></div>
-          </div>
-        </div>
 
         <div class="speech-rate-control" style="margin-top: 14px; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; width:100%; box-sizing:border-box;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px; width:100%; box-sizing:border-box;">
@@ -1070,9 +999,86 @@
             </button>
           </div>
           <small style="color:var(--muted); font-size:0.75rem; display:block; margin-top:8px; line-height:1.4; word-break:break-all;">
-            ※Gemini音声・同梱音声・ブラウザ標準音声のすべてに即座に反映されます（音程は自動補正されピッチが狂うことはありません）。
+            ※全モード（練習・耳トレ・ラリー）に即座に反映されます（音程は自動補正されピッチが狂うことはありません）。
           </small>
         </div>
+
+        <details class="dev-audio-details" style="margin-top: 14px; padding: 10px 12px; border-radius: 10px; border: 1px dashed var(--border); font-size: 0.82rem; background: var(--bg);">
+          <summary style="cursor: pointer; user-select: none; font-weight: 600; color: var(--muted); font-size: 0.82rem;">⚙️ 高度な音声設定（開発者・API変更）</summary>
+          <div style="margin-top: 10px;">
+            <label class="field field-select">
+              <span>音声エンジン</span>
+              <select name="ttsEngine" id="tts-engine-select">
+                <option value="bundled" selected>✨ 同梱Gemini 3.8 TTS音声（0円・推奨）</option>
+                <option value="gemini">✨ Gemini 3.8 TTS（Google AI直接・要APIキー）</option>
+                <option value="browser">ブラウザ標準音声（Web Speech API）</option>
+              </select>
+            </label>
+
+            <div id="gemini-subfields" class="gemini-subfields">
+              <label class="field-stacked">
+                <span>Gemini APIキー</span>
+                <div class="input-with-action">
+                  <input type="password" name="geminiApiKey" id="gemini-api-key" placeholder="AIzaSy..." autocomplete="off">
+                  <button type="button" class="btn small ghost" id="toggle-key-visibility">表示</button>
+                </div>
+                <small class="field-hint">Google AI Studioで取得したキー。端末のブラウザ内にのみ保存されます。</small>
+              </label>
+              <label class="field field-select">
+                <span>モデル</span>
+                <select name="geminiModel">
+                  <option value="gemini-3.8-flash-tts">Gemini 3.8 Flash TTS（高音質）</option>
+                  <option value="gemini-3.8-flash-lite-tts">Gemini 3.8 Flash-Lite TTS（高速）</option>
+                </select>
+              </label>
+              <label class="field field-select">
+                <span>ボイス</span>
+                <select name="geminiVoice">
+                  <option value="Kore">Kore（自然な女性）</option>
+                  <option value="Puck">Puck（自然な男性）</option>
+                  <option value="Aoede">Aoede（明るい女性）</option>
+                  <option value="Fenrir">Fenrir（落ち着いた男性）</option>
+                  <option value="Charon">Charon（深みのある男性）</option>
+                </select>
+              </label>
+              <label class="field field-select">
+                <span>英語アクセント</span>
+                <select name="geminiAccent" id="gemini-accent">
+                  <option value="us">🇺🇸 アメリカ英語 (US)</option>
+                  <option value="uk">🇬🇧 イギリス英語 (UK / RP)</option>
+                  <option value="in">🇮🇳 インド英語 (India / Business)</option>
+                  <option value="au">🇦🇺 オーストラリア英語 (Aussie)</option>
+                  <option value="global">🌏 グローバル実戦ミックス (米・英・印・豪)</option>
+                </select>
+              </label>
+              <div class="test-row" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button type="button" class="btn small" id="test-tts-btn"><svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-speaker"></use></svg> 英語をテスト</button>
+                <button type="button" class="btn small" id="test-tts-ja-btn">🇯🇵 日本語をテスト</button>
+                <span id="test-tts-status" class="status-msg"></span>
+              </div>
+              <div class="cache-row" style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
+                <span id="cache-count">キャッシュ: 0件</span>
+                <button type="button" class="btn small ghost" id="clear-cache-btn">消去</button>
+              </div>
+              <div class="batch-cache-box" style="margin-top: 12px; padding: 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px dashed var(--accent); width:100%; box-sizing:border-box;">
+                <div style="font-size: .84rem; font-weight: 700; display:flex; align-items:center; gap:4px; margin-bottom:8px;">
+                  <svg class="ui-icon icon-sm" aria-hidden="true"><use href="#icon-bolt"></use></svg> Gemini一括キャッシュ
+                </div>
+                <div style="margin-bottom:8px; width:100%;">
+                  <span style="font-size: .78rem; color: var(--muted); display:block; margin-bottom:4px;">生成範囲:</span>
+                  <select id="batch-cache-scope" style="font-size: .8rem; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); color: var(--fg); width: 100%; box-sizing: border-box; text-overflow:ellipsis;">
+                    <option value="all">全357問（口語編＋GRIT編 / 計714ファイル）</option>
+                    <option value="conv">口語編のみ（267問 / 計534ファイル）</option>
+                    <option value="grit">GRIT編のみ（90問 / 計180ファイル）</option>
+                  </select>
+                </div>
+                <button type="button" class="btn small primary" id="batch-cache-btn" style="width:100%; box-sizing:border-box; text-align:center;">全357問 一括生成を開始</button>
+                <p style="font-size: .74rem; color: var(--muted); margin: 6px 0 0; word-break: break-all;">※従量課金APIキーで選択範囲の音声を自動生成・端末保存（所要時間は1問あたり数秒）。生成中は画面スリープを防止します。</p>
+                <div id="batch-cache-progress" hidden style="margin-top: 8px; font-size: .8rem; color: var(--accent); font-weight:600;"></div>
+              </div>
+            </div>
+          </div>
+        </details>
       </fieldset>
 
       <div class="sync-section" style="margin: 16px 0; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px;">
@@ -1412,8 +1418,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=72"></script>
-  <script src="app.js?v=72"></script>
+  <script src="data.js?v=73"></script>
+  <script src="app.js?v=73"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
