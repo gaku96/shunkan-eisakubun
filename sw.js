@@ -1,10 +1,10 @@
-const CACHE_NAME = "shunkan-eisakubun-v70";
+const CACHE_NAME = "shunkan-eisakubun-v71";
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=70",
-  "./app.js?v=70",
-  "./data.js?v=70",
+  "./style.css?v=71",
+  "./app.js?v=71",
+  "./data.js?v=71",
   "./manifest.json",
   "./ogp.png",
   "./icon.png",
@@ -62,25 +62,26 @@ self.addEventListener("fetch", (e) => {
           const match = (await cache.match(e.request, { ignoreSearch: true })) || (await cache.match(e.request.url));
 
           if (!match) {
-            try {
-              const networkRes = await fetch(e.request);
-              if (networkRes && networkRes.ok && networkRes.status === 200) {
-                cache.put(e.request.url, networkRes.clone()).catch(() => {});
-              }
-              return networkRes;
-            } catch (err) {
-              return new Response("", { status: 404, statusText: "Not Found" });
-            }
+            // Not in cache: let the native network handle it cleanly with server 206 support
+            return fetch(e.request);
           }
 
           const rangeHeader = e.request.headers.get("range");
+          const arrayBuffer = await match.arrayBuffer();
+          const byteLength = arrayBuffer.byteLength;
+
           if (!rangeHeader) {
-            return match;
+            return new Response(arrayBuffer, {
+              status: 200,
+              headers: {
+                "Content-Type": "audio/mpeg",
+                "Content-Length": String(byteLength),
+                "Accept-Ranges": "bytes"
+              }
+            });
           }
 
           // Handle iOS Safari Range Request for cached Audio (AVPlayer requires 206 Partial Content)
-          const arrayBuffer = await match.arrayBuffer();
-          const byteLength = arrayBuffer.byteLength;
           const rangeMatch = rangeHeader.match(/bytes=(\d+)-(\d*)/);
           if (rangeMatch) {
             let start = parseInt(rangeMatch[1], 10) || 0;
@@ -98,16 +99,24 @@ self.addEventListener("fetch", (e) => {
               status: 206,
               statusText: "Partial Content",
               headers: {
-                "Content-Type": match.headers.get("Content-Type") || "audio/mp3",
+                "Content-Type": "audio/mpeg",
                 "Content-Range": `bytes ${start}-${end}/${byteLength}`,
                 "Content-Length": String(chunk.byteLength),
                 "Accept-Ranges": "bytes"
               }
             });
           }
-          return match;
+
+          return new Response(arrayBuffer, {
+            status: 200,
+            headers: {
+              "Content-Type": "audio/mpeg",
+              "Content-Length": String(byteLength),
+              "Accept-Ranges": "bytes"
+            }
+          });
         } catch (err) {
-          return fetch(e.request).catch(() => new Response("", { status: 404, statusText: "Not Found" }));
+          return fetch(e.request);
         }
       })()
     );

@@ -2130,20 +2130,34 @@
 
   let activeComposedUrl = null;
 
+  let activeWebAudioSource = null;
+
   function stopAudio() {
+    if (activeWebAudioSource) {
+      try { activeWebAudioSource.stop(); } catch (e) {}
+      activeWebAudioSource = null;
+    }
     if (currentAudio) {
       try {
         currentAudio.pause();
+        currentAudio.currentTime = 0;
         currentAudio.ontimeupdate = null;
         currentAudio.onended = null;
         currentAudio.onerror = null;
         currentAudio.onplay = null;
-        currentAudio.removeAttribute("src");
-        currentAudio.load();
+        if (currentAudio.src && currentAudio.src.startsWith("blob:")) {
+          currentAudio.src = "";
+        }
       } catch (e) {}
       currentAudio = null;
     }
-    activeComposedUrl = null;
+    if (activeComposedUrl) {
+      const urlToRevoke = activeComposedUrl;
+      activeComposedUrl = null;
+      setTimeout(() => {
+        try { URL.revokeObjectURL(urlToRevoke); } catch (e) {}
+      }, 1000);
+    }
     if ("speechSynthesis" in window) speechSynthesis.cancel();
   }
 
@@ -2381,12 +2395,48 @@
     });
   }
 
-  function playAudioUrlPromise(url, rate = null) {
-    return new Promise((resolve) => {
+  function playViaWebAudio(url, rate = 1) {
+    return new Promise(async (resolve) => {
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return resolve(false);
+        if (ctx.state === "suspended") {
+          await ctx.resume().catch(() => {});
+        }
+        const res = await fetch(url);
+        if (!res.ok) return resolve(false);
+        const ab = await res.arrayBuffer();
+        const audioBuffer = await decodeAudioDataSafe(ctx, ab);
+        if (!audioBuffer) return resolve(false);
+
+        if (activeWebAudioSource) {
+          try { activeWebAudioSource.stop(); } catch (e) {}
+          activeWebAudioSource = null;
+        }
+
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.playbackRate.value = rate;
+        source.connect(ctx.destination);
+        activeWebAudioSource = source;
+        source.onended = () => {
+          if (activeWebAudioSource === source) activeWebAudioSource = null;
+          resolve(true);
+        };
+        source.start(0);
+      } catch (err) {
+        console.warn("playViaWebAudio failed:", err);
+        resolve(false);
+      }
+    });
+  }
+
+  async function playAudioUrlPromise(url, rate = null) {
+    const speed = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
+    const htmlOk = await new Promise((resolve) => {
       stopAudio();
       const audio = getSharedAudio();
       currentAudio = audio;
-      const speed = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
 
       let finished = false;
       const cleanup = () => {
@@ -2404,7 +2454,6 @@
 
       audio.onended = () => done(true);
       audio.onerror = (e) => {
-        console.warn("playAudioUrlPromise error:", url, e);
         done(false);
       };
 
@@ -2418,11 +2467,15 @@
         p.then(() => {
           audio.playbackRate = speed;
         }).catch((err) => {
-          console.warn("playAudioUrlPromise play() rejected:", url, err);
           done(false);
         });
       }
     });
+
+    if (htmlOk) return true;
+
+    // Web Audio API fallback (bypasses iOS silent switch & gesture limitations)
+    return await playViaWebAudio(url, speed);
   }
 
   function playBlobPromise(blob, rate = null) {
@@ -2612,12 +2665,14 @@
   document.addEventListener("touchstart", unlockAudio, { passive: true });
   document.addEventListener("click", unlockAudio);
 
-  function tryPlayLocalAudio(cardId, rate = null) {
-    return new Promise((resolve) => {
+  async function tryPlayLocalAudio(cardId, rate = null) {
+    const speed = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
+    const url = `audio/${cardId}.mp3`;
+
+    const htmlOk = await new Promise((resolve) => {
       stopAudio();
       const audio = getSharedAudio();
       currentAudio = audio;
-      const speed = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
 
       let done = false;
       const cleanup = () => {
@@ -2639,7 +2694,7 @@
       audio.onerror = () => finish(false);
 
       audio.loop = false;
-      audio.src = `audio/${cardId}.mp3`;
+      audio.src = url;
       audio.playbackRate = speed;
       audio.defaultPlaybackRate = speed;
 
@@ -2651,6 +2706,11 @@
         }).catch(() => finish(false));
       }
     });
+
+    if (htmlOk) return true;
+
+    // Web Audio API fallback (bypasses iOS silent switch & gesture limitations)
+    return await playViaWebAudio(url, speed);
   }
 
   let lastTtsError = "";
