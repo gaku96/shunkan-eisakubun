@@ -2121,6 +2121,9 @@
       sharedAudio.setAttribute("playsinline", "");
       sharedAudio.setAttribute("webkit-playsinline", "");
     }
+    sharedAudio.volume = 1.0;
+    sharedAudio.muted = false;
+    sharedAudio.loop = false;
     return sharedAudio;
   }
 
@@ -2172,6 +2175,8 @@
       const speed = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
 
       audio.loop = false;
+      audio.volume = 1.0;
+      audio.muted = false;
       audio.src = url;
       audio.playbackRate = speed;
       audio.defaultPlaybackRate = speed;
@@ -2458,6 +2463,8 @@
       };
 
       audio.loop = false;
+      audio.volume = 1.0;
+      audio.muted = false;
       audio.src = url;
       audio.playbackRate = speed;
       audio.defaultPlaybackRate = speed;
@@ -2511,6 +2518,8 @@
         };
 
         audio.loop = false;
+        audio.volume = 1.0;
+        audio.muted = false;
         audio.src = url;
         audio.playbackRate = speed;
         audio.defaultPlaybackRate = speed;
@@ -2694,6 +2703,8 @@
       audio.onerror = () => finish(false);
 
       audio.loop = false;
+      audio.volume = 1.0;
+      audio.muted = false;
       audio.src = url;
       audio.playbackRate = speed;
       audio.defaultPlaybackRate = speed;
@@ -4620,22 +4631,23 @@ ${targetPatterns}
     currentSleepReject: null,
   };
 
+  let silenceKeeperAudio = null;
   function playSilenceKeeper() {
     if (!listening.playing) return;
     try {
-      const audio = getSharedAudio();
-      audio.loop = true;
-      audio.src = "audio/silence.mp3";
-      audio.volume = 0.001;
-      audio.playbackRate = 1.0;
-      audio.play().catch(() => {});
+      if (!silenceKeeperAudio) {
+        silenceKeeperAudio = new Audio("audio/silence.mp3");
+        silenceKeeperAudio.loop = true;
+        silenceKeeperAudio.volume = 0.001;
+      }
+      silenceKeeperAudio.play().catch(() => {});
     } catch (e) {}
   }
   function stopSilenceKeeper() {
-    if (sharedAudio && sharedAudio.src && sharedAudio.src.includes("silence.mp3")) {
+    if (silenceKeeperAudio) {
       try {
-        sharedAudio.pause();
-        sharedAudio.currentTime = 0;
+        silenceKeeperAudio.pause();
+        silenceKeeperAudio.currentTime = 0;
       } catch (e) {}
     }
   }
@@ -5137,6 +5149,8 @@ ${targetPatterns}
 
     audio.loop = false;
     audio.src = composed.url;
+    audio.volume = 1.0;
+    audio.muted = false;
     const speed = Number(listening.speed) || 1.15;
     audio.playbackRate = speed;
     audio.defaultPlaybackRate = speed;
@@ -5220,7 +5234,8 @@ ${targetPatterns}
       p.then(() => {
         audio.playbackRate = speed;
       }).catch((err) => {
-        console.warn("Composed audio play() rejected:", err);
+        console.warn("Composed audio play() rejected, fallback to sequential:", err);
+        playSingleCardSequential(card, listening.runId).then(onFinished).catch(onFinished);
       });
     }
   }
