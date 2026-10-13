@@ -67,7 +67,7 @@ def call_gemini_tts_with_retry(text: str, api_key: str, model: str = "gemini-3.8
         )
 
         try:
-            with urllib.request.urlopen(req, timeout=35) as response:
+            with urllib.request.urlopen(req, timeout=60) as response:
                 res_data = json.loads(response.read().decode("utf-8"))
 
             candidate = res_data.get("candidates", [{}])[0]
@@ -91,7 +91,7 @@ def call_gemini_tts_with_retry(text: str, api_key: str, model: str = "gemini-3.8
             except Exception:
                 detail = error_body
 
-            if e.code in (429, 500, 503):
+            if e.code in (429, 500, 502, 503, 504):
                 wait_sec = attempt * 12  # 12s, 24s, 36s, 48s, 60s
                 print(f"\n  ⚠️ 一時的リミット/サーバー待機 (HTTP {e.code}: {detail[:80]}) - {wait_sec}秒待機して再試行 ({attempt}/{max_retries})...")
                 time.sleep(wait_sec)
@@ -99,9 +99,9 @@ def call_gemini_tts_with_retry(text: str, api_key: str, model: str = "gemini-3.8
             else:
                 raise RuntimeError(f"HTTP {e.code} ({e.reason}): {detail}")
 
-        except (urllib.error.URLError, TimeoutError) as e:
-            wait_sec = attempt * 8
-            print(f"\n  ⚠️ ネットワーク接続再試行 - {wait_sec}秒待機 ({attempt}/{max_retries})...")
+        except Exception as e:
+            wait_sec = attempt * 10
+            print(f"\n  ⚠️ ネットワーク/タイムアウト待機 ({e}) - {wait_sec}秒待機して再試行 ({attempt}/{max_retries})...")
             time.sleep(wait_sec)
             continue
 
@@ -113,7 +113,7 @@ def main():
     parser.add_argument("--model", default="gemini-3.8-flash-tts", help="Gemini model")
     parser.add_argument("--voice", default="Kore", help="Voice name (Kore)")
     parser.add_argument("--limit", type=int, default=None, help="Max cards to process (default: all remaining cards)")
-    parser.add_argument("--delay", type=float, default=2.0, help="Delay between requests in seconds (default: 2.0s = ~30 RPM safe pace)")
+    parser.add_argument("--delay", type=float, default=3.5, help="Delay between requests in seconds (default: 3.5s = ~15 RPM safe pace)")
     args = parser.parse_args()
 
     api_key = args.api_key or os.environ.get("GEMINI_API_KEY")
