@@ -327,10 +327,8 @@
       const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (raw && typeof raw === "object") {
         const settings = { ...DEFAULT_SETTINGS, ...raw.settings };
-        // 全問の高品質音声をローカル同梱したため、ttsEngineは必ず"bundled"（同梱Gemini 3.8）を標準とする
-        // 過去のテストで localStorage に保存された "gemini" 設定によるクォータ超過エラーを自動解消
-        if (settings.ttsEngine === "gemini") {
-          settings.ttsEngine = "bundled";
+        if (raw.settings?.ttsEngine) {
+          settings.ttsEngine = raw.settings.ttsEngine;
         }
         if (raw.settings && (raw.settings.speechRate === 1 || raw.settings.speechRate === "1" || !raw.settings.speechRate)) {
           settings.speechRate = 1.15;
@@ -2326,12 +2324,6 @@
     const cardId = card ? card.id : null;
     const audioKey = card ? (card.audioId || getCustomAudioId(card) || card.id) : null;
     const isBundled = (audioKey && !audioKey.startsWith("c_")) || (card && card.audioId);
-    // 0. 同梱の高音質Gemini音声（全357問事前生成済み・最優先）
-    if (s.ttsEngine !== "browser" && isBundled) {
-      if (badge) badge.textContent = "✨ 日本語音声（同梱・Gemini 3.8）";
-      const ok = await playAudioUrlPromise(`audio/${audioKey}_ja.mp3`, rate);
-      if (ok) return true;
-    }
 
     // 1. Gemini TTS（IndexedDBキャッシュを最優先再生。APIキー未入力でもオフラインでも再生可能）
     if (s.ttsEngine !== "browser") {
@@ -2572,14 +2564,6 @@
     const audioKey = card.audioId || getCustomAudioId(card) || card.id;
     const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
 
-    // 0. 同梱の高音質Gemini音声（全357問事前生成済み・最優先）
-    if (s.ttsEngine !== "browser" && isBundled) {
-      if (badge && !badge.textContent.startsWith("⚠️")) {
-        badge.textContent = "✨ 英語 (同梱・Gemini 3.8)";
-      }
-      const ok = await playAudioUrlPromise(`audio/${audioKey}.mp3`, rate);
-      if (ok) return;
-    }
 
     // 1. Gemini 音声（IndexedDBキャッシュまたはAPI生成を最優先再生）
     if (s.ttsEngine !== "browser") {
@@ -2754,25 +2738,10 @@
       return;
     }
 
-    // 2. 同梱の高音質Gemini音声（全357問事前生成済み・最優先）
-    const audioKey = card.audioId || getCustomAudioId(card) || card.id;
-    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
-
-    if (isBundled) {
-      const playedLocal = await tryPlayLocalAudio(audioKey, rate);
-      if (playedLocal) {
-        badge.textContent = "✨ 英語音声（同梱・Gemini 3.8）";
-        badge.className = "tts-badge";
-        badge.style.cursor = "default";
-        lastTtsError = "";
-        return;
-      }
-    }
-
     const effectiveAccent = getEffectiveAccent(card, s.geminiAccent || "us");
     const accentInfo = ACCENT_LABELS[effectiveAccent] || ACCENT_LABELS.us;
 
-    // 3. まず IndexedDB に保存された Gemini キャッシュ音声があるか確認（APIキー未入力・オフラインでも再生可能！）
+    // 2. まず IndexedDB に保存された Gemini キャッシュ音声を最優先再生
     const cachedItem = await findCachedAudio(card.id, false, s.geminiModel, s.geminiVoice, effectiveAccent);
     if (cachedItem && cachedItem.blob) {
       const parts = cachedItem.key.split("_");
@@ -2786,8 +2755,24 @@
       badge.textContent = `✨ Gemini 3.8 (${voiceLabel}・${actualAccentInfo.flag} ${actualAccentInfo.name})`;
       badge.className = "tts-badge";
       badge.style.cursor = "default";
+      lastTtsError = "";
       const played = await playBlob(cachedItem.blob, rate);
       if (played) return;
+    }
+
+    // 3. 同梱の音声
+    const audioKey = card.audioId || getCustomAudioId(card) || card.id;
+    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
+
+    if (isBundled) {
+      const playedLocal = await tryPlayLocalAudio(audioKey, rate);
+      if (playedLocal) {
+        badge.textContent = "✨ 英語音声（同梱）";
+        badge.className = "tts-badge";
+        badge.style.cursor = "default";
+        lastTtsError = "";
+        return;
+      }
     }
 
     // 3. キャッシュがなく、Gemini APIキーが設定されている場合はリアルタイム生成

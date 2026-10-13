@@ -1,10 +1,10 @@
-const CACHE_NAME = "shunkan-eisakubun-v74";
+const CACHE_NAME = "shunkan-eisakubun-v75";
 const ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=74",
-  "./app.js?v=74",
-  "./data.js?v=74",
+  "./style.css?v=75",
+  "./app.js?v=75",
+  "./data.js?v=75",
   "./manifest.json",
   "./ogp.png",
   "./icon.png",

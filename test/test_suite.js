@@ -58,7 +58,7 @@ async function runDeviceTests(browser, deviceConfig, errors, warnings) {
   });
   page.on('requestfailed', req => {
     // Normal browser cancellation when audio element switches tracks or pauses
-    if (req.url().startsWith('blob:') && req.failure()?.errorText === 'net::ERR_ABORTED') {
+    if ((req.url().startsWith('blob:') || req.url().includes('/audio/')) && req.failure()?.errorText === 'net::ERR_ABORTED') {
       return;
     }
     errors.push(`[${name} Request Failed] ${req.url()} (${req.failure()?.errorText})`);
