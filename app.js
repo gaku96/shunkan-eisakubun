@@ -327,10 +327,9 @@
       const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (raw && typeof raw === "object") {
         const settings = { ...DEFAULT_SETTINGS, ...raw.settings };
-        if (settings.geminiApiKey && settings.ttsEngine === "bundled" && raw.settings?.ttsEngine === "gemini") {
-          settings.ttsEngine = "gemini";
-        }
-        if (!settings.geminiApiKey && settings.ttsEngine === "gemini") {
+        // 全問の高品質音声をローカル同梱したため、ttsEngineは必ず"bundled"（同梱Gemini 3.8）を標準とする
+        // 過去のテストで localStorage に保存された "gemini" 設定によるクォータ超過エラーを自動解消
+        if (settings.ttsEngine === "gemini") {
           settings.ttsEngine = "bundled";
         }
         if (raw.settings && (raw.settings.speechRate === 1 || raw.settings.speechRate === "1" || !raw.settings.speechRate)) {
@@ -2280,6 +2279,9 @@
     if (!card || !card.en) return;
     const s = state.settings;
     if (s.ttsEngine === "browser" || s.ttsEngine === "bundled" || !s.geminiApiKey) return;
+    const audioKey = card.audioId || getCustomAudioId(card) || card.id;
+    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
+    if (isBundled) return; // 全問同梱済みのため事前API通信は不要
 
     const effectiveAccent = getEffectiveAccent(card, s.geminiAccent || "us");
     const cacheKey = `${card.id}_${s.geminiModel}_${s.geminiVoice}_${effectiveAccent}`;
@@ -2323,9 +2325,10 @@
     const badge = $("#listening-ja-source");
     const cardId = card ? card.id : null;
     const audioKey = card ? (card.audioId || getCustomAudioId(card) || card.id) : null;
-    // 0. 同梱音声が明示的に選択されている場合
-    if (s.ttsEngine === "bundled" && audioKey) {
-      if (badge) badge.textContent = "✨ 日本語音声（同梱）";
+    const isBundled = (audioKey && !audioKey.startsWith("c_")) || (card && card.audioId);
+    // 0. 同梱の高音質Gemini音声（全357問事前生成済み・最優先）
+    if (s.ttsEngine !== "browser" && isBundled) {
+      if (badge) badge.textContent = "✨ 日本語音声（同梱・Gemini 3.8）";
       const ok = await playAudioUrlPromise(`audio/${audioKey}_ja.mp3`, rate);
       if (ok) return true;
     }
@@ -2569,10 +2572,10 @@
     const audioKey = card.audioId || getCustomAudioId(card) || card.id;
     const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
 
-    // 0. 同梱音声が明示的に選択されている場合
-    if (s.ttsEngine === "bundled" && isBundled) {
+    // 0. 同梱の高音質Gemini音声（全357問事前生成済み・最優先）
+    if (s.ttsEngine !== "browser" && isBundled) {
       if (badge && !badge.textContent.startsWith("⚠️")) {
-        badge.textContent = "✨ 英語 (同梱音声)";
+        badge.textContent = "✨ 英語 (同梱・Gemini 3.8)";
       }
       const ok = await playAudioUrlPromise(`audio/${audioKey}.mp3`, rate);
       if (ok) return;
@@ -2751,16 +2754,17 @@
       return;
     }
 
-    // 2. 同梱音声が明示的に選択されている場合
+    // 2. 同梱の高音質Gemini音声（全357問事前生成済み・最優先）
     const audioKey = card.audioId || getCustomAudioId(card) || card.id;
     const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
 
-    if (s.ttsEngine === "bundled" && isBundled) {
+    if (isBundled) {
       const playedLocal = await tryPlayLocalAudio(audioKey, rate);
       if (playedLocal) {
-        badge.textContent = "✨ 英語音声（同梱）";
+        badge.textContent = "✨ 英語音声（同梱・Gemini 3.8）";
         badge.className = "tts-badge";
         badge.style.cursor = "default";
+        lastTtsError = "";
         return;
       }
     }
@@ -4952,7 +4956,7 @@ ${targetPatterns}
     const audioKey = card.audioId || getCustomAudioId(card) || card.id;
 
     // 1. 同梱音声優先
-    if (s.ttsEngine === "bundled" && audioKey) {
+    if (s.ttsEngine !== "browser" && audioKey && !audioKey.startsWith("c_")) {
       try {
         const res = await fetch(`audio/${audioKey}_ja.mp3`);
         if (res.ok) {
@@ -5011,7 +5015,7 @@ ${targetPatterns}
     const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
 
     // 1. 同梱音声優先
-    if (s.ttsEngine === "bundled" && isBundled) {
+    if (s.ttsEngine !== "browser" && isBundled) {
       try {
         const res = await fetch(`audio/${audioKey}.mp3`);
         if (res.ok) {
