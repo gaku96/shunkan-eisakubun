@@ -34,7 +34,7 @@ def pcm_to_wav(pcm_data: bytes, sample_rate: int = 24000, num_channels: int = 1,
     )
     return bytes(header) + pcm_data
 
-def call_gemini_tts_with_retry(text: str, api_key: str, model: str = "gemini-3.8-flash-tts", voice: str = "Kore", lang: str = "en", max_retries: int = 5) -> bytes:
+def call_gemini_tts_with_retry(text: str, api_key: str, model: str = "gemini-3.8-flash-tts", voice: str = "Kore", lang: str = "en", max_retries: int = 10) -> bytes:
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     style_prompt = (
         "natural, clear, polite and warm Japanese narration by a native speaker with authentic standard Tokyo intonation"
@@ -92,16 +92,19 @@ def call_gemini_tts_with_retry(text: str, api_key: str, model: str = "gemini-3.8
                 detail = error_body
 
             if e.code in (429, 500, 502, 503, 504):
-                wait_sec = attempt * 12  # 12s, 24s, 36s, 48s, 60s
-                print(f"\n  ⚠️ 一時的リミット/サーバー待機 (HTTP {e.code}: {detail[:80]}) - {wait_sec}秒待機して再試行 ({attempt}/{max_retries})...")
+                # Google Gemini Paid Tier enforces strict RPM (Requests Per Minute) rolling windows (usually 10-15 RPM for TTS).
+                # Wait sufficiently (30s, 60s, 90s...) to ensure the rolling minute window resets completely.
+                wait_sec = min(120, attempt * 30)
+                print(f"\n  ⚠️ レート制限(RPM)待機中 (HTTP {e.code}: {detail[:80]})")
+                print(f"     -> 1分間のリクエスト枠(RPM)のリセットを待つため、{wait_sec}秒待機して自動再開します ({attempt}/{max_retries})...")
                 time.sleep(wait_sec)
                 continue
             else:
                 raise RuntimeError(f"HTTP {e.code} ({e.reason}): {detail}")
 
         except Exception as e:
-            wait_sec = attempt * 10
-            print(f"\n  ⚠️ ネットワーク/タイムアウト待機 ({e}) - {wait_sec}秒待機して再試行 ({attempt}/{max_retries})...")
+            wait_sec = min(60, attempt * 15)
+            print(f"\n  ⚠️ ネットワーク/タイムアウト待機 ({e}) - {wait_sec}秒待機して再開 ({attempt}/{max_retries})...")
             time.sleep(wait_sec)
             continue
 
@@ -113,7 +116,7 @@ def main():
     parser.add_argument("--model", default="gemini-3.8-flash-tts", help="Gemini model")
     parser.add_argument("--voice", default="Kore", help="Voice name (Kore)")
     parser.add_argument("--limit", type=int, default=None, help="Max cards to process (default: all remaining cards)")
-    parser.add_argument("--delay", type=float, default=3.5, help="Delay between requests in seconds (default: 3.5s = ~15 RPM safe pace)")
+    parser.add_argument("--delay", type=float, default=7.0, help="Delay between requests in seconds (default: 7.0s = ~8.5 RPM, strictly under the 10 RPM limit)")
     args = parser.parse_args()
 
     api_key = args.api_key or os.environ.get("GEMINI_API_KEY")
@@ -157,7 +160,7 @@ console.log(JSON.stringify(cards));
     ]
     all_cards = {c["id"]: c for c in json.loads(subprocess.check_output(cmd, encoding="utf-8"))}
 
-    to_process = target_ids[:args.limit] if args.limit else target_ids
+    to_process = list(target_ids)[:args.limit] if args.limit else list(target_ids)
 
     print("=" * 65)
     print("💎 Gemini 3.8 Flash TTS 音声置換ツール（有料枠・安定バースト制御）")
@@ -165,7 +168,7 @@ console.log(JSON.stringify(cards));
     print(f"・残り一時カード総数 : {len(target_ids)} 件")
     print(f"・今回処理予定件数   : {len(to_process)} 件 (英語+日本語 = {len(to_process)*2} リクエスト)")
     print(f"・リクエスト間隔     : {args.delay} 秒 (瞬間リミット429完全回避)")
-    print(f"・自動リトライ機能   : 有効 (最大5回バックオフ待機)")
+    print(f"・自動リトライ機能   : 有効 (最大10回バックオフ待機)")
     print(f"・進捗保存           : 1件ごとに即時ファイル更新（中断・再開可能）")
     print("=" * 65)
 
