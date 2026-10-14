@@ -26,7 +26,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   <title>瞬間パターントレーニング | 実戦英会話・口語70構文</title>
-  <link rel="stylesheet" href="style.css?v=76">
+  <link rel="stylesheet" href="style.css?v=77">
 </head>
 <body>
   <svg id="app-svg-icons" style="display:none;" xmlns="http://www.w3.org/2000/svg">
@@ -1009,9 +1009,7 @@
             <label class="field field-select">
               <span>音声エンジン</span>
               <select name="ttsEngine" id="tts-engine-select">
-                <option value="bundled" selected>✨ 同梱Gemini 3.8 TTS音声（0円・推奨）</option>
-                <option value="gemini">✨ Gemini 3.8 TTS（Google AI直接・要APIキー）</option>
-                <option value="browser">ブラウザ標準音声（Web Speech API）</option>
+                <option value="bundled" selected>✨ Gemini 3.8 Flash TTS（高音質ネイティブ音声・推奨）</option>
               </select>
             </label>
 
@@ -1418,8 +1416,8 @@
   <!-- 紙吹雪用 Canvas -->
   <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
-  <script src="data.js?v=76"></script>
-  <script src="app.js?v=76"></script>
+  <script src="data.js?v=77"></script>
+  <script src="app.js?v=77"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

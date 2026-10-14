@@ -328,7 +328,7 @@
       if (raw && typeof raw === "object") {
         const settings = { ...DEFAULT_SETTINGS, ...raw.settings };
         if (raw.settings?.ttsEngine) {
-          settings.ttsEngine = raw.settings.ttsEngine;
+          settings.ttsEngine = raw.settings.ttsEngine === "browser" ? "bundled" : raw.settings.ttsEngine;
         }
         if (raw.settings && (raw.settings.speechRate === 1 || raw.settings.speechRate === "1" || !raw.settings.speechRate)) {
           settings.speechRate = 1.15;
@@ -2360,16 +2360,15 @@
       }
     }
 
-    // 2. 同梱のローカル音声フォールバック
+    // 2. 同梱のGemini 3.8 Flash TTS音声
     if (audioKey) {
-      if (badge) badge.textContent = "✨ 日本語音声（同梱）";
+      if (badge) badge.textContent = "✨ Gemini 3.8 日本語";
       const ok = await playAudioUrlPromise(`audio/${audioKey}_ja.mp3`, rate);
       if (ok) return true;
     }
 
-    // 3. ブラウザ音声フォールバック
-    if (badge) badge.textContent = "ブラウザ音声";
-    return speakJapaneseBrowserPromise(text, rate);
+    // 3. ブラウザ標準フォールバックは無効化（Gemini 3.8 Flash TTSのみ使用）
+    return false;
   }
 
   function speakJapaneseBrowserPromise(text, rate = 1.0) {
@@ -2603,18 +2602,17 @@
       }
     }
 
-    // 2. 同梱のローカル音声フォールバック
+    // 2. 同梱のGemini 3.8 Flash TTS音声
     if (isBundled) {
       if (badge && !badge.textContent.startsWith("⚠️")) {
-        badge.textContent = "✨ 英語 (同梱音声)";
+        badge.textContent = "✨ 英語 (Gemini 3.8)";
       }
       const ok = await playAudioUrlPromise(`audio/${audioKey}.mp3`, rate);
       if (ok) return;
     }
 
-    // 3. ブラウザ標準音声フォールバック
-    if (badge && !badge.textContent.startsWith("⚠️")) badge.textContent = "🔊 英語 (ブラウザ音声)";
-    await speakBrowserPromise(card.en, rate);
+    // 3. ブラウザ標準フォールバックは無効化（Gemini 3.8 Flash TTSのみ使用）
+    return;
   }
 
   let sharedAudioCtx = null;
@@ -2730,14 +2728,6 @@
     const badge = $("#tts-source");
     if (!card) return;
 
-    // 1. ブラウザ標準設定の場合
-    if (s.ttsEngine === "browser") {
-      badge.textContent = "ブラウザ標準";
-      badge.className = "tts-badge fallback";
-      speakBrowser(card.en, rate);
-      return;
-    }
-
     const effectiveAccent = getEffectiveAccent(card, s.geminiAccent || "us");
     const accentInfo = ACCENT_LABELS[effectiveAccent] || ACCENT_LABELS.us;
 
@@ -2828,17 +2818,14 @@
       }
     }
 
-    // 5. ブラウザ標準音声フォールバック
+    // 5. ブラウザ標準音声フォールバックは無効化（Gemini 3.8 Flash TTSのみ使用）
     if (geminiFailReason) {
-      badge.textContent = `⚠️ ${geminiFailReason} → ブラウザ音声`;
+      badge.textContent = `⚠️ ${geminiFailReason}`;
       badge.className = "tts-badge fallback";
       badge.title = lastTtsError || geminiFailReason;
       badge.style.cursor = "pointer";
-    } else {
-      badge.textContent = "ブラウザ標準";
-      badge.className = "tts-badge fallback";
     }
-    speakBrowser(card.en, rate);
+    return;
   }
 
   // ---------- 実績・バッジシステム ----------

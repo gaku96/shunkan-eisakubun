@@ -193,15 +193,18 @@ def main():
     else:
         targets = all_cards
 
-    # 未作成判定
+    # 未作成・旧Edge TTS判定（2026-10-12以前の古い初期音声を確実に検知）
+    import datetime
+    GEMINI_CUTOFF = datetime.datetime(2026, 10, 12, 0, 0, 0).timestamp()
+
     pending = []
     for c in targets:
         en_file = os.path.join(audio_dir, f"{c['id']}.mp3")
         ja_file = os.path.join(audio_dir, f"{c['id']}_ja.mp3")
-        en_exists = os.path.exists(en_file) and os.path.getsize(en_file) > 1000
-        ja_exists = os.path.exists(ja_file) and os.path.getsize(ja_file) > 1000
-        if args.force or not (en_exists and ja_exists):
-            pending.append((c, not en_exists or args.force, not ja_exists or args.force))
+        en_is_gemini = os.path.exists(en_file) and os.path.getsize(en_file) > 1000 and os.path.getmtime(en_file) >= GEMINI_CUTOFF
+        ja_is_gemini = os.path.exists(ja_file) and os.path.getsize(ja_file) > 1000 and os.path.getmtime(ja_file) >= GEMINI_CUTOFF
+        if args.force or not (en_is_gemini and ja_is_gemini):
+            pending.append((c, not en_is_gemini or args.force, not ja_is_gemini or args.force))
 
     print("=================================================================")
     print("🛡️ Gemini 3.8 Flash TTS 安全音声生成ツール (レートリミット完全保護)")
