@@ -4,15 +4,15 @@
   const STORAGE_KEY = "shunkan-eisakubun-v1";
   const DB_NAME = "shunkan-eisakubun-audio";
   const DB_STORE = "cache";
-  const AUDIO_VER = "v80";
+  const AUDIO_VER = "v81";
 
   // 起動時に古いバージョンの音声キャッシュ(CacheStorage)を自動パージ
-  if ("caches" in window && localStorage.getItem("shunkan_audio_purged_v80") !== "1") {
+  if ("caches" in window && localStorage.getItem("shunkan_audio_purged_v81") !== "1") {
     caches.keys().then((keys) => {
       Promise.all(
         keys.filter((k) => k !== `shunkan-eisakubun-${AUDIO_VER}`).map((k) => caches.delete(k))
       ).then(() => {
-        try { localStorage.setItem("shunkan_audio_purged_v80", "1"); } catch {}
+        try { localStorage.setItem("shunkan_audio_purged_v81", "1"); } catch {}
       });
     }).catch(() => {});
   }
@@ -1709,7 +1709,14 @@
   // 💡 ネイティブニュアンス取得
   function getCardNuance(card) {
     if (!card) return "";
-    if (window.PATTERN_NUANCES && card.pattern && window.PATTERN_NUANCES[card.pattern.id]) {
+    if (window.CARD_NUANCES && card.id && window.CARD_NUANCES[card.id]) {
+      return window.CARD_NUANCES[card.id];
+    }
+    const isGrit = card.course === "grit" || (card.id && String(card.id).startsWith("grit-"));
+    if (isGrit && window.GRIT_PATTERN_NUANCES && card.pattern && window.GRIT_PATTERN_NUANCES[card.pattern.id]) {
+      return window.GRIT_PATTERN_NUANCES[card.pattern.id];
+    }
+    if (!isGrit && window.PATTERN_NUANCES && card.pattern && window.PATTERN_NUANCES[card.pattern.id]) {
       return window.PATTERN_NUANCES[card.pattern.id];
     }
     if (card.pattern && card.pattern.note) {
@@ -1755,8 +1762,8 @@
       [/\bis not\b/gi, "isn't"],
       [/\baren't\b/gi, "are not"],
       [/\bare not\b/gi, "aren't"],
-      [/\baround\b/gi, "about"],
-      [/\babout\b/gi, "around"],
+      [/\baround (?=\d|a\b|an\b)/gi, "about "],
+      [/\babout (?=\d|a\b|an\b)/gi, "around "],
       [/\bgonna\b/gi, "going to"],
       [/\bgoing to\b/gi, "gonna"],
       [/\bwanna\b/gi, "want to"],
