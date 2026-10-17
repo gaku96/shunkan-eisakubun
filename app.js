@@ -4,6 +4,7 @@
   const STORAGE_KEY = "shunkan-eisakubun-v1";
   const DB_NAME = "shunkan-eisakubun-audio";
   const DB_STORE = "cache";
+  const AUDIO_VER = "v79";
 
   // 2-Tone Pop UI Vector Icon Helper
   function uiIcon(name, extraClass = "") {
@@ -98,7 +99,14 @@
     if (card.audioId) return card.audioId;
     const prefix = PRESET_PREFIX_MAP[card.theme];
     if (prefix && card.patternId) {
-      return `${prefix}-${card.patternId}`;
+      try {
+        const presetEx = PRESET_EXAMPLES?.[card.theme]?.[card.patternId];
+        if (!presetEx || !card.en || presetEx.en === card.en) {
+          return `${prefix}-${card.patternId}`;
+        }
+      } catch {
+        return `${prefix}-${card.patternId}`;
+      }
     }
     return null;
   }
@@ -2238,7 +2246,13 @@
     const s = state.settings;
     const cacheKey = `rally_partner_${card.id || text.slice(0, 24)}`;
 
-    // 1. IndexedDB キャッシュ音声を優先再生
+    // 1. 同梱のGemini 3.8 Flash TTS音声（audio/rally_partner_rally-*.mp3）
+    if (card.id) {
+      const playedLocal = await tryPlayLocalAudio(`rally_partner_${card.id}`, 1.0);
+      if (playedLocal) return;
+    }
+
+    // 2. IndexedDB キャッシュ音声を再生
     try {
       const cached = await getCachedAudio(cacheKey);
       if (cached) {
@@ -2246,12 +2260,6 @@
         if (played) return;
       }
     } catch (e) {}
-
-    // 2. 同梱のGemini 3.8 Flash TTS音声（audio/rally-*.mp3）
-    if (card.id) {
-      const playedLocal = await tryPlayLocalAudio(card.id, 1.0);
-      if (playedLocal) return;
-    }
 
     // 3. Gemini APIキーがある場合はリアルタイム生成＆キャッシュ
     if (s.geminiApiKey) {
@@ -2326,7 +2334,14 @@
     const audioKey = card ? (card.audioId || getCustomAudioId(card) || card.id) : null;
     const isBundled = (audioKey && !audioKey.startsWith("c_")) || (card && card.audioId);
 
-    // 1. IndexedDBキャッシュを最優先再生
+    // 1. 同梱のGemini 3.8 Flash TTS音声（全問検証済み・0ms即時再生）
+    if (isBundled && audioKey) {
+      if (badge) badge.textContent = "✨ Gemini 3.8 日本語";
+      const ok = await playAudioUrlPromise(`audio/${audioKey}_ja.mp3?${AUDIO_VER}`, rate);
+      if (ok) return true;
+    }
+
+    // 2. IndexedDBキャッシュ再生
     let cachedItem = null;
     if (cardId) {
       cachedItem = await findCachedAudio(cardId, true, s.geminiModel, s.geminiVoice);
@@ -2341,13 +2356,6 @@
       const voiceLabel = cachedItem.key.split("_").pop() || s.geminiVoice || "Gemini 3.8";
       if (badge) badge.textContent = `✨ Gemini 3.8 日本語 (${voiceLabel})`;
       const ok = await playBlobPromise(cachedItem.blob, rate);
-      if (ok) return true;
-    }
-
-    // 2. 同梱のGemini 3.8 Flash TTS音声（API消費ゼロ・0ms即時再生）
-    if (isBundled && audioKey) {
-      if (badge) badge.textContent = "✨ Gemini 3.8 日本語";
-      const ok = await playAudioUrlPromise(`audio/${audioKey}_ja.mp3`, rate);
       if (ok) return true;
     }
 
@@ -2369,7 +2377,7 @@
     // 4. 最終同梱チェック
     if (audioKey) {
       if (badge) badge.textContent = "✨ Gemini 3.8 日本語";
-      const ok = await playAudioUrlPromise(`audio/${audioKey}_ja.mp3`, rate);
+      const ok = await playAudioUrlPromise(`audio/${audioKey}_ja.mp3?${AUDIO_VER}`, rate);
       if (ok) return true;
     }
 
@@ -2569,7 +2577,16 @@
     const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
     const effectiveAccent = getEffectiveAccent(card, s.geminiAccent || "us");
 
-    // 1. IndexedDBキャッシュを最優先再生
+    // 1. 米語(デフォルト)の同梱カードは全問検証済みの同梱Gemini 3.8音声を最優先再生
+    if (isBundled && audioKey && effectiveAccent === "us") {
+      if (badge) {
+        badge.textContent = "✨ 英語 (Gemini 3.8)";
+      }
+      const ok = await playAudioUrlPromise(`audio/${audioKey}.mp3?${AUDIO_VER}`, rate);
+      if (ok) return;
+    }
+
+    // 2. IndexedDBキャッシュ再生（別アクセント指定時や自作カード等）
     const cachedItem = await findCachedAudio(card.id, false, s.geminiModel, s.geminiVoice, effectiveAccent);
     if (cachedItem && cachedItem.blob) {
       const parts = cachedItem.key.split("_");
@@ -2585,16 +2602,7 @@
       if (ok) return;
     }
 
-    // 2. 同梱のGemini 3.8 Flash TTS音声（API消費ゼロ・0ms即時再生）
-    if (isBundled && audioKey) {
-      if (badge) {
-        badge.textContent = "✨ 英語 (Gemini 3.8)";
-      }
-      const ok = await playAudioUrlPromise(`audio/${audioKey}.mp3`, rate);
-      if (ok) return;
-    }
-
-    // 3. 自作AIカード等で同梱ファイルがない場合のみGemini APIで動的生成
+    // 3. 自作AIカードや未キャッシュの別アクセント等でGemini APIキーがある場合は動的生成
     if (s.geminiApiKey) {
       const accentInfo = ACCENT_LABELS[effectiveAccent] || ACCENT_LABELS.us;
       try {
@@ -2613,7 +2621,7 @@
     // 4. 最終同梱チェック
     if (audioKey) {
       if (badge) badge.textContent = "✨ 英語 (Gemini 3.8)";
-      await playAudioUrlPromise(`audio/${audioKey}.mp3`, rate);
+      await playAudioUrlPromise(`audio/${audioKey}.mp3?${AUDIO_VER}`, rate);
     }
   }
 
@@ -2663,7 +2671,7 @@
 
   async function tryPlayLocalAudio(cardId, rate = null) {
     const speed = Number(rate != null ? rate : state.settings.speechRate) || 1.15;
-    const url = `audio/${cardId}.mp3`;
+    const url = `audio/${cardId}.mp3?${AUDIO_VER}`;
 
     const htmlOk = await new Promise((resolve) => {
       stopAudio();
@@ -2732,8 +2740,22 @@
 
     const effectiveAccent = getEffectiveAccent(card, s.geminiAccent || "us");
     const accentInfo = ACCENT_LABELS[effectiveAccent] || ACCENT_LABELS.us;
+    const audioKey = card.audioId || getCustomAudioId(card) || card.id;
+    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
 
-    // 2. まず IndexedDB に保存された Gemini キャッシュ音声を最優先再生
+    // 1. 米語(デフォルト)の同梱カードは全問検証済みの同梱Gemini 3.8音声を最優先再生
+    if (isBundled && effectiveAccent === "us") {
+      const playedLocal = await tryPlayLocalAudio(audioKey, rate);
+      if (playedLocal) {
+        badge.textContent = "✨ Gemini 3.8 Flash TTS";
+        badge.className = "tts-badge";
+        badge.style.cursor = "default";
+        lastTtsError = "";
+        return;
+      }
+    }
+
+    // 2. IndexedDB に保存された Gemini キャッシュ音声を再生（別アクセント指定時や自作カード等）
     const cachedItem = await findCachedAudio(card.id, false, s.geminiModel, s.geminiVoice, effectiveAccent);
     if (cachedItem && cachedItem.blob) {
       const parts = cachedItem.key.split("_");
@@ -2750,21 +2772,6 @@
       lastTtsError = "";
       const played = await playBlob(cachedItem.blob, rate);
       if (played) return;
-    }
-
-    // 3. 同梱の音声
-    const audioKey = card.audioId || getCustomAudioId(card) || card.id;
-    const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
-
-    if (isBundled) {
-      const playedLocal = await tryPlayLocalAudio(audioKey, rate);
-      if (playedLocal) {
-        badge.textContent = "✨ Gemini 3.8 Flash TTS";
-        badge.className = "tts-badge";
-        badge.style.cursor = "default";
-        lastTtsError = "";
-        return;
-      }
     }
 
     // 3. キャッシュがなく、Gemini APIキーが設定されている場合はリアルタイム生成
@@ -4922,7 +4929,19 @@ ${targetPatterns}
     const cardId = card.id;
     const audioKey = card.audioId || getCustomAudioId(card) || card.id;
 
-    // 1. IndexedDB Gemini キャッシュ優先
+    // 1. 同梱 Gemini 3.8 Flash TTS 音声（全問検証済み最優先）
+    if (audioKey && !audioKey.startsWith("c_")) {
+      try {
+        const res = await fetch(`audio/${audioKey}_ja.mp3?${AUDIO_VER}`);
+        if (res.ok) {
+          const ab = await res.arrayBuffer();
+          const decoded = await decodeAudioDataSafe(audioCtx, ab);
+          if (decoded) return decoded;
+        }
+      } catch (e) {}
+    }
+
+    // 2. IndexedDB Gemini キャッシュ
     let cachedItem = null;
     if (cardId) {
       cachedItem = await findCachedAudio(cardId, true, s.geminiModel, s.geminiVoice);
@@ -4937,18 +4956,6 @@ ${targetPatterns}
         const ab = await cachedItem.blob.arrayBuffer();
         const decoded = await decodeAudioDataSafe(audioCtx, ab);
         if (decoded) return decoded;
-      } catch (e) {}
-    }
-
-    // 2. 同梱 Gemini 3.8 Flash TTS 音声
-    if (audioKey && !audioKey.startsWith("c_")) {
-      try {
-        const res = await fetch(`audio/${audioKey}_ja.mp3`);
-        if (res.ok) {
-          const ab = await res.arrayBuffer();
-          const decoded = await decodeAudioDataSafe(audioCtx, ab);
-          if (decoded) return decoded;
-        }
       } catch (e) {}
     }
 
@@ -4973,25 +4980,25 @@ ${targetPatterns}
     const isBundled = (audioKey && !audioKey.startsWith("c_")) || card.audioId;
     const effectiveAccent = getEffectiveAccent(card, s.geminiAccent || "us");
 
-    // 1. IndexedDB Gemini キャッシュ優先
+    // 1. 米語(デフォルト)の同梱カードは全問検証済みの同梱 Gemini 3.8 音声を最優先
+    if (isBundled && audioKey && effectiveAccent === "us") {
+      try {
+        const res = await fetch(`audio/${audioKey}.mp3?${AUDIO_VER}`);
+        if (res.ok) {
+          const ab = await res.arrayBuffer();
+          const decoded = await decodeAudioDataSafe(audioCtx, ab);
+          if (decoded) return decoded;
+        }
+      } catch (e) {}
+    }
+
+    // 2. IndexedDB Gemini キャッシュ（別アクセント指定時や自作カード等）
     const cachedItem = await findCachedAudio(card.id, false, s.geminiModel, s.geminiVoice, effectiveAccent);
     if (cachedItem && cachedItem.blob) {
       try {
         const ab = await cachedItem.blob.arrayBuffer();
         const decoded = await decodeAudioDataSafe(audioCtx, ab);
         if (decoded) return decoded;
-      } catch (e) {}
-    }
-
-    // 2. 同梱 Gemini 3.8 Flash TTS 音声
-    if (isBundled && audioKey) {
-      try {
-        const res = await fetch(`audio/${audioKey}.mp3`);
-        if (res.ok) {
-          const ab = await res.arrayBuffer();
-          const decoded = await decodeAudioDataSafe(audioCtx, ab);
-          if (decoded) return decoded;
-        }
       } catch (e) {}
     }
 
@@ -5003,6 +5010,18 @@ ${targetPatterns}
         await setCachedAudio(cacheKey, blob);
         const ab = await blob.arrayBuffer();
         return await decodeAudioDataSafe(audioCtx, ab);
+      } catch (e) {}
+    }
+
+    // 4. 最終同梱フォールバック
+    if (isBundled && audioKey) {
+      try {
+        const res = await fetch(`audio/${audioKey}.mp3?${AUDIO_VER}`);
+        if (res.ok) {
+          const ab = await res.arrayBuffer();
+          const decoded = await decodeAudioDataSafe(audioCtx, ab);
+          if (decoded) return decoded;
+        }
       } catch (e) {}
     }
 
@@ -5796,8 +5815,8 @@ ${targetPatterns}
     for (const card of ALL_CARDS) {
       const audioKey = card.audioId || getCustomAudioId(card) || card.id;
       if (audioKey && !audioKey.startsWith("c_")) {
-        audioUrls.add(`audio/${audioKey}.mp3`);
-        audioUrls.add(`audio/${audioKey}_ja.mp3`);
+        audioUrls.add(`audio/${audioKey}.mp3?${AUDIO_VER}`);
+        audioUrls.add(`audio/${audioKey}_ja.mp3?${AUDIO_VER}`);
       }
     }
     audioUrls.add("audio/silence.mp3");
@@ -5812,7 +5831,7 @@ ${targetPatterns}
 
     try {
       const cacheKeys = ("caches" in window) ? await caches.keys() : [];
-      const currentCacheName = cacheKeys.find(k => k.startsWith("shunkan-eisakubun-")) || "shunkan-eisakubun-v78";
+      const currentCacheName = cacheKeys.find(k => k.startsWith("shunkan-eisakubun-")) || "shunkan-eisakubun-v79";
       const cache = ("caches" in window) ? await caches.open(currentCacheName) : null;
 
       const concurrency = 6;
