@@ -4,7 +4,18 @@
   const STORAGE_KEY = "shunkan-eisakubun-v1";
   const DB_NAME = "shunkan-eisakubun-audio";
   const DB_STORE = "cache";
-  const AUDIO_VER = "v79";
+  const AUDIO_VER = "v80";
+
+  // 起動時に古いバージョンの音声キャッシュ(CacheStorage)を自動パージ
+  if ("caches" in window && localStorage.getItem("shunkan_audio_purged_v80") !== "1") {
+    caches.keys().then((keys) => {
+      Promise.all(
+        keys.filter((k) => k !== `shunkan-eisakubun-${AUDIO_VER}`).map((k) => caches.delete(k))
+      ).then(() => {
+        try { localStorage.setItem("shunkan_audio_purged_v80", "1"); } catch {}
+      });
+    }).catch(() => {});
+  }
 
   // 2-Tone Pop UI Vector Icon Helper
   function uiIcon(name, extraClass = "") {
@@ -5831,7 +5842,7 @@ ${targetPatterns}
 
     try {
       const cacheKeys = ("caches" in window) ? await caches.keys() : [];
-      const currentCacheName = cacheKeys.find(k => k.startsWith("shunkan-eisakubun-")) || "shunkan-eisakubun-v79";
+      const currentCacheName = cacheKeys.find(k => k.startsWith("shunkan-eisakubun-")) || `shunkan-eisakubun-${AUDIO_VER}`;
       const cache = ("caches" in window) ? await caches.open(currentCacheName) : null;
 
       const concurrency = 6;
